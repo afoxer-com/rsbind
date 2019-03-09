@@ -15,23 +15,23 @@
 # 使用方式
 1. 安装rsbind。可以在tools-rsbind目录下执行cargo install --force安装。执行rsbind，看是否有错误。如果有Library not load的错误，在启动项中加入该配置即可。export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH
 2. 创建rust项目（假设为A），并在项目的src目录下建立两个module，分别是contract和imp，contract用于存放Android/iOS调用的接口，而imp则是接口的实现。并需要在根目录lib.rs下将两个module开放出来。具体可以参考demo。
-3. 执行"rsbind A项目路径"，那么在A项目的target目录下就有生成的framework了。如果想要看接口，可以在A项目下_gen/swift_gen下查看ffi.swift文件。
+3. 执行rsbind命令(具体如下)，那么在A项目的target目录下就有生成的framework了。如果想要看接口，可以在A项目下_gen/swift_gen下查看ffi.swift文件。
 
-```
-rsbind path/to/project [android/ios/all] [ast/bridge/dest/c_header/build/all]
+```sh
+rsbind "path of project" android/ios/all ast/bridge/dest/header/build/all
 ```
 
 - ast：生成简化的ast，并以json保存在_gen/ast中
 - bridge：生成暴露的c接口，并建立一个module放到_gen/[ios/android]_bridge中
 - dest: 生成java、swift的wrapper代码已经c的头文件，并将工程放到_gen/[ios/android]_dest中
-- c_header：单独诚生c header，并放到_gen/header中
+- header：单独诚生c header，并放到_gen/header中
 - build: 编译bridge模块生成.a或者.so并拷贝到dest工程，然后编译dest工程生成最终产物。
 - all: 执行所有的步骤，并生成产物。
 
 # 编译参数配置
 在module的根目录，新建Rsbind.toml。
 
-```
+```toml
 [android]
 rustc_param = ""
 arch = ["armv7-linux-androideabi"]

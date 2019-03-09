@@ -1,0 +1,18 @@
+[android]
+rustc_param = ""
+arch = ["armv7-linux-androideabi"]
+arch_64 = ["aarch64-linux-android"]
+arch_x86 = ["i686-linux-android"]
+release = true
+namespace = "com.bytedance.ee.bear.ffi"
+#so_name = "demo"
+#ext_lib = []
+#features_def = ["xxxx=[]"]
+
+[ios]
+rustc_param = ""
+arch_phone = ["armv7-apple-ios"]
+arch_simu = ["i386-apple-ios", "x86_64-apple-ios"]
+release = true
+features_def = []
+

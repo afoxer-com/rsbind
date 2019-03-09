@@ -1,0 +1,19 @@
+[package]
+name = "$(*521%-host_crate_underscore)_ios_bridge_prj"
+version = "0.1.0"
+authors = ["wangxin.sidney <wangxin.sidney@bytedance.com>"]
+
+#[workspace]
+#members = []
+
+[lib]
+crate-type = [ "lib", "staticlib" ]
+
+[dependencies]
+$(*521%-host_crate) = { path = "../../"}
+serde_json = "1.0"
+serde_derive = "1.0"
+serde = "1.0"
+
+[features]
+$(*521%-features)

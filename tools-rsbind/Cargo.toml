@@ -1,0 +1,29 @@
+[package]
+name = "rsbind"
+version = "0.1.0"
+authors = ["wangxin.sidney <wangxin.sidney@bytedance.com>"]
+
+[dependencies]
+quote = "0.6"
+proc-macro2 = "0.4.4"
+cbindgen = "0.1.29"
+serde_json = "1.0"
+serde_derive = "1.0"
+serde = "1.0"
+zip = "0.4.2"
+fs_extra = "1.1.0"
+toml = "0.4"
+jni = { git = "https://github.com/prevoty/jni-rs" }
+
+[dependencies.syn]
+version = "0.14"
+default_features = false
+features = ["parsing", "full", "extra-traits"]
+
+[lib]
+name = "rsbind_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rsbind"
+path = "src/main.rs"

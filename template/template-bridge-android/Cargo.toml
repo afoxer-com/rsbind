@@ -1,0 +1,24 @@
+[package]
+name = "$(*521%-host_crate_underscore)_android_bridge_prj"
+version = "0.1.0"
+authors = ["wangxin.sidney <wangxin.sidney@bytedance.com>"]
+
+#[workspace]
+#members = []
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+$(*521%-host_crate) = { path = "../../"}
+jni = { git = "https://github.com/king6cong/jni-rs", branch = "sdk" }
+serde_json = "1.0"
+serde_derive = "1.0"
+serde = "1.0"
+lazy_static = "1.0.0"
+android_logger = "0.7"
+log = "0.4"
+
+[features]
+rsbind = []
+$(*521%-features)

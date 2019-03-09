@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "SwiftPoet",
+        "repositoryURL": "https://github.com/gilt/SwiftPoet.git",
+        "state": {
+          "branch": null,
+          "revision": "04a3da6239f55e0474f8f6612baf6f7fa7262eac",
+          "version": "1.9.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

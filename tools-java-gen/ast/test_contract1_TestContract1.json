@@ -1,0 +1,14 @@
+{
+  "name": "TestContract1",
+  "mod_name": "test_contract1",
+  "methods": [
+    {
+      "name": "test_vec",
+      "return_type": {
+        "Vec": "Int"
+      },
+      "origin_return_ty": "Vec<i32>",
+      "args": []
+    }
+  ]
+}

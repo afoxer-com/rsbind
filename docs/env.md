@@ -79,8 +79,8 @@ ar = "/usr/local/ndk/ndk-standalone-21-armeabi/bin/arm-linux-androideabi-ar"
 ```
  
 ### 测试环境是否搭建ok
-自己在一个路径下新建一个工程： cargo new my_project —lib
-编译试一下：cargo rustc  —target arm-linux-androideabi
+自己在一个路径下新建一个工程： cargo new my_project --lib
+编译试一下：cargo rustc  --target arm-linux-androideabi
 
 ## iOS:
 ### 安装targets
@@ -95,7 +95,7 @@ cargo install cargo-lipo
 
 ### xcode配置
 ```sh
-xcode-select —install
+xcode-select --install
 xcode-select -s /Applications/Xcode.app/Contents/Developer
-xcrun —show-sdk-path -sdk iphoneos
+xcrun --show-sdk-path -sdk iphoneos
 ```

@@ -82,7 +82,3 @@ pub trait TestContract1 {
 }
 
 ```
-
-# TODO
-现在Vec的实现不是很高效，需要修改下。
-现在函数如果不带返回值会有问题

@@ -1,7 +1,8 @@
 ## 安装Rustup
-参考 https://rustup.rs/
+- 参考 https://rustup.rs/
+
 ~~curl https://sh.rustup.rs -sSf | sh~~
-curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y
+```curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain nightly -y```
 
 - 如果要切换版本
 ```sh

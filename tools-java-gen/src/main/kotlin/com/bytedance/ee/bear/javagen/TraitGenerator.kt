@@ -150,9 +150,12 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
         for (callback in selectedCallbacks) {
             for (method in callback.methods) {
                 val methodBuilder = MethodSpec.methodBuilder("invoke_${callback.name}_${method.name}")
-                        .returns(mapType(method.return_type, AstType.VOID, true))
                         .addModifiers(Modifier.PUBLIC)
                         .addModifiers(Modifier.STATIC)
+                if (method.return_type != AstType.VOID) {
+                    methodBuilder.returns(mapType(method.return_type, AstType.VOID, true))
+                }
+
                 var argCalls = ""
                 methodBuilder.addParameter(TypeName.LONG, "index")
                 for ((index, arg) in method.args.withIndex()) {
@@ -201,10 +204,16 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
 
                 methodBuilder
                         .addCode(CodeBlock.builder().addStatement("${callback.name} callback = (${callback.name}) globalCallbacks.get(index)").build())
-                        .addCode(CodeBlock.builder().addStatement("\$T result = callback.${method.name}($argCalls)", mapType(method.return_type, method.return_sub_type)).build())
+                if (method.return_type == AstType.VOID) {
+                    methodBuilder.addCode(CodeBlock.builder().addStatement("callback.${method.name}($argCalls)").build())
+                } else {
+                    methodBuilder.addCode(CodeBlock.builder().addStatement("\$T result = callback.${method.name}($argCalls)", mapType(method.return_type, method.return_sub_type)).build())
+                }
 
                 if (method.return_type == AstType.BOOLEAN) {
                     methodBuilder.addStatement("return result ? 1 : 0")
+                } else if (method.return_type == AstType.VOID) {
+                    // skip
                 } else {
                     methodBuilder.addStatement("return result")
                 }

@@ -118,16 +118,30 @@ impl CallbackGenStrategy for CCallbackStrategy {
                 let arg_names = &method
                     .args
                     .iter()
+                    .filter(|arg| match arg.ty {
+                        AstType::Void => false,
+                        _ => true,
+                    })
                     .map(|arg| Ident::new(&arg.name, Span::call_site()))
                     .collect::<Vec<Ident>>();
+
                 let convert_arg_names = &method
                     .args
                     .iter()
+                    .filter(|arg| match arg.ty {
+                        AstType::Void => false,
+                        _ => true,
+                    })
                     .map(|arg| Ident::new(&format!("c_{}", &arg.name), Span::call_site()))
                     .collect::<Vec<Ident>>();
+
                 let arg_types = &method
                     .args
                     .iter()
+                    .filter(|arg| match arg.ty {
+                        AstType::Void => false,
+                        _ => true,
+                    })
                     .map(|arg| match arg.ty {
                         AstType::Vec(base_ty) => {
                             let vec_inner_name =
@@ -142,25 +156,33 @@ impl CallbackGenStrategy for CCallbackStrategy {
                     })
                     .collect::<Vec<TokenStream>>();
 
-                let ret_ty_tokens = Ident::new(&method.origin_return_ty, Span::call_site());
-                let return_convert = match method.return_type {
-                    AstType::Boolean => {
-                        quote! {
-                            let s_result = if result > 0 {true} else {false};
-                        }
-                    }
-                    AstType::String => {
-                        quote! {
-                            let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
-                            let s_result_str: &str = s_result_str.to_str().unwrap();
-                            let s_result: String = s_result_str.to_owned();
-                        }
-                    }
+                let ret_ty_tokens = match method.return_type {
+                    AstType::Void => quote!(()),
                     _ => {
-                        quote! {
-                            let s_result = result as #ret_ty_tokens;
-                        }
+                        let ident = Ident::new(&method.origin_return_ty, Span::call_site());
+                        quote!(#ident)
                     }
+                };
+
+                let return_convert = match method.return_type {
+                    AstType::Void => quote!(),
+                    AstType::Boolean => quote! {
+                        let s_result = if result > 0 {true} else {false};
+                    },
+                    AstType::String => quote! {
+                        let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
+                        let s_result_str: &str = s_result_str.to_str().unwrap();
+                        let s_result: String = s_result_str.to_owned();
+                    },
+                    _ => quote! {
+                        let s_result = result as #ret_ty_tokens;
+                    },
+                };
+
+                // return var ident name
+                let return_var_name = match method.return_type {
+                    AstType::Void => quote!(),
+                    _ => quote!(s_result),
                 };
 
                 // methods calls on impl
@@ -173,7 +195,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                         let result = #fn_method_name(self.index, #(#convert_arg_names),*);
                         #(unsafe {CString::from_raw(#strs_to_release)};)*
                         #return_convert
-                        s_result
+                        #return_var_name
                     }
                 };
 
@@ -243,11 +265,18 @@ impl CCallbackStrategy {
         let mut callback_methods = TokenStream::new();
         for method in trait_desc.methods.iter() {
             let callback_method_ident = Ident::new(&method.name, Span::call_site());
-            let ret_ty_tokens = self.ty_to_tokens(&method.return_type).unwrap();
+            let ret_ty_tokens = match method.return_type {
+                AstType::Void => quote!(()),
+                _ => self.ty_to_tokens(&method.return_type).unwrap(),
+            };
 
             let arg_types = method
                 .args
                 .iter()
+                .filter(|arg| match arg.ty {
+                    AstType::Void => false,
+                    _ => true,
+                })
                 .map(|arg| self.ty_to_tokens(&arg.ty).unwrap())
                 .collect::<Vec<TokenStream>>();
 

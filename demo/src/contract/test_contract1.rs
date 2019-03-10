@@ -17,6 +17,7 @@ pub trait Callback: Sync {
     fn on_callback_complex(&self, arg1: StructSimple) -> bool;
     fn on_callback_arg_vec(&self, arg1: Vec<StructSimple>) -> bool;
     fn on_callback_arg_vec_simple(&self, arg1: Vec<String>) -> bool;
+    fn on_empty_callback(&self);
 }
 
 pub struct StructSimple {

@@ -31,7 +31,14 @@ class CallbackGenerator {
     
     func quoteMethodSig(method: MethodDesc) -> MethodSpecBuilder {
         let methodSpec = MethodSpec.builder(for: method.name)
-            .add(returnType: method.return_type.toTypeName())
+
+        switch method.return_type {
+        case .VOID:
+            // skip
+            break
+        default:
+            methodSpec.add(returnType: method.return_type.toTypeName())
+        }
         
         method.args.forEach({ arg in
             switch arg.ty {

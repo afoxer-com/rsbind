@@ -120,8 +120,13 @@ class TraitGenerator {
                     for method in callback!.methods {
                         var closue = ""
                         var index = 0
-                        var arg_params = "(index, "
-                        var args_str = "(Int64, "
+                        var arg_params = "(index"
+                        var args_str = "(Int64"
+                        if method.args.count > 0 {
+                            arg_params = "\(arg_params), "
+                            args_str = "\(args_str), "
+                        }
+                        
                         for arg in method.args {
                             let isLast = index == method.args.count - 1
                             let arg_type = mapCallbackType(type: arg.ty)
@@ -189,7 +194,12 @@ class TraitGenerator {
                         }
                         method_call = "\(method_call))"
                         
-                        closureBuilder.add(codeLine: "let result = \(arg.name)_callback.\(method.name)\(method_call)")
+                        switch method.return_type {
+                        case AstType.VOID:
+                            closureBuilder.add(codeLine: "\(arg.name)_callback.\(method.name)\(method_call)")
+                        default:
+                            closureBuilder.add(codeLine: "let result = \(arg.name)_callback.\(method.name)\(method_call)")
+                        }
 
                         switch method.return_type {
                             case AstType.BOOLEAN:
@@ -204,6 +214,8 @@ class TraitGenerator {
                                 closureBuilder.add(codeLine: "return Float64(result)")
                             case AstType.STRING:
                                 closureBuilder.add(codeLine: "return result")
+                            case AstType.VOID:
+                                break
                             default:
                                 print("wrong type in callback: \(method.return_type)")
                                 assert(false)
@@ -250,6 +262,8 @@ class TraitGenerator {
             return "Float64"
         case AstType.STRING:
             return "UnsafePointer<Int8>?"
+        case AstType.VOID:
+            return "()"
         case AstType.VEC(_), AstType.STRUCT(_):
             return "UnsafePointer<Int8>?"
         default:

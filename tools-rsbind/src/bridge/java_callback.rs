@@ -117,36 +117,29 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 };
 
                 let cb_arg_array_each = match cb_arg.ty {
-                    AstType::Boolean | AstType::Int => {
-                        quote! {
-                            JValue::Int(#cb_arg_name),
-                        }
-                    }
-                    AstType::Long => {
-                        quote! {
-                            JValue::Long(#cb_arg_name),
-                        }
-                    }
-                    AstType::String => {
-                        quote! {
-                            JValue::Object(#cb_arg_name),
-                        }
-                    }
-                    AstType::Float => {
-                        quote! {
-                            JValue::Float(#cb_arg_name),
-                        }
-                    }
-                    AstType::Double => {
-                        quote! {
-                            JValue::Double(#cb_arg_name),
-                        }
-                    }
-                    _ => {
-                        quote! {
-                            JValue::Object(#cb_arg_name),
-                        }
-                    }
+                    AstType::Boolean | AstType::Int => quote! {
+                        JValue::Int(#cb_arg_name),
+                    },
+
+                    AstType::Long => quote! {
+                        JValue::Long(#cb_arg_name),
+                    },
+
+                    AstType::String => quote! {
+                        JValue::Object(#cb_arg_name),
+                    },
+
+                    AstType::Float => quote! {
+                        JValue::Float(#cb_arg_name),
+                    },
+
+                    AstType::Double => quote! {
+                        JValue::Double(#cb_arg_name),
+                    },
+
+                    _ => quote! {
+                        JValue::Object(#cb_arg_name),
+                    },
                 };
 
                 args_convert = quote! {
@@ -186,19 +179,26 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 })
                 .collect::<Vec<TokenStream>>();
 
-            let ret_ty_tokens = Ident::new(&method.origin_return_ty, Span::call_site());
-            let return_convert = match method.return_type {
-                AstType::Boolean => {
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Int(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let s_result = if r_result.unwrap() > 0 {true} else {false};
-                    }
+            let ret_ty_tokens = match method.return_type {
+                AstType::Void => quote!(()),
+                _ => {
+                    let ident = Ident::new(&method.origin_return_ty, Span::call_site());
+                    quote!(#ident)
                 }
+            };
+
+            let return_convert = match method.return_type {
+                AstType::Void => quote!(),
+                AstType::Boolean => quote! {
+                    let mut r_result = None;
+                    match result.unwrap() {
+                        JValue::Int(value) => r_result = Some(value),
+                        _ => assert!(false)
+                    }
+
+                    let s_result = if r_result.unwrap() > 0 {true} else {false};
+                },
+
                 AstType::Int => {
                     let origin_return_ty_ident =
                         Ident::new(&method.origin_return_ty, Span::call_site());
@@ -270,6 +270,11 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 }
             };
 
+            let return_result_ident = match method.return_type {
+                AstType::Void => quote!(),
+                _ => quote!(s_result),
+            };
+
             // methods calls on impl
             let method_name = Ident::new(&method.name, Span::call_site());
             let java_method_name = format!("invoke_{}_{}", &callback_desc.name, &method.name);
@@ -278,7 +283,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 #methods_result
 
                 fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
-                let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
+                    let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
 
                     #args_convert
 
@@ -292,7 +297,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     );
 
                     #return_convert
-                    s_result
+                    #return_result_ident
                 }
             };
         }
@@ -300,25 +305,25 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
         let callback_ident = Ident::new(&callback_desc.name, Span::call_site());
         let callback_str_ident = Ident::new(&format!("r_{}_str", &arg.name), Span::call_site());
         quote! {
-                    #callback_struct
+            #callback_struct
 
-                    impl #callback_ident for #struct_ident {
-                        #methods_result
-                    }
+            impl #callback_ident for #struct_ident {
+                #methods_result
+            }
 
-                    impl Drop for #struct_ident {
-                        fn drop(&mut self) {
-                            let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
-                            let _method_result = env.call_static_method(
-                                #class_name,
-                                "free_callback",
-                                "(J)V",
-                                &[JValue::Long(self.index as jlong)],
-                            );
-                        }
-                    }
+            impl Drop for #struct_ident {
+                fn drop(&mut self) {
+                    let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
+                    let _method_result = env.call_static_method(
+                        #class_name,
+                        "free_callback",
+                        "(J)V",
+                        &[JValue::Long(self.index as jlong)],
+                    );
+                }
+            }
 
-                    let #rust_arg_name: Box<#struct_ident> = Box::new(#struct_ident{index: #arg_name_ident});
+            let #rust_arg_name: Box<#struct_ident> = Box::new(#struct_ident{index: #arg_name_ident});
         }
     }
 }

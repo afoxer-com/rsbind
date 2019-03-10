@@ -79,6 +79,10 @@ impl TestContract1 for TestContract1Imp {
         return vec![3, 4, 5];
     }
 
+    fn test_no_return() {
+        
+    }
+
     //    fn test_return_callback(arg: bool) -> Box<Callback> {
     //
     //    }

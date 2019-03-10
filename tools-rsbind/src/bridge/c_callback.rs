@@ -38,7 +38,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                     method.name, callback_desc.name
                 );
 
-                let mut strs_to_release:Vec<Ident> = vec![];
+                let mut strs_to_release: Vec<Ident> = vec![];
                 // arguments converting in callback
                 let mut args_convert = TokenStream::new();
                 for cb_arg in method.args.iter() {

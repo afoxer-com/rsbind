@@ -7,6 +7,7 @@ pub trait TestContract1 {
     fn test_struct_vec() -> Vec<StructSimple>;
     fn test_two_string(arg1: String, arg2: String) -> String;
     fn test_return_vec_u8(input: Vec<u8>) -> Vec<u8>;
+    fn test_no_return();
     //    fn test_return_callback(arg: bool) -> Box<Callback>;
 }
 

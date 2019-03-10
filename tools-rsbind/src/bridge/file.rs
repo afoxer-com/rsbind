@@ -327,8 +327,13 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         };
 
         let imp_ident = Ident::new(impl_name, Span::call_site());
-        let imp_call = quote! {
-            let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+        let imp_call = match method.return_type {
+            AstType::Void => quote! {
+                #imp_ident::#imp_fun_name(#rust_args_repeat);
+            },
+            _ => quote! {
+                let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+            },
         };
 
         Ok(imp_call)

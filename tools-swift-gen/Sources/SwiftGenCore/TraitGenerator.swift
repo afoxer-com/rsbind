@@ -31,11 +31,8 @@ class TraitGenerator {
 
             let codeBlockBuilder = CodeBlock.builder()
             let _ = quoteArgConvert(builder: codeBlockBuilder, methodDesc: method, callbacks: callbacks)
-            print("66666")
-
+            
             let impMethodName = "\(self.traitDesc.mod_name)_\(method.name)"
-            print("444")
-
             var argCalls = ""
             var index = 0
             for arg in method.args {
@@ -46,18 +43,20 @@ class TraitGenerator {
                 }
                 index = index + 1
             }
-            print("999999")
 
-            codeBlockBuilder
-                .add(codeLine: "let result = \(impMethodName)(\(argCalls))")
+            switch method.return_type {
+                case AstType.VOID:
+                    codeBlockBuilder
+                        .add(codeLine: "\(impMethodName)(\(argCalls))")
+                default:
+                    codeBlockBuilder
+                        .add(codeLine: "let result = \(impMethodName)(\(argCalls))")
+            }
             
             let _ = quoteResultConvert(builder: codeBlockBuilder, methodDesc: method)
-            print("33333333eeeee")
 
             methodSpec.add(codeBlock: codeBlockBuilder.build())
             classBuilder.add(method: methodSpec.build())
-            print("74534536")
-
         }
         
         return classBuilder;
@@ -70,16 +69,17 @@ class TraitGenerator {
         
         var return_type = method.return_type.toTypeName()
         switch method.return_type {
+            case AstType.VOID:
+                {}()
             case AstType.VEC(let base):
                 if base == AstBaseType.STRUCT {
                     let return_ty_str = method.origin_return_ty.replacingOccurrences(of: "Vec", with: "Array")
                     return_type = TypeName.init(keyword: return_ty_str)
                 }
+                methodSpec.add(returnType: return_type)
             default:
-                {}()
+                methodSpec.add(returnType: return_type)
         }
-            
-        methodSpec.add(returnType: return_type)
         
         method.args.forEach({ arg in
             let argSpec = ParameterSpec.builder(for: arg.name, type: arg.ty.toTypeName()).build()
@@ -90,9 +90,7 @@ class TraitGenerator {
     }
     
     func quoteArgConvert(builder: CodeBlockBuilder, methodDesc: MethodDesc, callbacks: [String: TraitDesc]) -> CodeBlockBuilder {
-        let crateName = self.traitDesc.crate_name.replacingOccurrences(of: "-", with: "_")
-    
-        print("quoteArgConvert start\(strlen("123456"))")
+        let crateName = self.traitDesc.crate_name.replacingOccurrences(of: "-", with: "_")    
         for arg in methodDesc.args {
             print("quoteArgConvert for \(arg.name)")
             switch arg.ty {
@@ -121,14 +119,10 @@ class TraitGenerator {
 
                     for method in callback!.methods {
                         var closue = ""
-                        print("578457856785")
-
                         var index = 0
                         var arg_params = "(index, "
                         var args_str = "(Int64, "
                         for arg in method.args {
-                            print("546435634573546")
-
                             let isLast = index == method.args.count - 1
                             let arg_type = mapCallbackType(type: arg.ty)
                             args_str = "\(args_str)\(arg_type)"
@@ -138,30 +132,23 @@ class TraitGenerator {
                                 arg_params = "\(arg_params), "
                             }
                             index = index + 1
-                            print("000000000")
-
                         }
                         
                         args_str = "\(args_str))"
                         arg_params = "\(arg_params))"
-                        print("4434234533")
 
                         let return_type = mapCallbackType(type: method.return_type)
                         closue = "\(args_str) -> \(return_type)"
                         arg_params = "\(arg_params) -> \(return_type)"
-                        print("jkfjfgjfjfj")
 
                         builder.add(codeLine: "let \(arg.name)_\(method.name) : @convention(c) \(closue) = { ")
                         let closureBuilder = CodeBlock.builder()
                         closureBuilder.add(codeLine: "\(arg_params) in")
                         closureBuilder.add(codeLine: "let \(arg.name)_callback = globalCallbacks[index] as! \(callback!.name)")
-                        print("kdkgijjioejgeorg")
 
                         var method_call = "("
                         var i = 0
                         for arg in method.args {
-                            print(".........")
-
                             switch arg.ty {
                                 case AstType.BOOLEAN:
                                     closureBuilder.add(codeLine: "let c_\(arg.name): Bool = \(arg.name) > 0 ? true : false")
@@ -193,19 +180,16 @@ class TraitGenerator {
                                     print("don't support \(arg.origin_ty) in callback")
                                     assert(false)
                             }
-                            print("..qwefqwer.......")
 
                             method_call = "\(method_call)\(arg.name):c_\(arg.name)"
                             if i != method.args.count - 1 {
                                 method_call = "\(method_call),"
                             }
                             i = i + 1
-                            print("..qwefqwer.......")
                         }
                         method_call = "\(method_call))"
                         
                         closureBuilder.add(codeLine: "let result = \(arg.name)_callback.\(method.name)\(method_call)")
-                        print("..qertqretgewr.......")
 
                         switch method.return_type {
                             case AstType.BOOLEAN:
@@ -227,7 +211,6 @@ class TraitGenerator {
                         
                         builder.add(codeBlock: closureBuilder.build())
                         builder.add(codeLine: "}")
-                        print("..erwehgert.......")
 
                         modelArgs = "\(modelArgs)\(method.name):\(arg.name)_\(method.name),"
                         methodIndex = methodIndex + 1
@@ -236,21 +219,13 @@ class TraitGenerator {
                     builder.add(codeLine: "let callback_free : @convention(c)(Int64) -> () = {")
                     builder.add(codeLine: "(index) in")
                     builder.add(codeLine: "globalCallbacks.removeValue(forKey: index)")
-                    builder.add(codeLine: "}")
-                    print("..234523452.......")
-
-                
+                    builder.add(codeLine: "}")                
                     builder.add(codeLine: "let s_\(arg.name) = \(traitDesc.mod_name)_\(callback!.name)_Model(\(modelArgs)free_callback: callback_free, index: \(arg.name)_index)")
-                    print("srwegr44444")
 
                 case AstType.VEC(_):
-                    print("535353455dfff")
-
                     builder.add(codeLine: "let encoder = JSONEncoder()")
                     builder.add(codeLine: "let data_\(arg.name) = try! encoder.encode(\(arg.name))")
                     builder.add(codeLine: "let s_\(arg.name) = String(data: data_\(arg.name), encoding: .utf8)!")
-                    print("435346345634gggh")
-
                 case AstType.VOID:
                     {}()
                 case AstType.STRUCT(_):
@@ -322,7 +297,12 @@ class TraitGenerator {
                 {}()
         }
 
-        builder.add(codeLine: "return s_result")
+        switch methodDesc.return_type {
+            case AstType.VOID:
+                {}()
+            default:
+                builder.add(codeLine: "return s_result")
+        }
         return builder
     }
 }

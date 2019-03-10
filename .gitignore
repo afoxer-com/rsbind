@@ -3,3 +3,6 @@
 build
 _gen
 target
+.vscode
+.test
+.build

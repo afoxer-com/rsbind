@@ -10,6 +10,7 @@ import javax.lang.model.element.Modifier
 
 class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, val extLibs: String, val callbacks: List<TraitDesc>) {
     fun generate(): JavaFile.Builder {
+        // loadLibrary
         val staticBlock = CodeBlock.builder().addStatement("System.loadLibrary(\"${soName}\")")
         val extLibArray = extLibs.split(",")
         for (extLib in extLibArray) {
@@ -18,26 +19,14 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
             }
             staticBlock.addStatement("System.loadLibrary(\"${extLib}\")")
         }
+
         val builder = TypeSpec.classBuilder(this.desc.name)
                 .addModifiers(Modifier.PUBLIC)
                 .addSuperinterface(ClassName.get(Serializable::class.java))
                 .addStaticBlock(staticBlock.build())
 
-        builder.addField(FieldSpec.builder(ClassName.get(AtomicLong::class.java), "globalIndex", Modifier.PRIVATE, Modifier.STATIC)
-                .initializer("new AtomicLong(0)")
-                .build())
-
-        builder.addField(FieldSpec.builder(ParameterizedTypeName.get(ClassName.get(ConcurrentHashMap::class.java), TypeName.LONG.box(), ClassName.get(Object::class.java)),
-                "globalCallbacks", Modifier.PRIVATE, Modifier.STATIC)
-                .initializer("new \$T<>()", ClassName.get(ConcurrentHashMap::class.java))
-                .build())
-
-        builder.addMethod(MethodSpec.methodBuilder("free_callback")
-                .addModifiers(Modifier.PUBLIC)
-                .addModifiers(Modifier.STATIC)
-                .addParameter(TypeName.LONG, "index")
-                .addCode(CodeBlock.builder().addStatement("globalCallbacks.remove(index)").build())
-                .build())
+        // global properties.
+        buildGlobal(builder)
 
         var selectedCallbacks = mutableListOf<TraitDesc>()
 
@@ -47,7 +36,9 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
             val methodSpec = MethodSpec.methodBuilder(method.name)
                     .addModifiers(Modifier.PUBLIC)
                     .addModifiers(Modifier.STATIC)
-            if (method.return_type == AstType.STRUCT) {
+            if (method.return_type == AstType.VOID) {
+                //skip
+            } else if (method.return_type == AstType.STRUCT) {
                 methodSpec.returns(ClassName.get(pkg, method.origin_return_ty))
             } else if (method.return_type == AstType.VEC) {
                 var subType = mapType(method.return_sub_type, method.return_sub_type).box()
@@ -62,7 +53,9 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
 
             val args = method.args
             for (arg in args) {
-                if (arg.ty == AstType.CALLBACK) {
+                if (arg.ty == AstType.VOID) {
+                    // skip
+                } else if (arg.ty == AstType.CALLBACK) {
                     val param = ParameterSpec.builder(ClassName.get(pkg, arg.origin_ty), arg.name)
                     methodSpec.addParameter(param.build())
                     val callback = callbacks.filter { it.name == arg.origin_ty }
@@ -80,7 +73,9 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
 
             // arguments convert
             for (arg in args) {
-                if (arg.ty == AstType.CALLBACK) {
+                if (arg.ty == AstType.VOID) {
+                    //skip
+                } else if (arg.ty == AstType.CALLBACK) {
                     methodSpec.addStatement("long ${arg.name}_callback_index = globalIndex.incrementAndGet()")
                             .addStatement("globalCallbacks.put(${arg.name}_callback_index, ${arg.name})")
                             .addStatement("long r_${arg.name} = ${arg.name}_callback_index")
@@ -103,7 +98,12 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                 mapType(method.return_type, method.return_sub_type, true)
             }
 
-            var callMethodStatement = "\$T ret = native_\$L("
+            var callMethodStatement = if (method.return_type == AstType.VOID) {
+                "native_\$L("
+            } else {
+                "\$T ret = native_\$L("
+            }
+
             for ((index, arg) in args.withIndex()) {
                 if (index == args.size - 1) {
                     callMethodStatement = "${callMethodStatement}r_${arg.name}"
@@ -112,10 +112,17 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                 }
             }
             callMethodStatement = "$callMethodStatement)"
-            methodSpec.addStatement(callMethodStatement, returnType, method.name)
+
+            if (method.return_type == AstType.VOID) {
+                methodSpec.addStatement(callMethodStatement, method.name)
+            } else {
+                methodSpec.addStatement(callMethodStatement, returnType, method.name)
+            }
 
             // return type convert
-            if (method.return_type == AstType.VEC) {
+            if (method.return_type == AstType.VOID) {
+                // skip
+            } else if (method.return_type == AstType.VEC) {
                 var subType = mapType(method.return_sub_type, method.return_sub_type)
                 if (method.return_sub_type == AstType.STRUCT) {
                     val clsName = method.origin_return_ty.replace("Vec<", "").replace(">", "")
@@ -206,14 +213,45 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
             }
         }
 
-
         // native functions
+        buildNativeMethods(methods, builder)
+
+        return JavaFile.builder(this.pkg, builder.build())
+    }
+
+    /**
+     *   build global properties and methods.
+     */
+     fun buildGlobal(builder: TypeSpec.Builder) {
+        builder.addField(FieldSpec.builder(ClassName.get(AtomicLong::class.java), "globalIndex", Modifier.PRIVATE, Modifier.STATIC)
+                .initializer("new AtomicLong(0)")
+                .build())
+
+        builder.addField(FieldSpec.builder(ParameterizedTypeName.get(ClassName.get(ConcurrentHashMap::class.java), TypeName.LONG.box(), ClassName.get(Object::class.java)),
+                "globalCallbacks", Modifier.PRIVATE, Modifier.STATIC)
+                .initializer("new \$T<>()", ClassName.get(ConcurrentHashMap::class.java))
+                .build())
+
+        builder.addMethod(MethodSpec.methodBuilder("free_callback")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.STATIC)
+                .addParameter(TypeName.LONG, "index")
+                .addCode(CodeBlock.builder().addStatement("globalCallbacks.remove(index)").build())
+                .build())
+     }
+
+    /**
+    * build native methods for accessing .so
+    */
+    fun buildNativeMethods(methods: Array<MethodDesc>, builder: TypeSpec.Builder) {
         for (method in methods) {
             val methodSpec = MethodSpec.methodBuilder("native_" + method.name)
                     .addModifiers(Modifier.PRIVATE)
                     .addModifiers(Modifier.STATIC)
                     .addModifiers(Modifier.NATIVE);
-            if (method.return_type == AstType.VEC) {
+            if(method.return_type == AstType.VOID) {
+                // skip
+            } else if (method.return_type == AstType.VEC) {
                 methodSpec.returns(mapType(AstType.STRING, AstType.VOID, true))
             } else if (method.return_type == AstType.STRUCT) {
                 methodSpec.returns(ClassName.get(String::class.java))
@@ -223,7 +261,9 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
 
             val args = method.args;
             for (arg in args) {
-                if (arg.ty == AstType.CALLBACK) {
+                if (arg.ty == AstType.VOID) {
+                    // skip
+                } else if (arg.ty == AstType.CALLBACK) {
                     val param = ParameterSpec.builder(mapType(AstType.LONG, AstType.VOID, true), arg.name)
                     methodSpec.addParameter(param.build())
                 } else if (arg.ty == AstType.VEC) {
@@ -237,7 +277,5 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
 
             builder.addMethod(methodSpec.build())
         }
-
-        return JavaFile.builder(this.pkg, builder.build())
     }
 }

@@ -112,11 +112,20 @@ impl FileGenStrategy for CFileGenStrategy {
         let arg_names = method
             .args
             .iter()
+            .filter(|arg| match arg.ty {
+                AstType::Void => false,
+                _ => true,
+            })
             .map(|arg| Ident::new(&arg.name, Span::call_site()))
             .collect::<Vec<Ident>>();
+
         let arg_types = method
             .args
             .iter()
+            .filter(|arg| match arg.ty {
+                AstType::Void => false,
+                _ => true,
+            })
             .map(|arg| match arg.ty {
                 AstType::Callback => {
                     let mut callback_trait = None;
@@ -145,10 +154,30 @@ impl FileGenStrategy for CFileGenStrategy {
             "xxxxxx result ={:?} -> {:?}",
             &method.return_type, ret_ty_tokens
         );
-        let sig_define = quote! {
-            #[no_mangle]
-            pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
+        let sig_define = if arg_names.len() <= 0 {
+            match method.return_type {
+                AstType::Void => quote! {
+                    #[no_mangle]
+                    pub extern "C" fn #fun_name()
+                },
+                _ => quote! {
+                    #[no_mangle]
+                    pub extern "C" fn #fun_name() -> #ret_ty_tokens
+                },
+            }
+        } else {
+            match method.return_type {
+                AstType::Void => quote! {
+                    #[no_mangle]
+                    pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*)
+                },
+                _ => quote! {
+                    #[no_mangle]
+                    pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
+                },
+            }
         };
+
         return Ok(sig_define);
     }
 
@@ -217,11 +246,12 @@ impl FileGenStrategy for CFileGenStrategy {
         let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
         Ok(match *ty {
+            AstType::Void => quote!(),
             AstType::Boolean => quote! {
-                return if #ret_name_ident {1} else {0};
+                if #ret_name_ident {1} else {0}
             },
             AstType::String => quote! {
-                return CString::new(#ret_name_ident).unwrap().into_raw();
+                CString::new(#ret_name_ident).unwrap().into_raw()
             },
             AstType::Vec(ref base_ty) => match base_ty {
                 AstBaseType::Struct => {
@@ -231,13 +261,13 @@ impl FileGenStrategy for CFileGenStrategy {
                     quote! {
                         let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                         let json_ret = serde_json::to_string(&ret_value);
-                        return CString::new(json_ret.unwrap()).unwrap().into_raw();
+                        CString::new(json_ret.unwrap()).unwrap().into_raw()
                     }
                 }
                 _ => {
                     quote! {
                         let json_ret = serde_json::to_string(&ret_value);
-                        return CString::new(json_ret.unwrap()).unwrap().into_raw();
+                        CString::new(json_ret.unwrap()).unwrap().into_raw()
                     }
                 }
             },
@@ -246,13 +276,13 @@ impl FileGenStrategy for CFileGenStrategy {
                     Ident::new(&format!("Struct_{}", origin_ty), Span::call_site());
                 quote! {
                     let json_ret = serde_json::to_string(&#struct_copy_name::from(ret_value));
-                    return CString::new(json_ret.unwrap()).unwrap().into_raw();
+                    CString::new(json_ret.unwrap()).unwrap().into_raw()
                 }
             }
             _ => {
                 let ty_ident = self.ty_to_tokens(&ty, TypeDirection::Return).unwrap();
                 quote! {
-                    return #ret_name_ident as #ty_ident;
+                    #ret_name_ident as #ty_ident
                 }
             }
         })
@@ -266,31 +296,24 @@ impl FileGenStrategy for CFileGenStrategy {
             AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),
             AstType::Double => tokens.append(Ident::new("f64", Span::call_site())),
             AstType::Boolean => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::String => {
-                match direction {
-                    TypeDirection::Return => {
-                        tokens.append(Punct::new('*', Spacing::Alone));
-                        tokens.append(Ident::new("mut", Span::call_site()));
-                        tokens.append(Ident::new("c_char", Span::call_site()));
-                    }
-                    TypeDirection::Argument => {
-                        tokens.append(Punct::new('*', Spacing::Alone));
-                        tokens.append(Ident::new("const", Span::call_site()));
-                        tokens.append(Ident::new("c_char", Span::call_site()));
-                    }
+            AstType::String => match direction {
+                TypeDirection::Return => {
+                    tokens.append(Punct::new('*', Spacing::Alone));
+                    tokens.append(Ident::new("mut", Span::call_site()));
+                    tokens.append(Ident::new("c_char", Span::call_site()));
                 }
-
-            }
+                TypeDirection::Argument => {
+                    tokens.append(Punct::new('*', Spacing::Alone));
+                    tokens.append(Ident::new("const", Span::call_site()));
+                    tokens.append(Ident::new("c_char", Span::call_site()));
+                }
+            },
             AstType::Struct => {
-                let struct_tokens = self
-                    .ty_to_tokens(&AstType::String, direction)
-                    .unwrap();
+                let struct_tokens = self.ty_to_tokens(&AstType::String, direction).unwrap();
                 tokens = quote!(#struct_tokens)
             }
             AstType::Vec(_) => {
-                let vec_tokens = self
-                    .ty_to_tokens(&AstType::String, direction)
-                    .unwrap();
+                let vec_tokens = self.ty_to_tokens(&AstType::String, direction).unwrap();
                 tokens = quote!(#vec_tokens)
             }
             _ => (),

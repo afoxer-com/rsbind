@@ -7,4 +7,3 @@
 | demo            | rust项目的示例，直接执行命令可以在demo/target下                                      |
 | demo-ios        | 主要用于实验demo生成的framwork                                                       |
 | template        | 一些模板项目，在生成时将模板项目解压并更改或添加其中的文件达到编译成目标文件的作用      |
-

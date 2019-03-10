@@ -1,10 +1,12 @@
 # 简单介绍
-该库帮助开发者使用Rust语言来开发Android和iOS应用程序。方式是通过简单的命令，直接生成iOS的framework以及android的aar, 其中自动生成了Rust接口对应的java绑定和swift绑定代码。省去了开发者自己动手写ffi及其转换代码的繁琐。
+- 该库帮助开发者使用Rust语言来开发Android和iOS应用程序。
+- 方式是通过简单的命令，直接生成iOS的framework以及android的aar, 其中自动生成了Rust接口对应的java绑定和swift绑定代码。省去了开发者自己动手写ffi及其转换代码的繁琐。
 
 # 使用方式
-1. 安装rsbind。可以在tools-rsbind目录下执行cargo install --force安装。
-2. 创建rust项目（假设为A），并在项目的src目录下建立两个module，分别是contract和imp，contract用于存放Android/iOS调用的接口，而imp则是接口的实现。并需要在根目录lib.rs下将两个module开放出来。具体可以参考demo。
-3. 执行rsbind命令(具体如下)，那么在A项目的target目录下就有生成的framework了。如果想要看接口，可以在A项目下_gen/swift_gen下查看ffi.swift文件。
+1. [Rust环境搭建](/docs/env.md)
+2. 安装rsbind。```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
+3. 创建rust项目，并在项目的src目录下建立两个module，分别是contract和imp，contract用于存放Android/iOS调用的接口，而imp则是接口的实现。并需要在根目录lib.rs下将两个module开放出来。具体可以参考demo。
+4. 执行rsbind命令(具体如下)，那么在A项目的target目录下就有生成的framework了。如果想要看接口，可以在A项目下_gen/[swift/java]_gen下查看文件。
 
 错误解决：
 执行rsbind，如果有Library not load的错误，在启动项中加入如下该配置即可： export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH

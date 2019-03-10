@@ -150,11 +150,20 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let arg_names = method
             .args
             .iter()
+            .filter(|arg| match arg.ty {
+                AstType::Void => false,
+                _ => true,
+            })
             .map(|arg| Ident::new(&arg.name, Span::call_site()))
             .collect::<Vec<Ident>>();
+
         let arg_types = method
             .args
             .iter()
+            .filter(|arg| match arg.ty {
+                AstType::Void => false,
+                _ => true,
+            })
             .map(|arg| self.ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap())
             .collect::<Vec<TokenStream>>();
 
@@ -162,10 +171,33 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             .ty_to_tokens(&method.return_type, TypeDirection::Return)
             .unwrap();
 
-        let method_sig = quote! {
-            #[no_mangle]
-            #[allow(non_snake_case)]
-            pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, #(#arg_names: #arg_types),*) -> #ret_ty_tokens
+        let method_sig = if arg_names.len() <= 0 {
+            match method.return_type {
+                AstType::Void => quote! {
+                    #[no_mangle]
+                    #[allow(non_snake_case)]
+                    pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass)
+                },
+                _ => quote! {
+                    #[no_mangle]
+                    #[allow(non_snake_case)]
+                    pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass) -> #ret_ty_tokens
+                },
+            }
+        } else {
+            match method.return_type {
+                AstType::Void => quote! {
+                    #[no_mangle]
+                    #[allow(non_snake_case)]
+                    pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, #(#arg_names: #arg_types),*)
+                },
+
+                _ => quote! {
+                    #[no_mangle]
+                    #[allow(non_snake_case)]
+                    pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, #(#arg_names: #arg_types),*) -> #ret_ty_tokens
+                },
+            }
         };
 
         Ok(method_sig)
@@ -229,11 +261,12 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
         Ok(match *return_ty {
+            AstType::Void => quote!(),
             AstType::Boolean => quote! {
-                return if #ret_name_ident {1} else {0};
+                if #ret_name_ident {1} else {0}
             },
             AstType::String => quote! {
-                return env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner();
+                env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner()
             },
             AstType::Vec(ref base_ty) => match base_ty {
                 AstBaseType::Struct => {
@@ -243,13 +276,13 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     quote! {
                         let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                         let json_ret = serde_json::to_string(&ret_value);
-                        return env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner();
+                        env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
                     }
                 }
                 _ => {
                     quote! {
                         let json_ret = serde_json::to_string(&ret_value);
-                        return env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner();
+                        env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
                     }
                 }
             },
@@ -258,7 +291,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     Ident::new(&format!("Struct_{}", origin_ty), Span::call_site());
                 quote! {
                     let json_ret = serde_json::to_string(&#struct_copy_name::from(ret_value));
-                    return env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner();
+                    env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
                 }
             }
             _ => {
@@ -266,7 +299,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     .ty_to_tokens(&return_ty, TypeDirection::Return)
                     .unwrap();
                 quote! {
-                    return #ret_name_ident as #ty_ident;
+                    #ret_name_ident as #ty_ident
                 }
             }
         })
@@ -293,6 +326,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
             AstType::Callback => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Void => (),
             _ => (),
         };
 

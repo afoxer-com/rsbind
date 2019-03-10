@@ -66,12 +66,9 @@ public final class SwiftGen {
             let _ = traitDescs.filter { desc -> Bool in
                 desc.is_callback
             }.map { desc -> (String, TraitDesc) in
-                print("2.1.0")
                 callback_dic[desc.name] = desc
-                print("2.1.1")
                 return (desc.name, desc)
             }
-            print("2.1 callbacks = \(callback_dic)")
             
             let structs = astResult.structs
             for struct_ in structs {
@@ -81,21 +78,16 @@ public final class SwiftGen {
         })
         
         for desc in allTraitDescs {
-            print("2.2.0")
             if desc.is_callback {
                 let traitGenerator = CallbackGenerator(desc: desc, libModName: self.libModuleName)
                 let cls = traitGenerator.generate()
-                poetFile.append(cls.build())
-                print("2.2")
-                
+                poetFile.append(cls.build())                
             } else {
                 let traitGenerator = TraitGenerator(desc: desc, libModName: self.libModuleName)
                 let cls = traitGenerator.generate(callbacks: callback_dic)
                 poetFile.append(cls.build())
-                print("2.3")
             }
         }
-        print("3")
         
         for struct_ in allStructDescs {
             let structGenerator = StructGenerator(desc: struct_, libModName: self.libModuleName)

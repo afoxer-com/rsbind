@@ -229,7 +229,7 @@ fn parse_return_type(output: &syn::ReturnType) -> Result<(AstType, String)> {
                 _ => (),
             }
         }
-        syn::ReturnType::Default => (),
+        syn::ReturnType::Default => return Ok((AstType::Void, "".to_owned())),
     }
 
     Err(Error::ParseError("can't parse return type".to_string()))
@@ -239,9 +239,9 @@ fn parse_return_type(output: &syn::ReturnType) -> Result<(AstType, String)> {
 /// parse one argument
 ///
 fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
-    let mut arg_name: Option<String> = None;
-    let mut arg_type: Option<AstType> = None;
-    let mut origin_arg_ty: Option<String> = None;
+    let mut arg_name: Option<String> = Some("".to_owned());
+    let mut arg_type: Option<AstType> = Some(AstType::Void);
+    let mut origin_arg_ty: Option<String> = Some("".to_owned());
     match input {
         syn::FnArg::Captured(ref arg) => {
             match arg.pat {

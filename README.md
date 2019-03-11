@@ -3,10 +3,10 @@
 - It generate bindings from a Rust package and packaged to android aar or iOS framework. You don't need to write jni or other ffi code with this tool.
 
 # Step by step.
-1. [Step rust environment](/docs/env.md).
+1. [Setup rust environment](/docs/env.md).
 2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
 3. Create a Rust library, which contains two directory, contract and imp. You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
-4. Run rsbind command as below. Then the generate code will be in _gen directory and aar/framework will be in target directory.
+4. Run rsbind command as below. Then the generated code will be in _gen directory and aar/framework will be in target directory.
 
 Rsbind usage:
 ```sh

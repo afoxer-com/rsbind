@@ -1,3 +1,84 @@
+# What's this?
+- This Repository provide tools to build mobile applications in Rust.
+- It generate bindings from a Rust package and packaged to android aar or iOS framework. You don't need to write jni or other ffi code with this tool.
+
+# Step by step.
+1. [Step rust environment](/docs/env.md).
+2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
+3. Create a Rust library, which contains two directory, contract and imp. You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
+4. Run rsbind command as below. Then the generate code will be in _gen directory and aar/framework will be in target directory.
+
+Rsbind usage:
+```sh
+rsbind path-of-project android/ios/all ast/bridge/dest/header/build/all
+```
+- ast: generate simplified ast files with json format to _gen/ast.
+- bridge: generate c methods to expose our interface to _gen/[ios/android]_bridge.
+- dest: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android]_dest).
+- build: build bridge modules and copy output to dest project and then build dest project.
+- all: run all the steps for binding.
+
+# Configuration
+You can create a file named Rsbind.toml to add some configuration.
+```toml
+[android]
+rustc_param = ""
+arch = ["armv7-linux-androideabi"]
+arch_64 = ["aarch64-linux-android"]
+arch_x86 = ["i686-linux-android"]
+release = true
+namespace = "com.bytedance.ee.xxx.ffi"
+so_name = "demo"
+ext_lib = []
+features_def = ["xxxx=[]"]
+
+[ios]
+rustc_param = ""
+arch_phone = ["armv7-apple-ios"]
+arch_simu = ["i386-apple-ios", "x86_64-apple-ios"]
+release = true
+features_def = []
+```
+
+# Supported Types
+- Parameters: Basic types, Callback, Vec
+- Return: Basic types, Struct, Vec
+
+supported types in Callback:
+- Parameters: Basic types, Vec, Struct
+- Return: Basic types.
+
+TODO: add callback support for return types.
+
+It is different to define a callback and a normal trait.
+It should contains &self in every callback but not in normal trait.
+
+Callback:
+```rust
+pub trait Callback : Sync {
+    fn on_callback(&self, arg1: i32, arg2: String, arg3: bool, arg4: f32, arg5: f64) -> i32;
+    fn on_callback2(&self, arg1: bool) -> bool;
+    fn on_callback_complex(&self, arg1: StructSimple) -> bool;
+    fn on_callback_arg_vec(&self, arg1: Vec<StructSimple>) -> bool;
+    fn on_callback_arg_vec_simple(&self, arg1: Vec<String>) -> bool;
+}
+```
+
+Normal trait:
+```rust
+pub trait TestContract1 {
+    fn test_arg_vec(arg: Vec<String>) -> i32;
+    fn test_return_vec(arg: u8) -> Vec<i32>;
+    fn test_arg_callback(arg: Box<Callback>) -> u8;
+    fn test_bool(arg1: bool) -> bool;
+    fn test_struct() -> StructSimple;
+    fn test_struct_vec() -> Vec<StructSimple>;
+}
+
+```
+
+----------------------
+
 # 简单介绍
 - 该库帮助开发者使用Rust语言来开发Android和iOS应用程序。
 - 方式是通过简单的命令，直接生成iOS的framework以及android的aar, 其中自动生成了Rust接口对应的java绑定和swift绑定代码。省去了开发者自己动手写ffi及其转换代码的繁琐。

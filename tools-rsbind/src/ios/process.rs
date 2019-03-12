@@ -7,6 +7,7 @@ use cbindgen;
 use cbindgen::{Config, Language};
 use config::Config as BuildConfig;
 use errors::*;
+use errors::ErrorKind::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
 use std::fs;
@@ -59,9 +60,9 @@ impl<'a> IosProcess<'a> {
 impl<'a> IosProcess<'a> {
     pub fn gen_c_header(&self) -> Result<()> {
         if self.header_path.exists() {
-            fs::remove_dir_all(&self.header_path).unwrap();
+            fs::remove_dir_all(&self.header_path)?;
         }
-        fs::create_dir_all(&self.header_path).unwrap();
+        fs::create_dir_all(&self.header_path)?;
 
         let output_file = self.header_path.join("ffi.h").display().to_string();
 
@@ -72,8 +73,7 @@ impl<'a> IosProcess<'a> {
         };
 
         let root_path = self.bridge_prj_path.to_str().unwrap();
-        cbindgen::generate_with_config(root_path, config)
-            .unwrap()
+        cbindgen::generate_with_config(root_path, config)?
             .write_to_file(&output_file);
         Ok(())
     }
@@ -189,14 +189,13 @@ impl<'a> BuildProcess for IosProcess<'a> {
         unpack.unpack()?;
 
         let bridge_c_src_path = self.bridge_prj_path.join("src").join("c").join("bridge");
-        fs::create_dir_all(&bridge_c_src_path).unwrap();
+        fs::create_dir_all(&bridge_c_src_path)?;
         CGen(
             self.host_crate_name.to_owned(),
             self.ast_result,
             &bridge_c_src_path,
         )
-        .gen_bridges()
-        .unwrap();
+        .gen_bridges()?;
 
         let _ = Command::new("cargo")
             .arg("fmt")
@@ -274,14 +273,14 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .current_dir(self.bridge_prj_path)
             .output()
             .map_err(|e| {
-                Error::CommandError(format!("run building rust project error => {:?}", e))
+                CommandError(format!("run building rust project error => {:?}", e))
             })?;
 
         if !output.status.success() {
-            return Err(Error::CommandError(format!(
+            return Err(CommandError(format!(
                 "run build rust project build failed. e = {:?}",
                 output
-            )));
+            )).into());
         }
 
         println!("begin strip lib");
@@ -323,7 +322,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         };
 
         fs_extra::copy_items(&vec![header_file], &header_dest, &options)
-            .map_err(|e| Error::FileError(format!("move header file error. {:?}", e)))?;
+            .map_err(|e| FileError(format!("move header file error. {:?}", e)))?;
 
         let lib_file = self
             .bridge_prj_path
@@ -334,10 +333,10 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         let lib_dest = self.dest_prj_path.join("rustlib");
         fs_extra::copy_items(&vec![lib_file], &lib_dest, &options)
-            .map_err(|e| Error::FileError(format!("move lib file error. {:?}", e)))?;
+            .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
 
         fs::rename(&lib_dest.join(&self.lib_name()), &lib_dest.join("ffi.a"))
-            .map_err(|e| Error::FileError(format!("rename ffi.a failed. {:?}", e)))?;
+            .map_err(|e| FileError(format!("rename ffi.a failed. {:?}", e)))?;
 
         println!("copy output files to swift project over.");
 
@@ -347,11 +346,11 @@ impl<'a> BuildProcess for IosProcess<'a> {
     fn gen_bind_code(&self) -> Result<()> {
         println!("begin unzip ios template");
         if self.dest_prj_path.exists() {
-            fs::remove_dir_all(&self.dest_prj_path).unwrap();
+            fs::remove_dir_all(&self.dest_prj_path)?;
         }
-        fs::create_dir_all(&self.dest_prj_path).unwrap();
+        fs::create_dir_all(&self.dest_prj_path)?;
         let ios_template_buf: &[u8] = include_bytes!("res/template_ios.zip");
-        unzip::unzip_to(ios_template_buf, &self.dest_prj_path).unwrap();
+        unzip::unzip_to(ios_template_buf, &self.dest_prj_path)?;
 
         gen::gen_swift_code(&self.dest_prj_path, &self.ast_path, &self.bin_path)?;
 
@@ -363,13 +362,12 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         // prj file
         let prj_file = self.dest_prj_path.join("rustlib.xcodeproj");
-        let prj_file_path = prj_file.canonicalize().unwrap();
+        let prj_file_path = prj_file.canonicalize()?;
         let prj_file_str = prj_file_path
             .to_str()
-            .ok_or(Error::FileError(
+            .ok_or(FileError(
                 "get xcodeproj path string error".to_string(),
-            ))
-            .unwrap();
+            ))?;
 
         // simulator output dir
         let simu_output_dir = PathBuf::from(&self.origin_prj_path)
@@ -378,14 +376,13 @@ impl<'a> BuildProcess for IosProcess<'a> {
         if simu_output_dir.exists() {
             fs::remove_dir_all(&simu_output_dir);
         }
-        fs::create_dir_all(&simu_output_dir).unwrap();
+        fs::create_dir_all(&simu_output_dir);
         let simu_output_dir_path = simu_output_dir.canonicalize().unwrap();
         let simu_output_dir_str = simu_output_dir_path
             .to_str()
-            .ok_or(Error::FileError(format!(
+            .ok_or(FileError(format!(
                 "can't get ios outupt file string"
-            )))
-            .unwrap();
+            )))?;
 
         // iphoneos output dir
         let iphone_output_dir = PathBuf::from(&self.origin_prj_path)
@@ -394,14 +391,13 @@ impl<'a> BuildProcess for IosProcess<'a> {
         if iphone_output_dir.exists() {
             fs::remove_dir_all(&iphone_output_dir);
         }
-        fs::create_dir_all(&iphone_output_dir).unwrap();
+        fs::create_dir_all(&iphone_output_dir)?;
         let iphone_output_dir_path = iphone_output_dir.canonicalize().unwrap();
         let iphone_output_dir_str = iphone_output_dir_path
             .to_str()
-            .ok_or(Error::FileError(format!(
+            .ok_or(FileError(format!(
                 "can't get ios outupt file string"
-            )))
-            .unwrap();
+            )))?;
 
         // universal output dir
         let universal_output_dir = PathBuf::from(&self.origin_prj_path)
@@ -410,14 +406,13 @@ impl<'a> BuildProcess for IosProcess<'a> {
         if universal_output_dir.exists() {
             fs::remove_dir_all(&universal_output_dir);
         }
-        fs::create_dir_all(&universal_output_dir).unwrap();
+        fs::create_dir_all(&universal_output_dir)?;
         let universal_output_dir_path = universal_output_dir.canonicalize().unwrap();
         let universal_output_dir_str = universal_output_dir_path
             .to_str()
-            .ok_or(Error::FileError(format!(
+            .ok_or(FileError(format!(
                 "can't get ios outupt file string"
-            )))
-            .unwrap();
+            )))?;
 
         println!("archive swift path: {}", simu_output_dir_str);
         println!("archive swift path: {}", iphone_output_dir_str);
@@ -442,15 +437,14 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .current_dir(self.dest_prj_path)
             .output()
             .map_err(|e| {
-                Error::CommandError(format!("run archiving swift project error => {:?}", e))
-            })
-            .unwrap();
+                CommandError(format!("run archiving swift project error => {:?}", e))
+            })?;
 
         if !output.status.success() {
-            return Err(Error::CommandError(format!(
+            return Err(CommandError(format!(
                 "run archiving swift project build failed. e = {:?}",
                 output
-            )));
+            )).into());
         }
         Ok(())
     }

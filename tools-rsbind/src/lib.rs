@@ -11,6 +11,8 @@ extern crate proc_macro2;
 extern crate serde;
 extern crate toml;
 extern crate zip;
+#[macro_use]
+extern crate error_chain;
 
 mod android;
 mod ast;
@@ -120,7 +122,7 @@ impl Bind {
 
         match self.action {
             Action::GEN_AST => {
-                self.parse_ast(crate_name.clone()).unwrap();
+                self.parse_ast(crate_name.clone())?;
                 return Ok(());
             }
             _ => (),
@@ -128,20 +130,17 @@ impl Bind {
 
         Ok(match self.target {
             Target::Ios => {
-                let ast = &self.get_ast_if_need(crate_name.clone()).unwrap();
-                self.gen_for_ios(&crate_name, ast, config.clone()).unwrap();
+                let ast = &self.get_ast_if_need(crate_name.clone())?;
+                self.gen_for_ios(&crate_name, ast, config.clone())?;
             }
             Target::Android => {
-                let ast = &self.get_ast_if_need(crate_name.clone()).unwrap();
-                self.gen_for_android(&crate_name, ast, config.clone())
-                    .unwrap();
+                let ast = &self.get_ast_if_need(crate_name.clone())?;
+                self.gen_for_android(&crate_name, ast, config.clone())?;
             }
             Target::All => {
-                let ast_result = self.get_ast_if_need(crate_name.clone()).unwrap();
-                self.gen_for_ios(&crate_name, &ast_result, config.clone())
-                    .unwrap();
-                self.gen_for_android(&crate_name, &ast_result, config.clone())
-                    .unwrap();
+                let ast_result = self.get_ast_if_need(crate_name.clone())?;
+                self.gen_for_ios(&crate_name, &ast_result, config.clone())?;
+                self.gen_for_android(&crate_name, &ast_result, config.clone())?;
             }
         })
     }
@@ -166,12 +165,11 @@ impl Bind {
     fn parse_ast(&self, crate_name: String) -> Result<AstResult> {
         let prj_path = PathBuf::from(&self.prj_path);
         if self.ast_path.exists() {
-            fs::remove_dir_all(&self.ast_path).unwrap();
+            fs::remove_dir_all(&self.ast_path)?;
         }
-        fs::create_dir_all(&self.ast_path).unwrap();
+        fs::create_dir_all(&self.ast_path)?;
         return ast::AstHandler::new(crate_name)
-            .parse(&prj_path)
-            .unwrap()
+            .parse(&prj_path)?
             .flush(&self.ast_path);
     }
 
@@ -197,20 +195,20 @@ impl Bind {
 
         match self.action {
             Action::GEN_AST => (),
-            Action::GEN_BRIDGE => ios_process.gen_bridge_src().unwrap(),
-            Action::GEN_BIND_SRC => ios_process.gen_bind_code().unwrap(),
-            Action::GEN_C_HEADER => ios_process.gen_c_header().unwrap(),
+            Action::GEN_BRIDGE => ios_process.gen_bridge_src()?,
+            Action::GEN_BIND_SRC => ios_process.gen_bind_code()?,
+            Action::GEN_C_HEADER => ios_process.gen_c_header()?,
             Action::BUILD => {
-                ios_process.build_bridge_prj().unwrap();
-                ios_process.copy_bridge_outputs().unwrap();
-                ios_process.build_dest_prj().unwrap();
+                ios_process.build_bridge_prj()?;
+                ios_process.copy_bridge_outputs()?;
+                ios_process.build_dest_prj()?;
             }
             Action::ALL => {
-                ios_process.gen_bridge_src().unwrap();
-                ios_process.gen_bind_code().unwrap();
-                ios_process.build_bridge_prj().unwrap();
-                ios_process.copy_bridge_outputs().unwrap();
-                ios_process.build_dest_prj().unwrap();
+                ios_process.gen_bridge_src()?;
+                ios_process.gen_bind_code()?;
+                ios_process.build_bridge_prj()?;
+                ios_process.copy_bridge_outputs()?;
+                ios_process.build_dest_prj()?;
             }
         }
 
@@ -263,20 +261,20 @@ impl Bind {
 
         match self.action {
             Action::GEN_AST => (),
-            Action::GEN_BRIDGE => android_process.gen_bridge_src().unwrap(),
-            Action::GEN_BIND_SRC => android_process.gen_bind_code().unwrap(),
+            Action::GEN_BRIDGE => android_process.gen_bridge_src()?,
+            Action::GEN_BIND_SRC => android_process.gen_bind_code()?,
             Action::GEN_C_HEADER => (),
             Action::BUILD => {
-                android_process.build_bridge_prj().unwrap();
-                android_process.copy_bridge_outputs().unwrap();
-                android_process.build_dest_prj().unwrap();
+                android_process.build_bridge_prj()?;
+                android_process.copy_bridge_outputs()?;
+                android_process.build_dest_prj()?;
             }
             Action::ALL => {
-                android_process.gen_bridge_src().unwrap();
-                android_process.gen_bind_code().unwrap();
-                android_process.build_bridge_prj().unwrap();
-                android_process.copy_bridge_outputs().unwrap();
-                android_process.build_dest_prj().unwrap();
+                android_process.gen_bridge_src()?;
+                android_process.gen_bind_code()?;
+                android_process.build_bridge_prj()?;
+                android_process.copy_bridge_outputs()?;
+                android_process.build_dest_prj()?;
             }
         };
 

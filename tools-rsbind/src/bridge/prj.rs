@@ -1,4 +1,5 @@
 use errors::*;
+use errors::ErrorKind::*;
 use std::fs;
 use std::path::PathBuf;
 use unzip;
@@ -23,7 +24,7 @@ impl<'a> Unpack<'a> {
 
         let manifest_path = self.path.join("Cargo.toml");
         let manifest_text = fs::read_to_string(&manifest_path).map_err(|e| {
-            Error::FileError(format!("read rust project Cargo.toml error: {:?}", e))
+            FileError(format!("read rust project Cargo.toml error: {:?}", e))
         })?;
 
         let replaced =
@@ -40,12 +41,12 @@ impl<'a> Unpack<'a> {
 
         let replaced = replaced.replace(&format!("$({}-features)", MAGIC_NUM), &feature_defs);
         fs::write(manifest_path, replaced).map_err(|e| {
-            Error::FileError(format!("write rust project Cargo.toml error {:?}", e))
+            FileError(format!("write rust project Cargo.toml error {:?}", e))
         })?;
 
         let lib_file = self.path.join("src").join("lib.rs");
         let lib_text = fs::read_to_string(&lib_file)
-            .map_err(|e| Error::FileError(format!("read lib.rs error, {:?}", e)))?;
+            .map_err(|e| FileError(format!("read lib.rs error, {:?}", e)))?;
 
         let lib_replaced =
             lib_text.replace(&format!("$({}-host_crate)", MAGIC_NUM), &self.host_crate);
@@ -54,7 +55,7 @@ impl<'a> Unpack<'a> {
             &self.host_crate.replace("-", "_"),
         );
         fs::write(lib_file, lib_replaced)
-            .map_err(|e| Error::FileError(format!("write lib.rs error, {}", e)))?;
+            .map_err(|e| FileError(format!("write lib.rs error, {}", e)))?;
 
         Ok(())
     }

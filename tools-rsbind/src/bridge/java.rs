@@ -4,6 +4,7 @@ use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use ast::imp::desc::*;
 use ast::types::*;
 use errors::*;
+use errors::ErrorKind::*;
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::TokenStreamExt;
 use std::path::PathBuf;
@@ -168,8 +169,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             .collect::<Vec<TokenStream>>();
 
         let ret_ty_tokens = self
-            .ty_to_tokens(&method.return_type, TypeDirection::Return)
-            .unwrap();
+            .ty_to_tokens(&method.return_type, TypeDirection::Return)?;
 
         let method_sig = if arg_names.len() <= 0 {
             match method.return_type {
@@ -244,10 +244,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 .java_callback_strategy
                 .arg_convert(arg, trait_desc, callbacks),
             _ => {
-                return Err(Error::GenerateError(format!(
+                return Err(GenerateError(format!(
                     "find unsupported type in arg, {:?}",
                     &arg.ty
-                )));
+                )).into());
             }
         })
     }

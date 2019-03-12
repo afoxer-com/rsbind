@@ -4,6 +4,7 @@ use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;
 use errors::*;
+use errors::ErrorKind::*;
 use proc_macro2::{Ident, Literal, Punct, Spacing, Span, TokenStream};
 use quote::TokenStreamExt;
 use std::path::PathBuf;
@@ -58,8 +59,7 @@ impl FileGenStrategy for CFileGenStrategy {
         let callback_str = &format!("{}_{}_Model", &trait_desc.mod_name, &trait_desc.name);
         let callback_struct = self
             .callback_strategy
-            .quote_callback_struct(trait_desc, callback_str)
-            .unwrap();
+            .quote_callback_struct(trait_desc, callback_str)?;
         Ok(quote! {
             #[repr(C)]
             #callback_struct
@@ -148,8 +148,7 @@ impl FileGenStrategy for CFileGenStrategy {
             .collect::<Vec<TokenStream>>();
 
         let ret_ty_tokens = self
-            .ty_to_tokens(&method.return_type, TypeDirection::Return)
-            .unwrap();
+            .ty_to_tokens(&method.return_type, TypeDirection::Return)?;
         println!(
             "xxxxxx result ={:?} -> {:?}",
             &method.return_type, ret_ty_tokens
@@ -229,10 +228,10 @@ impl FileGenStrategy for CFileGenStrategy {
                     .arg_convert(arg, trait_desc, callbacks)
             }
             _ => {
-                return Err(Error::GenerateError(format!(
+                return Err(GenerateError(format!(
                     "find unsupported type in arg, {:?}",
                     &arg.ty
-                )));
+                )).into());
             }
         })
     }
@@ -280,7 +279,7 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             }
             _ => {
-                let ty_ident = self.ty_to_tokens(&ty, TypeDirection::Return).unwrap();
+                let ty_ident = self.ty_to_tokens(&ty, TypeDirection::Return)?;
                 quote! {
                     #ret_name_ident as #ty_ident
                 }
@@ -309,11 +308,11 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             },
             AstType::Struct => {
-                let struct_tokens = self.ty_to_tokens(&AstType::String, direction).unwrap();
+                let struct_tokens = self.ty_to_tokens(&AstType::String, direction)?;
                 tokens = quote!(#struct_tokens)
             }
             AstType::Vec(_) => {
-                let vec_tokens = self.ty_to_tokens(&AstType::String, direction).unwrap();
+                let vec_tokens = self.ty_to_tokens(&AstType::String, direction)?;
                 tokens = quote!(#vec_tokens)
             }
             _ => (),

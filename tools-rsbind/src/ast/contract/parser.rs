@@ -7,6 +7,7 @@ use syn;
 
 use ast::imp::desc::ImpDesc;
 use errors::*;
+use errors::ErrorKind::*;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
@@ -19,17 +20,14 @@ pub(crate) fn parse(
     file_path: &PathBuf,
 ) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
     let mut file = File::open(file_path)
-        .map_err(|e| Error::ParseError(e.to_string()))
-        .unwrap();
+        .map_err(|e| ParseError(e.to_string()))?;
 
     let mut src = String::new();
     file.read_to_string(&mut src)
-        .map_err(|e| Error::ParseError(e.to_string()))
-        .unwrap();
+        .map_err(|e| ParseError(e.to_string()))?;
 
     let syn_file = syn::parse_file(&src)
-        .map_err(|e| Error::ParseError(e.to_string()))
-        .unwrap();
+        .map_err(|e| ParseError(e.to_string()))?;
 
     let mut trait_descs = vec![];
     let mut struct_descs = vec![];
@@ -48,7 +46,7 @@ pub(crate) fn parse(
                 let trait_name = trait_inner.ident.to_string();
                 println!("found trait => {}", trait_inner.ident);
 
-                let methods = parse_methods(&trait_inner.items).unwrap();
+                let methods = parse_methods(&trait_inner.items)?;
 
                 let trait_desc = TraitDesc {
                     name: trait_name,
@@ -107,9 +105,9 @@ pub(crate) fn parse(
         println!("final trait desc => {:#?}", trait_descs);
         Ok((trait_descs, struct_descs))
     } else {
-        Err(Error::ParseError(
+        Err(ParseError(
             "Can't find invalid trait and struct.".to_string(),
-        ))
+        ).into())
     }
 }
 
@@ -128,7 +126,7 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
                 println!("found method => {}", method_inner.sig.ident);
 
                 let (return_type, origin_return_ty) =
-                    parse_return_type(&method_inner.sig.decl.output).unwrap();
+                    parse_return_type(&method_inner.sig.decl.output)?;
 
                 // arguments
                 for input in method_inner.sig.decl.inputs.iter() {
@@ -138,7 +136,7 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
                             continue;
                         }
                         _ => {
-                            let arg = parse_one_arg(input).unwrap();
+                            let arg = parse_one_arg(input)?;
                             args.push(arg);
                         }
                     }
@@ -158,9 +156,9 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
     }
 
     if method_descs.len() > 0 {
-        return Ok((method_descs, is_callback));
+        Ok((method_descs, is_callback))
     } else {
-        return Err(Error::ParseError("Can't parse methods.".to_string()));
+        Err(ParseError("Can't parse methods.".to_string()).into())
     }
 }
 
@@ -232,7 +230,7 @@ fn parse_return_type(output: &syn::ReturnType) -> Result<(AstType, String)> {
         syn::ReturnType::Default => return Ok((AstType::Void, "".to_owned())),
     }
 
-    Err(Error::ParseError("can't parse return type".to_string()))
+    Err(ParseError("can't parse return type".to_string()).into())
 }
 
 ///
@@ -324,6 +322,6 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
             ty: arg_type,
             origin_ty,
         }),
-        _ => Err(Error::ParseError("parse argments error!".to_string())),
+        _ => Err(ParseError("parse argments error!".to_string()).into()),
     }
 }

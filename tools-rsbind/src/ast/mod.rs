@@ -5,6 +5,7 @@ pub(crate) mod types;
 use self::contract::desc::*;
 use self::imp::desc::*;
 use errors::*;
+use errors::ErrorKind::*;
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
@@ -31,12 +32,12 @@ impl AstHandler {
 
     pub(crate) fn parse(&self, origin_prj_path: &PathBuf) -> Result<AstResult> {
         let imp_dir_path = origin_prj_path.join(IMP_DIR);
-        let imp_desc = imp::parser::parse_dir(&imp_dir_path).unwrap();
+        let imp_desc = imp::parser::parse_dir(&imp_dir_path)?;
 
         let mut trait_descs = HashMap::new();
         let mut struct_descs = HashMap::new();
         let contract_dir_path = origin_prj_path.join(CONTRACT_DIR);
-        let contract_dir = fs::read_dir(&contract_dir_path).unwrap();
+        let contract_dir = fs::read_dir(&contract_dir_path)?;
         for file in contract_dir {
             let path = file?.path();
 
@@ -71,15 +72,14 @@ impl AstResult {
             let trait_descs = each_mod.1;
             for trait_desc in trait_descs {
                 let json = serde_json::to_string(trait_desc)
-                    .map_err(|e| Error::GenerateError(e.to_string()))
-                    .unwrap();
+                    .map_err(|e| GenerateError(e.to_string()))?;
 
                 let file_name = ast_dir.join(&format!(
                     "{}_{}.json",
                     &trait_desc.mod_name, &trait_desc.name
                 ));
-                let mut ast_file = fs::File::create(&file_name).unwrap();
-                ast_file.write_all(&json.into_bytes()).unwrap();
+                let mut ast_file = fs::File::create(&file_name)?;
+                ast_file.write_all(&json.into_bytes())?;
             }
         }
 
@@ -87,15 +87,14 @@ impl AstResult {
             let struct_descs = each_mod.1;
             for struct_desc in struct_descs {
                 let json = serde_json::to_string(struct_desc)
-                    .map_err(|e| Error::GenerateError(e.to_string()))
-                    .unwrap();
+                    .map_err(|e| GenerateError(e.to_string()))?;
 
                 let file_name = ast_dir.join(&format!(
                     "{}_{}.json",
                     &struct_desc.mod_name, &struct_desc.name
                 ));
-                let mut ast_file = fs::File::create(&file_name).unwrap();
-                ast_file.write_all(&json.into_bytes()).unwrap();
+                let mut ast_file = fs::File::create(&file_name)?;
+                ast_file.write_all(&json.into_bytes())?;
             }
         }
 

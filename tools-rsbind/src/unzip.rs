@@ -1,4 +1,5 @@
 use errors::*;
+use errors::ErrorKind::*;
 use std::fs;
 use std::fs::File;
 use std::io::Cursor;
@@ -10,13 +11,13 @@ use zip::ZipArchive;
 
 pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
     let reader = Cursor::new(buf);
-    let mut archive = ZipArchive::new(reader).map_err(|e| Error::ZipError(e.to_string()))?;
+    let mut archive = ZipArchive::new(reader).map_err(|e| ZipError(e.to_string()))?;
 
     println!("begin unzip every file. len = {}", archive.len());
     for i in 0..archive.len() {
         let mut zip_file = archive
             .by_index(i)
-            .map_err(|e| Error::ZipError(e.to_string()))?;
+            .map_err(|e| ZipError(e.to_string()))?;
 
         println!("unzip file name = {}", &zip_file.name());
         let file_path = path.join(&zip_file.name());
@@ -28,7 +29,7 @@ pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
             continue;
         }
 
-        let parent_path = file_path.parent().ok_or(Error::ZipError(format!(
+        let parent_path = file_path.parent().ok_or(ZipError(format!(
             "can't find parent path for {:?}",
             &file_path
         )))?;
@@ -36,7 +37,7 @@ pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
         fs::create_dir_all(&parent_path)?;
 
         let mut file = File::create(&file_path).map_err(|e| {
-            Error::ZipError(format!(
+            ZipError(format!(
                 "can't create file for {:?}, with error => {:?}",
                 &file_path, e
             ))
@@ -44,7 +45,7 @@ pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
 
         for byte in zip_file.bytes() {
             let byte = byte.map_err(|e| {
-                Error::ZipError(format!(
+                ZipError(format!(
                     "read bytes from zip error, file = {:?}, error => {:?}",
                     &file_path, e
                 ))

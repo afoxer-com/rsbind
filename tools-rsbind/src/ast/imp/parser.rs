@@ -3,6 +3,7 @@
 //!
 use super::desc::*;
 use errors::*;
+use errors::ErrorKind::*;
 use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
@@ -15,12 +16,12 @@ pub(crate) fn parse_dir(dir: &PathBuf) -> Result<Vec<ImpDesc>> {
     println!("begin parsing dir {:?}", dir);
     let mut result: Vec<ImpDesc> = vec![];
 
-    let imp_dir = fs::read_dir(&dir).map_err(|e| Error::ParseError(e.to_string()))?;
+    let imp_dir = fs::read_dir(&dir).map_err(|e| ParseError(e.to_string()))?;
 
     for file in imp_dir {
-        let real_file = file.map_err(|e| Error::ParseError(e.to_string()))?;
+        let real_file = file.map_err(|e| ParseError(e.to_string()))?;
         let file_path = real_file.path();
-        let path_str = file_path.to_str().ok_or(Error::ParseError(
+        let path_str = file_path.to_str().ok_or(ParseError(
             "can't get path from PathBuf when parsing imps.".to_string(),
         ))?;
 
@@ -42,16 +43,16 @@ pub(crate) fn parse_dir(dir: &PathBuf) -> Result<Vec<ImpDesc>> {
 ///
 pub(crate) fn parse(file: &str) -> Result<Vec<ImpDesc>> {
     // open file.
-    let mut real_file = fs::File::open(file).map_err(|e| Error::ParseError(e.to_string()))?;
+    let mut real_file = fs::File::open(file).map_err(|e| ParseError(e.to_string()))?;
 
     // read all content in file.
     let mut content = String::new();
     let _ = real_file
         .read_to_string(&mut content)
-        .map_err(|e| Error::ParseError(e.to_string()))?;
+        .map_err(|e| ParseError(e.to_string()))?;
 
     // parse file to ast.
-    let syn_file = syn::parse_file(&content).map_err(|e| Error::ParseError(e.to_string()))?;
+    let syn_file = syn::parse_file(&content).map_err(|e| ParseError(e.to_string()))?;
 
     return parse_content(&syn_file, file);
 }

@@ -5,6 +5,7 @@ use bridge::Unpack;
 use build::BuildProcess;
 use config::Config as BuildConfig;
 use errors::*;
+use errors::ErrorKind::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
 use std::collections::HashMap;
@@ -335,17 +336,17 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             .current_dir(self.bridge_prj_path)
             .output()
             .map_err(|e| {
-                Error::CommandError(format!(
+                CommandError(format!(
                     "run building android rust project error => {:?}",
                     e
                 ))
             })?;
 
         if !output.status.success() {
-            return Err(Error::CommandError(format!(
+            return Err(CommandError(format!(
                 "run build android rust project build failed. e = {:?}",
                 output
-            )));
+            )).into());
         }
 
         Ok(())
@@ -394,7 +395,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 .join("jniLibs")
                 .join(entry.1);
             fs_extra::copy_items(&vec![armeabi_src], &armeabi_dest, &options).map_err(|e| {
-                Error::FileError(format!("copy android bridge outputs failed. {:?}", e))
+                FileError(format!("copy android bridge outputs failed. {:?}", e))
             })?;
             fs::rename(
                 &armeabi_dest.join(&self.lib_name()),
@@ -446,14 +447,14 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             .arg(&build_cmd)
             .current_dir(self.dest_prj_path)
             .output()
-            .map_err(|e| Error::CommandError(format!("run building java dest project. {:?}", e)))
+            .map_err(|e| CommandError(format!("run building java dest project. {:?}", e)))
             .unwrap();
 
         if !output.status.success() {
-            return Err(Error::CommandError(format!(
+            return Err(CommandError(format!(
                 "run building java dest project failed. e = {:?}",
                 output
-            )));
+            )).into());
         }
 
         let options = CopyOptions {
@@ -478,7 +479,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         fs::create_dir_all(&target).unwrap();
 
         fs_extra::copy_items(&vec![src_arr], &target, &options)
-            .map_err(|e| Error::FileError(format!("copy android bridge outputs failed. {:?}", e)))
+            .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))
             .unwrap();
 
         Ok(())

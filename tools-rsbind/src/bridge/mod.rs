@@ -41,7 +41,7 @@ impl<'a> BridgeGen<'a> {
                     bridge_dir,
                     mod_gen_strategy,
                 };
-                mod_gen.gen_bridges().unwrap();
+                mod_gen.gen_bridges()?;
             }
             BridgeGen::JavaGen(ref crate_name, ast_result, bridge_dir, ref namespace) => {
                 let mod_gen_strategy = JavaGenStrategyImp {
@@ -53,7 +53,7 @@ impl<'a> BridgeGen<'a> {
                     bridge_dir,
                     mod_gen_strategy,
                 };
-                mod_gen.gen_bridges().unwrap();
+                mod_gen.gen_bridges()?;
             }
         };
 

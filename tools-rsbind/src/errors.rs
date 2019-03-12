@@ -1,33 +1,30 @@
-use std::fmt;
-use std::fmt::Formatter;
-use std::io;
-use std::result;
+error_chain! {
+    errors {
+        FileError(msg: String) {
+            description("file error"),
+            display("file error: {}", msg),
+        }
+        ParseError(msg: String) {
+            description("parse error"),
+            display("parse error: {}", msg),
+        }
+        GenerateError(msg: String) {
+            description("generate error"),
+            display("parse error: {}", msg),
+        }
 
-pub type Result<T> = result::Result<T, Error>;
-
-#[derive(Debug)]
-pub enum Error {
-    FileError(String),
-    ParseError(String),
-    GenerateError(String),
-    ZipError(String),
-    CommandError(String),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut Formatter) -> result::Result<(), fmt::Error> {
-        match self {
-            Error::FileError(e) => write!(f, "{:?}", e),
-            Error::ParseError(e) => write!(f, "{:?}", e),
-            Error::GenerateError(e) => write!(f, "{:?}", e),
-            Error::ZipError(e) => write!(f, "{:?}", e),
-            Error::CommandError(e) => write!(f, "{:?}", e),
+        ZipError(msg: String) {
+            description("zip error"),
+            display("zip error: {}", msg),
+        }
+        CommandError(msg: String) {
+            description("command error"),
+            display("command error: {}", msg),
         }
     }
-}
 
-impl From<io::Error> for Error {
-    fn from(e: io::Error) -> Self {
-        return Error::FileError(format!("file error => {:?}", e));
+    foreign_links {
+        IO(::std::io::Error);
+        TOML(::toml::de::Error);
     }
 }

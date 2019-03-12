@@ -1,5 +1,5 @@
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use std::fs;
 use std::path::PathBuf;
 use unzip;
@@ -23,9 +23,8 @@ impl<'a> Unpack<'a> {
         unzip::unzip_to(self.buf, &self.path)?;
 
         let manifest_path = self.path.join("Cargo.toml");
-        let manifest_text = fs::read_to_string(&manifest_path).map_err(|e| {
-            FileError(format!("read rust project Cargo.toml error: {:?}", e))
-        })?;
+        let manifest_text = fs::read_to_string(&manifest_path)
+            .map_err(|e| FileError(format!("read rust project Cargo.toml error: {:?}", e)))?;
 
         let replaced =
             manifest_text.replace(&format!("$({}-host_crate)", MAGIC_NUM), &self.host_crate);
@@ -40,9 +39,8 @@ impl<'a> Unpack<'a> {
         }
 
         let replaced = replaced.replace(&format!("$({}-features)", MAGIC_NUM), &feature_defs);
-        fs::write(manifest_path, replaced).map_err(|e| {
-            FileError(format!("write rust project Cargo.toml error {:?}", e))
-        })?;
+        fs::write(manifest_path, replaced)
+            .map_err(|e| FileError(format!("write rust project Cargo.toml error {:?}", e)))?;
 
         let lib_file = self.path.join("src").join("lib.rs");
         let lib_text = fs::read_to_string(&lib_file)

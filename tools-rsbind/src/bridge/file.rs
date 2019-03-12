@@ -1,8 +1,8 @@
 use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use std::fs::File;
 use std::io::Write;
@@ -160,7 +160,8 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                 return Err(GenerateError(format!(
                     "You have more than one impl for trait {}",
                     desc.name
-                )).into());
+                ))
+                .into());
             } else if imps.len() <= 0 {
                 println!(
                     "You haven't impl the trait {}, so I guess it is a callback",
@@ -228,7 +229,8 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                 return Err(GenerateError(format!(
                     "You have more than one impl for trait {}",
                     trait_desc.name
-                )).into());
+                ))
+                .into());
             } else if imps.len() <= 0 {
                 println!(
                     "You haven't impl the trait {}, I guess it is a callback",
@@ -289,9 +291,11 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
 
         let call_imp = self.quote_imp_call(&imp.name, method)?;
 
-        let return_handle = self
-            .strategy
-            .quote_return_convert(&method.return_type, "ret_value", &method.origin_return_ty)?;
+        let return_handle = self.strategy.quote_return_convert(
+            &method.return_type,
+            "ret_value",
+            &method.origin_return_ty,
+        )?;
 
         // combine all the parts
         let result = quote! {

@@ -4,8 +4,8 @@ pub(crate) mod types;
 
 use self::contract::desc::*;
 use self::imp::desc::*;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use serde_json;
 use std::collections::HashMap;
 use std::fs;
@@ -71,8 +71,8 @@ impl AstResult {
         for each_mod in self.trait_descs.iter() {
             let trait_descs = each_mod.1;
             for trait_desc in trait_descs {
-                let json = serde_json::to_string(trait_desc)
-                    .map_err(|e| GenerateError(e.to_string()))?;
+                let json =
+                    serde_json::to_string(trait_desc).map_err(|e| GenerateError(e.to_string()))?;
 
                 let file_name = ast_dir.join(&format!(
                     "{}_{}.json",
@@ -86,8 +86,8 @@ impl AstResult {
         for each_mod in self.struct_descs.iter() {
             let struct_descs = each_mod.1;
             for struct_desc in struct_descs {
-                let json = serde_json::to_string(struct_desc)
-                    .map_err(|e| GenerateError(e.to_string()))?;
+                let json =
+                    serde_json::to_string(struct_desc).map_err(|e| GenerateError(e.to_string()))?;
 
                 let file_name = ast_dir.join(&format!(
                     "{}_{}.json",

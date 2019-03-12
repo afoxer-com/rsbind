@@ -6,8 +6,8 @@ use super::desc::*;
 use syn;
 
 use ast::imp::desc::ImpDesc;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
@@ -19,15 +19,13 @@ pub(crate) fn parse(
     crate_name: String,
     file_path: &PathBuf,
 ) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
-    let mut file = File::open(file_path)
-        .map_err(|e| ParseError(e.to_string()))?;
+    let mut file = File::open(file_path).map_err(|e| ParseError(e.to_string()))?;
 
     let mut src = String::new();
     file.read_to_string(&mut src)
         .map_err(|e| ParseError(e.to_string()))?;
 
-    let syn_file = syn::parse_file(&src)
-        .map_err(|e| ParseError(e.to_string()))?;
+    let syn_file = syn::parse_file(&src).map_err(|e| ParseError(e.to_string()))?;
 
     let mut trait_descs = vec![];
     let mut struct_descs = vec![];
@@ -105,9 +103,7 @@ pub(crate) fn parse(
         println!("final trait desc => {:#?}", trait_descs);
         Ok((trait_descs, struct_descs))
     } else {
-        Err(ParseError(
-            "Can't find invalid trait and struct.".to_string(),
-        ).into())
+        Err(ParseError("Can't find invalid trait and struct.".to_string()).into())
     }
 }
 

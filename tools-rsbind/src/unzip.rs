@@ -1,5 +1,5 @@
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use std::fs;
 use std::fs::File;
 use std::io::Cursor;
@@ -15,9 +15,7 @@ pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
 
     println!("begin unzip every file. len = {}", archive.len());
     for i in 0..archive.len() {
-        let mut zip_file = archive
-            .by_index(i)
-            .map_err(|e| ZipError(e.to_string()))?;
+        let mut zip_file = archive.by_index(i).map_err(|e| ZipError(e.to_string()))?;
 
         println!("unzip file name = {}", &zip_file.name());
         let file_path = path.join(&zip_file.name());

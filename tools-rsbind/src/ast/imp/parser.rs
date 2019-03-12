@@ -2,8 +2,8 @@
 //! This module is used for parsing implementations of a ffi trait.
 //!
 use super::desc::*;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use std::fs;
 use std::io::Read;
 use std::path::PathBuf;

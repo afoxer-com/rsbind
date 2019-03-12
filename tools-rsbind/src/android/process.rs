@@ -4,8 +4,8 @@ use bridge::BridgeGen::JavaGen;
 use bridge::Unpack;
 use build::BuildProcess;
 use config::Config as BuildConfig;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
 use std::collections::HashMap;
@@ -346,7 +346,8 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             return Err(CommandError(format!(
                 "run build android rust project build failed. e = {:?}",
                 output
-            )).into());
+            ))
+            .into());
         }
 
         Ok(())
@@ -394,9 +395,8 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 .join("main")
                 .join("jniLibs")
                 .join(entry.1);
-            fs_extra::copy_items(&vec![armeabi_src], &armeabi_dest, &options).map_err(|e| {
-                FileError(format!("copy android bridge outputs failed. {:?}", e))
-            })?;
+            fs_extra::copy_items(&vec![armeabi_src], &armeabi_dest, &options)
+                .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))?;
             fs::rename(
                 &armeabi_dest.join(&self.lib_name()),
                 &armeabi_dest.join(format!("lib{}.so", &self.so_name())),
@@ -454,7 +454,8 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             return Err(CommandError(format!(
                 "run building java dest project failed. e = {:?}",
                 output
-            )).into());
+            ))
+            .into());
         }
 
         let options = CopyOptions {

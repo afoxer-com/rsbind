@@ -1,5 +1,5 @@
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -16,27 +16,22 @@ pub fn gen_swift_code(prj_dir: &PathBuf, ast_dir: &PathBuf, bin_dir: &PathBuf) -
         fs::remove_file(&bin_file_path)
             .or_else(|e| Err(FileError("remove old swift bin failed.".to_string())))?;
     }
-    let _ = fs::File::create(&bin_file_path)
-        .or_else(|e| {
-            Err(FileError(format!(
-                "create new swift bin failed. cause = {}",
-                e
-            )))
-        })?;
+    let _ = fs::File::create(&bin_file_path).or_else(|e| {
+        Err(FileError(format!(
+            "create new swift bin failed. cause = {}",
+            e
+        )))
+    })?;
     fs::write(&bin_file_path, swift_gen_bin_buf)?;
 
     let ast_dir_tmp = ast_dir.canonicalize().unwrap();
     let ast_dir_str = ast_dir_tmp
         .to_str()
-        .ok_or(FileError(
-            "get ast dir path string error".to_string(),
-        ))?;
+        .ok_or(FileError("get ast dir path string error".to_string()))?;
 
     let parent = prj_dir
         .parent()
-        .ok_or(FileError(
-            "can't find parent dir for swift".to_string(),
-        ))?;
+        .ok_or(FileError("can't find parent dir for swift".to_string()))?;
     let swift_gen_path = parent.join("swift_gen");
     if swift_gen_path.exists() {
         fs::remove_dir_all(&swift_gen_path)?;
@@ -51,9 +46,7 @@ pub fn gen_swift_code(prj_dir: &PathBuf, ast_dir: &PathBuf, bin_dir: &PathBuf) -
     let output_dir_tmp = prj_dir.join("rustlib").canonicalize().unwrap();
     let output_dir_str = output_dir_tmp
         .to_str()
-        .ok_or(FileError(
-            "get swift dir path string error.".to_string(),
-        ))?;
+        .ok_or(FileError("get swift dir path string error.".to_string()))?;
 
     println!(
         "generating swift code, ast dir = {}, out dir = {}",
@@ -74,9 +67,9 @@ pub fn gen_swift_code(prj_dir: &PathBuf, ast_dir: &PathBuf, bin_dir: &PathBuf) -
     print!("gen_swift_code over");
 
     if !output.status.success() {
-        return Err(CommandError(
-            format!("execute swift gen error. {:?}", output).to_string(),
-        ).into());
+        return Err(
+            CommandError(format!("execute swift gen error. {:?}", output).to_string()).into(),
+        );
     }
 
     Ok(())

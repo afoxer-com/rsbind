@@ -3,8 +3,8 @@ use super::file::*;
 use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
 use proc_macro2::{Ident, Literal, Punct, Spacing, Span, TokenStream};
 use quote::TokenStreamExt;
 use std::path::PathBuf;
@@ -147,8 +147,7 @@ impl FileGenStrategy for CFileGenStrategy {
             })
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = self
-            .ty_to_tokens(&method.return_type, TypeDirection::Return)?;
+        let ret_ty_tokens = self.ty_to_tokens(&method.return_type, TypeDirection::Return)?;
         println!(
             "xxxxxx result ={:?} -> {:?}",
             &method.return_type, ret_ty_tokens
@@ -228,10 +227,9 @@ impl FileGenStrategy for CFileGenStrategy {
                     .arg_convert(arg, trait_desc, callbacks)
             }
             _ => {
-                return Err(GenerateError(format!(
-                    "find unsupported type in arg, {:?}",
-                    &arg.ty
-                )).into());
+                return Err(
+                    GenerateError(format!("find unsupported type in arg, {:?}", &arg.ty)).into(),
+                );
             }
         })
     }

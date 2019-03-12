@@ -213,7 +213,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             Span::call_site(),
         );
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
-        let _class_name = format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
+        let _class_name =
+            format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
 
         Ok(match arg.ty {
             AstType::Int | AstType::Long | AstType::Float | AstType::Double => {

@@ -10,6 +10,7 @@ use fs_extra;
 use fs_extra::dir::CopyOptions;
 use std::collections::HashMap;
 use std::fs;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use unzip;
@@ -333,20 +334,15 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             .arg("-c")
             .arg(cmds)
             .current_dir(self.bridge_prj_path)
-            .output()
-            .map_err(|e| {
-                CommandError(format!(
-                    "run building android rust project error => {:?}",
-                    e
-                ))
-            })?;
+            .output()?;
+
+        io::stdout().write_all(&output.stdout)?;
+        io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!(
-                "run build android rust project build failed. e = {:?}",
-                output
-            ))
-            .into());
+            return Err(
+                CommandError(format!("run build android rust project build failed. ")).into(),
+            );
         }
 
         Ok(())
@@ -416,17 +412,26 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             let android_template_buf: &[u8] = include_bytes!("res/template_android.zip");
             unzip::unzip_to(android_template_buf, &self.dest_prj_path).unwrap();
 
-            let manifest_path = self.dest_prj_path
+            let manifest_path = self
+                .dest_prj_path
                 .join("rustlib")
                 .join("src")
                 .join("main")
                 .join("AndroidManifest.xml");
-            let manifest_text = fs::read_to_string(&manifest_path)
-                .map_err(|e| FileError(format!("read android dest project AndroidManifest.xml error: {:?}", e)))?;
+            let manifest_text = fs::read_to_string(&manifest_path).map_err(|e| {
+                FileError(format!(
+                    "read android dest project AndroidManifest.xml error: {:?}",
+                    e
+                ))
+            })?;
             let replaced =
                 manifest_text.replace(&format!("$({}-namespace)", MAGIC_NUM), &self.namespace());
-            fs::write(manifest_path, replaced)
-                .map_err(|e| FileError(format!("write android dest project AndroidManifest  error {:?}", e)))?;
+            fs::write(manifest_path, replaced).map_err(|e| {
+                FileError(format!(
+                    "write android dest project AndroidManifest  error {:?}",
+                    e
+                ))
+            })?;
         }
 
         // unpack the javabind bin
@@ -457,16 +462,13 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             .arg("-c")
             .arg(&build_cmd)
             .current_dir(self.dest_prj_path)
-            .output()
-            .map_err(|e| CommandError(format!("run building java dest project. {:?}", e)))
-            .unwrap();
+            .output()?;
+
+        io::stdout().write_all(&output.stdout)?;
+        io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!(
-                "run building java dest project failed. e = {:?}",
-                output
-            ))
-            .into());
+            return Err(CommandError(format!("run building java dest project failed.")).into());
         }
 
         let options = CopyOptions {

@@ -11,6 +11,7 @@ use errors::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
 use std::fs;
+use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use unzip;
@@ -270,15 +271,13 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .arg("-c")
             .arg(build_cmds)
             .current_dir(self.bridge_prj_path)
-            .output()
-            .map_err(|e| CommandError(format!("run building rust project error => {:?}", e)))?;
+            .output()?;
+
+        io::stdout().write_all(&output.stdout)?;
+        io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!(
-                "run build rust project build failed. e = {:?}",
-                output
-            ))
-            .into());
+            return Err(CommandError(format!("run build rust project build failed.",)).into());
         }
 
         println!("begin strip lib");
@@ -294,7 +293,10 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         match strip_result {
             Err(err) => println!("strip error, err = {:?}", err),
-            _ => {}
+            Ok(output) => {
+                io::stdout().write_all(&output.stdout)?;
+                io::stderr().write_all(&output.stderr)?;
+            }
         }
 
         Ok(())
@@ -425,15 +427,15 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .arg("-c")
             .arg(&build_cmd)
             .current_dir(self.dest_prj_path)
-            .output()
-            .map_err(|e| CommandError(format!("run archiving swift project error => {:?}", e)))?;
+            .output()?;
+
+        io::stdout().write_all(&output.stdout)?;
+        io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!(
-                "run archiving swift project build failed. e = {:?}",
-                output
-            ))
-            .into());
+            return Err(
+                CommandError(format!("run archiving swift project build failed. ",)).into(),
+            );
         }
         Ok(())
     }

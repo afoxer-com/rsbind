@@ -5,7 +5,6 @@ use super::super::types::*;
 use super::desc::*;
 use syn;
 
-
 use errors::ErrorKind::*;
 use errors::*;
 use std::fs::File;

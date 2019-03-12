@@ -19,7 +19,6 @@ use ast::AstResult;
 use errors::*;
 use std::path::PathBuf;
 
-
 pub(crate) enum BridgeGen<'a> {
     // create_name, ast, bridge_dir
     CGen(String, &'a AstResult, &'a PathBuf),

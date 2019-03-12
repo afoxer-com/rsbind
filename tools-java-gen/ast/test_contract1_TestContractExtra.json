@@ -1,1 +1,0 @@
-{"name":"TestContractExtra","mod_name":"test_contract1","methods":[{"name":"hello_world","return_type":"Boolean","origin_return_ty":"bool","args":[{"name":"lx","ty":"Int","origin_ty":"i16"}]}]}

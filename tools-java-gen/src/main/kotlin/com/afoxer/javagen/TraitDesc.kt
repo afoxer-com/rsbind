@@ -1,4 +1,4 @@
-package com.bytedance.ee.bear.javagen
+package com.afoxer.javagen
 
 import com.google.gson.annotations.SerializedName
 import com.squareup.javapoet.ArrayTypeName

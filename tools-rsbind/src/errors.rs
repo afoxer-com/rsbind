@@ -26,5 +26,6 @@ error_chain! {
     foreign_links {
         IO(::std::io::Error);
         TOML(::toml::de::Error);
+        FS_EXT(::fs_extra::error::Error);
     }
 }

@@ -1,7 +1,7 @@
 [package]
 name = "$(*521%-host_crate_underscore)_ios_bridge_prj"
 version = "0.1.0"
-authors = ["wangxin.sidney <wangxin.sidney@bytedance.com>"]
+authors = ["sidney.wang <sidney.wang@foxmail.com>"]
 
 #[workspace]
 #members = []

@@ -27,7 +27,7 @@ arch = ["armv7-linux-androideabi"]
 arch_64 = ["aarch64-linux-android"]
 arch_x86 = ["i686-linux-android"]
 release = true
-namespace = "com.bytedance.ee.xxx.ffi"
+namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
 ext_lib = []
 features_def = ["xxxx=[]"]
@@ -114,7 +114,7 @@ arch = ["armv7-linux-androideabi"]
 arch_64 = ["aarch64-linux-android"]
 arch_x86 = ["i686-linux-android"]
 release = true
-namespace = "com.bytedance.ee.xxx.ffi"
+namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
 ext_lib = []
 features_def = ["xxxx=[]"]

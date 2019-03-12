@@ -1,2 +1,2 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.bytedance.ee.bear.ffi" />
+    package="$(*521%-namespace)" />

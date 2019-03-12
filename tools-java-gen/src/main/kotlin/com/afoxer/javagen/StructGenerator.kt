@@ -1,4 +1,4 @@
-package com.bytedance.ee.bear.javagen
+package com.afoxer.javagen
 
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.JavaFile

@@ -1,4 +1,4 @@
-package com.bytedance.ee.bear.javagen
+package com.afoxer.javagen
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement

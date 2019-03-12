@@ -17,7 +17,9 @@ use unzip;
 const PHONE_ARCHS: [&str; 2] = ["armv7-linux-androideabi", "arm-linux-androideabi"];
 const PHONE64_ARCHS: [&str; 1] = ["aarch64-linux-android"];
 const X86_ARCHS: [&str; 1] = ["i686-linux-android"];
-const NAMESPACE: &str = "com.bytedance.ee.bear.ffi";
+const NAMESPACE: &str = "com.afoxer.xxx.ffi";
+
+const MAGIC_NUM: &'static str = "*521%";
 
 pub(crate) struct AndroidProcess<'a> {
     origin_prj_path: &'a PathBuf,
@@ -416,6 +418,18 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             fs::create_dir_all(&self.dest_prj_path).unwrap();
             let android_template_buf: &[u8] = include_bytes!("res/template_android.zip");
             unzip::unzip_to(android_template_buf, &self.dest_prj_path).unwrap();
+
+            let manifest_path = self.dest_prj_path
+                .join("rustlib")
+                .join("src")
+                .join("main")
+                .join("AndroidManifest.xml");
+            let manifest_text = fs::read_to_string(&manifest_path)
+                .map_err(|e| FileError(format!("read android dest project AndroidManifest.xml error: {:?}", e)))?;
+            let replaced =
+                manifest_text.replace(&format!("$({}-namespace)", MAGIC_NUM), &self.namespace());
+            fs::write(manifest_path, replaced)
+                .map_err(|e| FileError(format!("write android dest project AndroidManifest  error {:?}", e)))?;
         }
 
         // unpack the javabind bin

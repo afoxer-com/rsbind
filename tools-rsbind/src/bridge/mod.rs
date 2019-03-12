@@ -18,7 +18,7 @@ use ast::imp::desc::*;
 use ast::AstResult;
 use errors::*;
 use std::path::PathBuf;
-use std::process::Command;
+
 
 pub(crate) enum BridgeGen<'a> {
     // create_name, ast, bridge_dir

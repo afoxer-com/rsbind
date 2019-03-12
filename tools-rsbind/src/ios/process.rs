@@ -370,9 +370,9 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .join("target")
             .join("iphone_simulator");
         if simu_output_dir.exists() {
-            fs::remove_dir_all(&simu_output_dir);
+            fs::remove_dir_all(&simu_output_dir)?;
         }
-        fs::create_dir_all(&simu_output_dir);
+        fs::create_dir_all(&simu_output_dir)?;
         let simu_output_dir_path = simu_output_dir.canonicalize().unwrap();
         let simu_output_dir_str = simu_output_dir_path
             .to_str()
@@ -383,7 +383,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .join("target")
             .join("iphoneos");
         if iphone_output_dir.exists() {
-            fs::remove_dir_all(&iphone_output_dir);
+            fs::remove_dir_all(&iphone_output_dir)?;
         }
         fs::create_dir_all(&iphone_output_dir)?;
         let iphone_output_dir_path = iphone_output_dir.canonicalize().unwrap();
@@ -396,7 +396,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .join("target")
             .join("universal");
         if universal_output_dir.exists() {
-            fs::remove_dir_all(&universal_output_dir);
+            fs::remove_dir_all(&universal_output_dir)?;
         }
         fs::create_dir_all(&universal_output_dir)?;
         let universal_output_dir_path = universal_output_dir.canonicalize().unwrap();

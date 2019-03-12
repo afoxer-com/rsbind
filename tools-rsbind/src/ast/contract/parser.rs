@@ -5,7 +5,7 @@ use super::super::types::*;
 use super::desc::*;
 use syn;
 
-use ast::imp::desc::ImpDesc;
+
 use errors::ErrorKind::*;
 use errors::*;
 use std::fs::File;
@@ -127,7 +127,7 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
                 // arguments
                 for input in method_inner.sig.decl.inputs.iter() {
                     match input {
-                        syn::FnArg::SelfRef(ref arg) => {
+                        syn::FnArg::SelfRef(ref _arg) => {
                             is_callback = true;
                             continue;
                         }

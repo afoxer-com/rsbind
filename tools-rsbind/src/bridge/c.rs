@@ -5,7 +5,7 @@ use ast::imp::desc::*;
 use ast::types::*;
 use errors::ErrorKind::*;
 use errors::*;
-use proc_macro2::{Ident, Literal, Punct, Spacing, Span, TokenStream};
+use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
 use quote::TokenStreamExt;
 use std::path::PathBuf;
 
@@ -39,7 +39,7 @@ pub(crate) struct CFileGenStrategy {
 impl CFileGenStrategy {}
 
 impl FileGenStrategy for CFileGenStrategy {
-    fn gen_sdk_file(&self, mod_names: &Vec<String>) -> Result<TokenStream> {
+    fn gen_sdk_file(&self, _mod_names: &Vec<String>) -> Result<TokenStream> {
         Ok(quote!())
     }
 
@@ -51,7 +51,7 @@ impl FileGenStrategy for CFileGenStrategy {
         })
     }
 
-    fn quote_common_part(&self, traits: &Vec<TraitDesc>) -> Result<TokenStream> {
+    fn quote_common_part(&self, _traits: &Vec<TraitDesc>) -> Result<TokenStream> {
         Ok(quote! {})
     }
 
@@ -102,7 +102,7 @@ impl FileGenStrategy for CFileGenStrategy {
         _impl_desc: &ImpDesc,
         method: &MethodDesc,
         callbacks: &Vec<&TraitDesc>,
-        structs: &Vec<StructDesc>,
+        _structs: &Vec<StructDesc>,
     ) -> Result<TokenStream> {
         let fun_name = Ident::new(
             &format!("{}_{}", &trait_desc.mod_name, &method.name),
@@ -212,7 +212,7 @@ impl FileGenStrategy for CFileGenStrategy {
                     let #rust_arg_name: String = #c_slice_ident.to_owned();
                 }
             }
-            AstType::Vec(base) => {
+            AstType::Vec(_base) => {
                 let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
                 let c_slice_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
                 quote! {

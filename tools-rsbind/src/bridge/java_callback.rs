@@ -2,7 +2,7 @@ use super::file::*;
 use ast::contract::desc::*;
 use ast::types::*;
 use errors::*;
-use proc_macro2::{Ident, Literal, Punct, Spacing, Span, TokenStream};
+use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::TokenStreamExt;
 
 pub struct JavaCallbackStrategy {
@@ -40,7 +40,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             }
         };
 
-        let mut callback_methods = TokenStream::new();
+        let _callback_methods = TokenStream::new();
         let callback_desc = callback_desc.unwrap();
         let mut methods_result = TokenStream::new();
         for method in callback_desc.methods.iter() {
@@ -157,7 +157,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 .iter()
                 .map(|arg| Ident::new(&arg.name, Span::call_site()))
                 .collect::<Vec<Ident>>();
-            let convert_arg_names = &method
+            let _convert_arg_names = &method
                 .args
                 .iter()
                 .map(|arg| Ident::new(&format!("c_{}", &arg.name), Span::call_site()))
@@ -166,7 +166,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 .args
                 .iter()
                 .map(|arg| match arg.ty {
-                    AstType::Vec(base_ty) => {
+                    AstType::Vec(_base_ty) => {
                         let vec_inner_name =
                             arg.origin_ty.clone().replace("Vec<", "").replace(">", "");
                         let vec_innder_ident = Ident::new(&vec_inner_name, Span::call_site());
@@ -239,7 +239,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                 }
                 AstType::Double => {
-                    let origin_return_ty_ident =
+                    let _origin_return_ty_ident =
                         Ident::new(&method.origin_return_ty, Span::call_site());
                     quote! {
                         let mut r_result = None;
@@ -303,7 +303,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
         }
 
         let callback_ident = Ident::new(&callback_desc.name, Span::call_site());
-        let callback_str_ident = Ident::new(&format!("r_{}_str", &arg.name), Span::call_site());
+        let _callback_str_ident = Ident::new(&format!("r_{}_str", &arg.name), Span::call_site());
         quote! {
             #callback_struct
 
@@ -341,7 +341,7 @@ impl JavaCallbackStrategy {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
-            AstType::Vec(base) => match direction {
+            AstType::Vec(_base) => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },

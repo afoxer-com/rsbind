@@ -5,7 +5,7 @@ use ast::imp::desc::*;
 use ast::types::*;
 use errors::ErrorKind::*;
 use errors::*;
-use proc_macro2::{Ident, Literal, Span, TokenStream};
+use proc_macro2::{Ident, Span, TokenStream};
 use quote::TokenStreamExt;
 use std::path::PathBuf;
 
@@ -99,7 +99,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         })
     }
 
-    fn quote_callback_structures(&self, trait_desc: &TraitDesc) -> Result<TokenStream> {
+    fn quote_callback_structures(&self, _trait_desc: &TraitDesc) -> Result<TokenStream> {
         Ok(quote! {})
     }
 
@@ -138,7 +138,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         _impl_desc: &ImpDesc,
         method: &MethodDesc,
         _callbacks: &Vec<&TraitDesc>,
-        structs: &Vec<StructDesc>,
+        _structs: &Vec<StructDesc>,
     ) -> Result<TokenStream> {
         let namespace = self.java_namespace.replace(".", "_");
         let method_name = format!(
@@ -213,7 +213,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             Span::call_site(),
         );
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
-        let class_name = format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
+        let _class_name = format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
 
         Ok(match arg.ty {
             AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
@@ -232,7 +232,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     let #rust_arg_name: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
                 }
             }
-            AstType::Vec(base) => {
+            AstType::Vec(_base) => {
                 let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
                 quote! {
                     let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
@@ -315,7 +315,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
-            AstType::Vec(base) => match direction {
+            AstType::Vec(_base) => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
@@ -325,7 +325,6 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             },
             AstType::Callback => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Void => (),
-            _ => (),
         };
 
         Ok(tokens)

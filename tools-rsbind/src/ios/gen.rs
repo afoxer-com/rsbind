@@ -8,13 +8,13 @@ pub fn gen_swift_code(prj_dir: &PathBuf, ast_dir: &PathBuf, bin_dir: &PathBuf) -
     print!("gen_swift_code");
 
     fs::create_dir_all(&bin_dir)
-        .or_else(|e| Err(FileError("create bin dir failed.".to_string())))?;
+        .or_else(|_e| Err(FileError("create bin dir failed.".to_string())))?;
 
     let swift_gen_bin_buf: &[u8] = include_bytes!("res/swift_gen");
     let bin_file_path = bin_dir.join("swift_gen");
     if bin_file_path.exists() {
         fs::remove_file(&bin_file_path)
-            .or_else(|e| Err(FileError("remove old swift bin failed.".to_string())))?;
+            .or_else(|_e| Err(FileError("remove old swift bin failed.".to_string())))?;
     }
     let _ = fs::File::create(&bin_file_path).or_else(|e| {
         Err(FileError(format!(

@@ -46,12 +46,12 @@ fn main() {
     };
 
     let action_enum = match action.as_ref() {
-        "ast" => Action::GEN_AST,
-        "bridge" => Action::GEN_BRIDGE,
-        "dest" => Action::GEN_BIND_SRC,
-        "header" => Action::GEN_C_HEADER,
-        "build" => Action::BUILD,
-        "all" => Action::ALL,
+        "ast" => Action::GenAst,
+        "bridge" => Action::GenBridge,
+        "dest" => Action::GenBindSrc,
+        "header" => Action::GenCHeader,
+        "build" => Action::Build,
+        "all" => Action::All,
         _ => {
             eprintln!(
                 "Usage: rsbind path-to-project java/ios/all ast/bridge/dest/header/build/all"

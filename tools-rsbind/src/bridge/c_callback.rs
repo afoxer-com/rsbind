@@ -2,7 +2,7 @@ use super::file::*;
 use ast::contract::desc::*;
 use ast::types::*;
 use errors::*;
-use proc_macro2::{Ident, Literal, Punct, Spacing, Span, TokenStream};
+use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
 use quote::TokenStreamExt;
 
 pub struct CCallbackStrategy {}
@@ -11,7 +11,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
     fn arg_convert(
         &self,
         arg: &ArgDesc,
-        trait_desc: &TraitDesc,
+        _trait_desc: &TraitDesc,
         callbacks: &Vec<&TraitDesc>,
     ) -> TokenStream {
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
@@ -143,7 +143,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                         _ => true,
                     })
                     .map(|arg| match arg.ty {
-                        AstType::Vec(base_ty) => {
+                        AstType::Vec(_base_ty) => {
                             let vec_inner_name =
                                 arg.origin_ty.clone().replace("Vec<", "").replace(">", "");
                             let vec_innder_ident = Ident::new(&vec_inner_name, Span::call_site());

@@ -61,12 +61,12 @@ pub enum Target {
 }
 
 pub enum Action {
-    GEN_AST,
-    GEN_BRIDGE,
-    GEN_BIND_SRC,
-    GEN_C_HEADER,
-    BUILD,
-    ALL,
+    GenAst,
+    GenBridge,
+    GenBindSrc,
+    GenCHeader,
+    Build,
+    All,
 }
 
 impl Bind {
@@ -121,7 +121,7 @@ impl Bind {
         let crate_name = self.parse_crate_name()?;
 
         match self.action {
-            Action::GEN_AST => {
+            Action::GenAst => {
                 self.parse_ast(crate_name.clone())?;
                 return Ok(());
             }
@@ -147,7 +147,7 @@ impl Bind {
 
     fn get_ast_if_need(&self, crate_name: String) -> Result<AstResult> {
         match self.action {
-            Action::GEN_BRIDGE | Action::GEN_BIND_SRC | Action::ALL => {
+            Action::GenBridge | Action::GenBindSrc | Action::All => {
                 self.parse_ast(crate_name.clone())
             }
             _ => {
@@ -194,16 +194,16 @@ impl Bind {
         );
 
         match self.action {
-            Action::GEN_AST => (),
-            Action::GEN_BRIDGE => ios_process.gen_bridge_src()?,
-            Action::GEN_BIND_SRC => ios_process.gen_bind_code()?,
-            Action::GEN_C_HEADER => ios_process.gen_c_header()?,
-            Action::BUILD => {
+            Action::GenAst => (),
+            Action::GenBridge => ios_process.gen_bridge_src()?,
+            Action::GenBindSrc => ios_process.gen_bind_code()?,
+            Action::GenCHeader => ios_process.gen_c_header()?,
+            Action::Build => {
                 ios_process.build_bridge_prj()?;
                 ios_process.copy_bridge_outputs()?;
                 ios_process.build_dest_prj()?;
             }
-            Action::ALL => {
+            Action::All => {
                 ios_process.gen_bridge_src()?;
                 ios_process.gen_bind_code()?;
                 ios_process.build_bridge_prj()?;
@@ -211,29 +211,6 @@ impl Bind {
                 ios_process.build_dest_prj()?;
             }
         }
-
-        Ok(())
-    }
-
-    fn gen_c_header(
-        &self,
-        crate_name: &str,
-        ast_result: &AstResult,
-        config: &Option<config::Config>,
-    ) -> Result<()> {
-        let ios_process = IosProcess::new(
-            &self.prj_path,
-            &self.ios_dest_path,
-            &self.ios_bridge_path,
-            &self.header_path,
-            &self.ast_path,
-            &self.bin_path,
-            crate_name,
-            &ast_result,
-            config.clone(),
-        );
-
-        ios_process.gen_c_header();
 
         Ok(())
     }
@@ -251,7 +228,6 @@ impl Bind {
             &self.prj_path,
             &self.android_dest_path,
             &self.android_bridge_path,
-            &self.header_path,
             &self.ast_path,
             &self.bin_path,
             crate_name,
@@ -260,16 +236,16 @@ impl Bind {
         );
 
         match self.action {
-            Action::GEN_AST => (),
-            Action::GEN_BRIDGE => android_process.gen_bridge_src()?,
-            Action::GEN_BIND_SRC => android_process.gen_bind_code()?,
-            Action::GEN_C_HEADER => (),
-            Action::BUILD => {
+            Action::GenAst => (),
+            Action::GenBridge => android_process.gen_bridge_src()?,
+            Action::GenBindSrc => android_process.gen_bind_code()?,
+            Action::GenCHeader => (),
+            Action::Build => {
                 android_process.build_bridge_prj()?;
                 android_process.copy_bridge_outputs()?;
                 android_process.build_dest_prj()?;
             }
-            Action::ALL => {
+            Action::All => {
                 android_process.gen_bridge_src()?;
                 android_process.gen_bind_code()?;
                 android_process.build_bridge_prj()?;

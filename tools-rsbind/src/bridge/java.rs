@@ -132,6 +132,9 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         })
     }
 
+    ///
+    /// quote the method signature for java bridge file.
+    ///
     fn quote_method_sig(
         &self,
         trait_desc: &TraitDesc,
@@ -151,20 +154,12 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let arg_names = method
             .args
             .iter()
-            .filter(|arg| match arg.ty {
-                AstType::Void => false,
-                _ => true,
-            })
             .map(|arg| Ident::new(&arg.name, Span::call_site()))
             .collect::<Vec<Ident>>();
 
         let arg_types = method
             .args
             .iter()
-            .filter(|arg| match arg.ty {
-                AstType::Void => false,
-                _ => true,
-            })
             .map(|arg| self.ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap())
             .collect::<Vec<TokenStream>>();
 
@@ -217,7 +212,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
 
         Ok(match arg.ty {
-            AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
+            AstType::Byte | AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
                 let origin_type_ident = Ident::new(&arg.origin_ty, Span::call_site());
                 quote! {
                     let #rust_arg_name = #arg_name_ident as #origin_type_ident;
@@ -307,6 +302,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match *ast_type {
+            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
             AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),

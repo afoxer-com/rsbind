@@ -10,6 +10,7 @@ import SwiftPoet
 
 enum AstBaseType: String {
     case VOID = "Void"
+    case BYTE = "Int8"
     case INT = "Int"
     case LONG = "Long"
     case FLOAT = "Float"
@@ -24,6 +25,8 @@ extension AstBaseType {
         switch str {
         case "Void":
             return AstBaseType.VOID
+        case "Byte":
+            return AstBaseType.BYTE
         case "Int":
             return AstBaseType.INT
         case "Long":
@@ -46,6 +49,7 @@ extension AstBaseType {
 
 enum AstType {
     case VOID
+    case BYTE
     case INT
     case LONG
     case FLOAT
@@ -62,6 +66,8 @@ extension AstType {
         switch ty {
         case "Void":
             return AstType.VOID
+        case "Byte":
+            return AstType.BYTE
         case "Int":
             return AstType.INT
         case "Long":
@@ -87,6 +93,8 @@ extension AstType {
         switch self {
         case AstType.VOID:
             return "Void"
+        case AstType.BYTE:
+            return "Byte"
         case AstType.INT:
             return "Int"
         case AstType.LONG:
@@ -112,6 +120,8 @@ extension AstType {
         switch self {
             case .BOOLEAN:
                 return TypeName.BooleanType
+            case .BYTE:
+                return TypeName.init(keyword: "Int8")
             case .INT:
                 return TypeName.IntegerType
             case .LONG:

@@ -192,7 +192,7 @@ impl FileGenStrategy for CFileGenStrategy {
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
 
         Ok(match arg.ty {
-            AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
+            AstType::Byte | AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
                 let origin_type_ident = Ident::new(&arg.origin_ty, Span::call_site());
                 quote! {
                     let #rust_arg_name = #arg_name_ident as #origin_type_ident;
@@ -288,6 +288,7 @@ impl FileGenStrategy for CFileGenStrategy {
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match *ast_type {
+            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
             AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),

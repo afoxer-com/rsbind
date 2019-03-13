@@ -1,4 +1,6 @@
 pub trait TestContract1 {
+    fn test_byte(arg: u8) -> u8;
+    fn test_byte_i8(arg: i8) -> i8;
     fn test_arg_vec(arg: Vec<String>) -> i32;
     fn test_return_vec(arg: u8) -> Vec<i32>;
     fn test_arg_callback(arg: Box<Callback>) -> u8;
@@ -12,6 +14,8 @@ pub trait TestContract1 {
 }
 
 pub trait Callback: Sync {
+    fn on_callback_u8(&self, arg1: u8) -> u8;
+    fn on_callback_i8(&self, arg1:i8) -> i8;
     fn on_callback(&self, arg1: i32, arg2: String, arg3: bool, arg4: f32, arg5: f64) -> i32;
     fn on_callback2(&self, arg1: bool) -> bool;
     fn on_callback_complex(&self, arg1: StructSimple) -> bool;

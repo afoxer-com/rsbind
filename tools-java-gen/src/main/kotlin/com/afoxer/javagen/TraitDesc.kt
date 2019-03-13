@@ -10,6 +10,8 @@ enum class AstType() {
     VOID,
     @SerializedName("Int")
     INT,
+    @SerializedName("Int")
+    BYTE,
     @SerializedName("Long")
     LONG,
     @SerializedName("Float")
@@ -32,6 +34,7 @@ fun mapType(str: String): AstType {
     return when (str) {
         "Void" -> AstType.VOID
         "Int" -> AstType.INT
+        "Byte" -> AstType.BYTE
         "Long" -> AstType.LONG
         "Float" -> AstType.FLOAT
         "Double" -> AstType.DOUBLE
@@ -47,6 +50,7 @@ fun mapType(str: String): AstType {
 fun mapType(type: AstType, subType: AstType, transfer: Boolean = false): TypeName {
     return when (type) {
         AstType.BOOLEAN -> if (transfer) TypeName.INT else TypeName.BOOLEAN
+        AstType.BYTE -> TypeName.BYTE
         AstType.INT -> TypeName.INT
         AstType.LONG -> TypeName.LONG
         AstType.FLOAT -> TypeName.FLOAT

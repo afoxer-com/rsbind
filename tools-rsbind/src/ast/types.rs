@@ -6,6 +6,7 @@ use std::convert::From;
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub(crate) enum AstBaseType {
     Void,
+    Byte,
     Int,
     Long,
     Float,
@@ -19,7 +20,8 @@ pub(crate) enum AstBaseType {
 impl<'a> From<&'a str> for AstBaseType {
     fn from(ident: &'a str) -> Self {
         match ident {
-            "u8" | "u16" | "u32" | "i8" | "i16" | "i32" | "isize" | "usize" => AstBaseType::Int,
+            "u8" | "i8" => AstBaseType::Byte,
+            "u16" | "u32" | "i16" | "i32" | "isize" | "usize" => AstBaseType::Int,
             "f32" => AstBaseType::Float,
             "f64" => AstBaseType::Double,
             "u64" | "i64" => AstBaseType::Long,
@@ -40,6 +42,7 @@ impl From<String> for AstBaseType {
 #[derive(Debug, Clone, Serialize, Deserialize, Copy)]
 pub(crate) enum AstType {
     Void,
+    Byte,
     Int,
     Long,
     Float,
@@ -57,7 +60,8 @@ pub(crate) enum AstType {
 impl<'a> From<&'a str> for AstType {
     fn from(ident: &'a str) -> Self {
         match ident {
-            "u8" | "u16" | "u32" | "i8" | "i16" | "i32" | "isize" | "usize" => AstType::Int,
+            "u8" | "i8" => AstType::Byte,
+            "u16" | "u32" | "i16" | "i32" | "isize" | "usize" => AstType::Int,
             "f32" => AstType::Float,
             "f64" => AstType::Double,
             "u64" | "i64" => AstType::Long,
@@ -73,6 +77,7 @@ impl From<AstBaseType> for AstType {
     fn from(base_ty: AstBaseType) -> Self {
         match base_ty {
             AstBaseType::Void => AstType::Void,
+            AstBaseType::Byte => AstType::Byte,
             AstBaseType::Int => AstType::Int,
             AstBaseType::Long => AstType::Long,
             AstBaseType::Float => AstType::Float,
@@ -89,6 +94,7 @@ impl AstType {
     pub(crate) fn to_java_sig(&self) -> String {
         match *self {
             AstType::Void => "V".to_owned(),
+            AstType::Byte => "B".to_owned(),
             AstType::Int => "I".to_owned(),
             AstType::Long => "J".to_owned(),
             AstType::Float => "F".to_owned(),
@@ -97,7 +103,7 @@ impl AstType {
             AstType::String => "Ljava/lang/String;".to_owned(),
             AstType::Callback => "Ljava/lang/String;".to_owned(),
             AstType::Struct => "Ljava/lang/String;".to_owned(),
-            AstType::Vec(_) => "Ljava/lang/String;".to_owned(), //            AstType::Vec(base) => format!("[{}", &AstType::from(base).to_java_sig())
+            AstType::Vec(_) => "Ljava/lang/String;".to_owned(),
         }
     }
 }

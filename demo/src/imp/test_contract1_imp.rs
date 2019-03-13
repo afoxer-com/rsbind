@@ -5,6 +5,14 @@ use contract::test_contract1::TestContract1;
 pub struct TestContract1Imp {}
 
 impl TestContract1 for TestContract1Imp {
+    fn test_byte(arg: u8) -> u8 {
+        3u8
+    }
+
+    fn test_byte_i8(arg: i8) -> i8 {
+        10i8
+    }
+
     fn test_arg_vec(arg: Vec<String>) -> i32 {
         return arg.len() as i32;
     }
@@ -32,6 +40,8 @@ impl TestContract1 for TestContract1Imp {
             art6: 5.0,
         }]);
         arg.on_callback_arg_vec_simple(vec!["Helllo vec simple".to_owned(), "d".to_owned()]);
+        arg.on_callback_u8(76u8);
+        arg.on_callback_i8(4i8);
         33u8
     }
 

@@ -9,10 +9,20 @@
 import UIKit
 import rustlib.Swift
 
-class ViewController: UIViewController, Callback{
-    func on_empty_callback() {
-        print("empty callback")
+class ViewController: UIViewController, Callback{cv 
+    func on_callback_u8(arg1: Int8) -> Int8 {
+        print("on_callback_u8 \(arg1)")
+        return 55
     }
+    
+    func on_callback_i8(arg1: Int8) -> Int8 {
+        print("on_callback_i8 \(arg1)")
+        return 3
+    }
+    
+    func on_empty_callback() {
+        print("on_empty_callback")
+        }
     
     func on_callback(arg1: Int, arg2: String, arg3: Bool, arg4: Double, arg5: Double) -> Int {
         print("on_callback: \(arg1)")
@@ -48,21 +58,26 @@ class ViewController: UIViewController, Callback{
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        while true {
-            let result = TestContract1.test_struct_vec()
-            print("result = \(result)")
-            // Do any additional setup after loading the view, typically from a nib.
-            
-            TestContract1.test_arg_callback(arg: self)
-            let struct_imp = TestContract1.test_struct();
-            print("struct = \(struct_imp)")
-            
-            let struct_vec = TestContract1.test_struct_vec()
-            print("struct_vec = \(struct_imp)")
-            
-            let return_vec = TestContract1.test_return_vec(arg: 333)
-            print("return_vec = \(return_vec)")
-        }
+        let result = TestContract1.test_struct_vec()
+        print("result = \(result)")
+        // Do any additional setup after loading the view, typically from a nib.
+        
+        TestContract1.test_arg_callback(arg: self)
+        let struct_imp = TestContract1.test_struct();
+        print("struct = \(struct_imp)")
+        
+        let struct_vec = TestContract1.test_struct_vec()
+        print("struct_vec = \(struct_imp)")
+        
+        let return_vec = TestContract1.test_return_vec(arg: 43)
+        print("return_vec = \(return_vec)")
+        
+        let byte_result = TestContract1.test_byte(arg: 44)
+        print("byte result = \(byte_result)")
+        
+        let i8_result = TestContract1.test_byte_i8(arg: 55)
+        print("i8 result = \(i8_result)")
+
     }
 
     override func didReceiveMemoryWarning() {

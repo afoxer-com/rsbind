@@ -9,3 +9,5 @@ target
 .project
 .settings
 .classpath
+.iml
+*.xcuserdatad

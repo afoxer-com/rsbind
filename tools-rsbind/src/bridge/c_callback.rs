@@ -301,6 +301,7 @@ impl CCallbackStrategy {
     fn ty_to_tokens(&self, ast_type: &AstType) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match *ast_type {
+            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
             AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),

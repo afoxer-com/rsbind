@@ -96,6 +96,8 @@ class TraitGenerator {
             switch arg.ty {
                 case AstType.BOOLEAN:
                      builder.add(codeLine: "let s_\(arg.name): Int32 = \(arg.name) ? 1 : 0")
+                case AstType.BYTE:
+                    builder.add(codeLine: "let s_\(arg.name) = Int8(\(arg.name))")
                 case AstType.INT:
                     builder.add(codeLine: "let s_\(arg.name) = Int32(\(arg.name))")
                 case AstType.LONG:
@@ -157,6 +159,8 @@ class TraitGenerator {
                             switch arg.ty {
                                 case AstType.BOOLEAN:
                                     closureBuilder.add(codeLine: "let c_\(arg.name): Bool = \(arg.name) > 0 ? true : false")
+                                case AstType.BYTE:
+                                    closureBuilder.add(codeLine: "let c_\(arg.name) = Int8(\(arg.name))")
                                 case AstType.INT:
                                     closureBuilder.add(codeLine: "let c_\(arg.name) = Int(\(arg.name))")
                                 case AstType.LONG:
@@ -213,6 +217,8 @@ class TraitGenerator {
                         switch method.return_type {
                             case AstType.BOOLEAN:
                                 closureBuilder.add(codeLine: "return result ? 1 : 0")
+                            case AstType.BYTE:
+                                closureBuilder.add(codeLine: "return Int8(result)")
                             case AstType.INT:
                                 closureBuilder.add(codeLine: "return Int32(result)")
                             case AstType.LONG:
@@ -261,6 +267,8 @@ class TraitGenerator {
         switch type {
         case AstType.BOOLEAN:
             return "Int32"
+        case AstType.BYTE:
+            return "Int8"
         case AstType.INT:
             return "Int32"
         case AstType.LONG:
@@ -287,6 +295,8 @@ class TraitGenerator {
         switch methodDesc.return_type {
             case AstType.BOOLEAN:
                 builder.add(codeLine: "let s_result = result > 0 ? true : false")
+            case AstType.BYTE:
+                builder.add(codeLine: "let s_result = Int8(result)")
             case AstType.INT:
                 builder.add(codeLine: "let s_result = Int(result)")
             case AstType.LONG:

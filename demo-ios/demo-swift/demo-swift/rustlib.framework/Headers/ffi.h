@@ -8,6 +8,7 @@ typedef struct {
   int32_t (*on_callback_complex)(int64_t, const char*);
   int32_t (*on_callback_arg_vec)(int64_t, const char*);
   int32_t (*on_callback_arg_vec_simple)(int64_t, const char*);
+  void (*on_empty_callback)(int64_t);
   void (*free_callback)(int64_t);
   int64_t index;
 } test_contract1_Callback_Model;
@@ -22,8 +23,14 @@ int32_t test_contract1_test_arg_vec(const char *arg);
 
 int32_t test_contract1_test_bool(int32_t arg1);
 
+void test_contract1_test_no_return();
+
 char *test_contract1_test_return_vec(int32_t arg);
+
+char *test_contract1_test_return_vec_u8(const char *input);
 
 char *test_contract1_test_struct();
 
 char *test_contract1_test_struct_vec();
+
+char *test_contract1_test_two_string(const char *arg1, const char *arg2);

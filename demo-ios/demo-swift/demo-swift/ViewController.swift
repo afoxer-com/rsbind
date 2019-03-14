@@ -10,6 +10,10 @@ import UIKit
 import rustlib.Swift
 
 class ViewController: UIViewController, Callback{
+    func on_empty_callback() {
+        print("empty callback")
+    }
+    
     func on_callback(arg1: Int, arg2: String, arg3: Bool, arg4: Double, arg5: Double) -> Int {
         print("on_callback: \(arg1)")
         return 3
@@ -44,20 +48,21 @@ class ViewController: UIViewController, Callback{
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let result = TestContract1.test_struct_vec()
-        print("result = \(result)")
-        // Do any additional setup after loading the view, typically from a nib.
-        
-        TestContract1.test_arg_callback(arg: self)
-        let struct_imp = TestContract1.test_struct();
-        print("struct = \(struct_imp)")
-        
-        let struct_vec = TestContract1.test_struct_vec()
-        print("struct_vec = \(struct_imp)")
-        
-        let return_vec = TestContract1.test_return_vec(arg: 333)
-        print("return_vec = \(return_vec)")
-
+        while true {
+            let result = TestContract1.test_struct_vec()
+            print("result = \(result)")
+            // Do any additional setup after loading the view, typically from a nib.
+            
+            TestContract1.test_arg_callback(arg: self)
+            let struct_imp = TestContract1.test_struct();
+            print("struct = \(struct_imp)")
+            
+            let struct_vec = TestContract1.test_struct_vec()
+            print("struct_vec = \(struct_imp)")
+            
+            let return_vec = TestContract1.test_return_vec(arg: 333)
+            print("return_vec = \(return_vec)")
+        }
     }
 
     override func didReceiveMemoryWarning() {

@@ -169,18 +169,27 @@ class TraitGenerator {
                                     closureBuilder.add(codeLine: "let c_\(arg.name) = String(cString: \(arg.name)!)")
                                 case AstType.STRUCT(_):
                                     closureBuilder.add(codeLine: "let c_tmp_\(arg.name) = String(cString:\(arg.name)!)")
+                                        .add(codeLine: "var c_option_\(arg.name): \(arg.ty.toStr())?")
+                                        .add(codeLine: "autoreleasepool {")
                                         .add(codeLine: "let c_tmp_json_\(arg.name) = c_tmp_\(arg.name).data(using: .utf8)!")
                                         .add(codeLine: "let decoder = JSONDecoder()")
-                                        .add(codeLine: "let c_\(arg.name) = try! decoder.decode(\(arg.ty.toStr()).self, from: c_tmp_json_\(arg.name))")
+                                        .add(codeLine: "c_option_\(arg.name) = try! decoder.decode(\(arg.ty.toStr()).self, from: c_tmp_json_\(arg.name))")
+                                        .add(codeLine: "}")
+                                        .add(codeLine: "let c_\(arg.name) = c_option_\(arg.name)!")
                                 case AstType.VEC(let base):
                                     var vecType = arg.ty.toStr()
                                     if base == AstBaseType.STRUCT {
                                         vecType = arg.origin_ty.replacingOccurrences(of: "Vec", with: "Array")
                                     }
+                                    
                                     closureBuilder.add(codeLine: "let c_tmp_\(arg.name) = String(cString:\(arg.name)!)")
+                                        .add(codeLine: "var c_option_\(arg.name): \(vecType)?")
+                                        .add(codeLine: "autoreleasepool {")
                                         .add(codeLine: "let c_tmp_json_\(arg.name) = c_tmp_\(arg.name).data(using: .utf8)!")
                                         .add(codeLine: "let decoder = JSONDecoder()")
-                                        .add(codeLine: "let c_\(arg.name) = try! decoder.decode(\(vecType).self, from: c_tmp_json_\(arg.name))")
+                                        .add(codeLine: "c_option_\(arg.name) = try! decoder.decode(\(vecType).self, from: c_tmp_json_\(arg.name))")
+                                        .add(codeLine: "}")
+                                        .add(codeLine: "let c_\(arg.name) = c_option_\(arg.name)!")
                                 default:
                                     print("don't support \(arg.origin_ty) in callback")
                                     assert(false)
@@ -295,16 +304,25 @@ class TraitGenerator {
                     vecType = methodDesc.origin_return_ty.replacingOccurrences(of: "Vec", with: "Array")
                 }
                 builder.add(codeLine: "let ret_str = String(cString:result!)")
+                    .add(codeLine: "\(crateName)_free_str(result!)")
+                    .add(codeLine: "var s_tmp_result: \(vecType)?")
+                    .add(codeLine: "autoreleasepool {")
                     .add(codeLine: "let ret_str_json = ret_str.data(using: .utf8)!")
                     .add(codeLine: "let decoder = JSONDecoder()")
-                    .add(codeLine: "let s_result = try! decoder.decode(\(vecType).self, from: ret_str_json)")
-                    .add(codeLine: "\(crateName)_free_str(result!)")
+                    .add(codeLine: "s_tmp_result = try! decoder.decode(\(vecType).self, from: ret_str_json)")
+                    .add(codeLine: "}")
+                    .add(codeLine: "let s_result = s_tmp_result!")
             case AstType.STRUCT(_):
                 builder.add(codeLine: "let ret_str = String(cString:result!)")
+                    .add(codeLine: "\(crateName)_free_str(result!)")
+                    .add(codeLine: "var s_tmp_result: \(methodDesc.return_type.toStr())?")
+                    .add(codeLine: "autoreleasepool {")
                     .add(codeLine: "let ret_str_json = ret_str.data(using: .utf8)!")
                     .add(codeLine: "let decoder = JSONDecoder()")
-                    .add(codeLine: "let s_result = try! decoder.decode(\(methodDesc.return_type.toStr()).self, from: ret_str_json)")
-                    .add(codeLine: "\(crateName)_free_str(result!)")
+                    .add(codeLine: "s_tmp_result = try! decoder.decode(\(methodDesc.return_type.toStr()).self, from: ret_str_json)")
+                    .add(codeLine: "}")
+                    .add(codeLine: "let s_result = s_tmp_result!")
+
             case AstType.VOID:
                 {}()
             case AstType.CALLBACK(_):

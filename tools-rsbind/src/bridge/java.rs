@@ -228,13 +228,21 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     let #rust_arg_name: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
                 }
             }
-            AstType::Vec(_base) => {
-                let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
-                quote! {
-                    let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
-                    let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
+            AstType::Vec(base) => match base {
+                AstBaseType::Byte => {
+                    quote! {
+                        let #rust_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
+                    }
                 }
-            }
+                _ => {
+                    let json_arg_ident =
+                        Ident::new(&format!("json_{}", &arg.name), Span::call_site());
+                    quote! {
+                        let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
+                        let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
+                    }
+                }
+            },
             AstType::Callback => self
                 .java_callback_strategy
                 .arg_convert(arg, trait_desc, callbacks),
@@ -271,6 +279,11 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                         let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                         let json_ret = serde_json::to_string(&ret_value);
                         env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
+                    }
+                }
+                AstBaseType::Byte => {
+                    quote! {
+                        env.byte_array_from_slice(&ret_value).unwrap()
                     }
                 }
                 _ => {
@@ -312,9 +325,15 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
-            AstType::Vec(_base) => match direction {
-                TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
-                TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
+            AstType::Vec(base) => match direction {
+                TypeDirection::Argument => match base {
+                    AstBaseType::Byte => tokens.append(Ident::new("jbyteArray", Span::call_site())),
+                    _ => tokens.append(Ident::new("JString", Span::call_site())),
+                },
+                TypeDirection::Return => match base {
+                    AstBaseType::Byte => tokens.append(Ident::new("jbyteArray", Span::call_site())),
+                    _ => tokens.append(Ident::new("jstring", Span::call_site())),
+                },
             },
             AstType::Struct => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),

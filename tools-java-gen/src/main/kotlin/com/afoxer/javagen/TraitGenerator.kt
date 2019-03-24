@@ -28,7 +28,7 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
         // global properties.
         buildGlobal(builder)
 
-        var selectedCallbacks = mutableListOf<TraitDesc>()
+        val selectedCallbacks = mutableListOf<TraitDesc>()
 
         // normal functions
         val methods = desc.methods;
@@ -36,19 +36,22 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
             val methodSpec = MethodSpec.methodBuilder(method.name)
                     .addModifiers(Modifier.PUBLIC)
                     .addModifiers(Modifier.STATIC)
-            if (method.return_type == AstType.VOID) {
-                //skip
-            } else if (method.return_type == AstType.STRUCT) {
-                methodSpec.returns(ClassName.get(pkg, method.origin_return_ty))
-            } else if (method.return_type == AstType.VEC) {
-                var subType = mapType(method.return_sub_type, method.return_sub_type).box()
-                if (method.return_sub_type == AstType.STRUCT) {
-                    val clsName = method.origin_return_ty.replace("Vec<", "").replace(">", "")
-                    subType = ClassName.get(pkg, clsName)
+            when (method.return_type) {
+                AstType.VOID -> {
+                    //skip
                 }
-                methodSpec.returns(ArrayTypeName.of(subType))
-            } else {
-                methodSpec.returns(mapType(method.return_type, method.return_sub_type))
+                AstType.STRUCT -> methodSpec.returns(ClassName.get(pkg, method.origin_return_ty))
+                AstType.VEC -> {
+                    var subType = mapType(method.return_sub_type, method.return_sub_type)
+                    if (method.return_sub_type == AstType.STRUCT) {
+                        val clsName = method.origin_return_ty.replace("Vec<", "").replace(">", "")
+                        subType = ClassName.get(pkg, clsName)
+                    } else if (method.return_sub_type != AstType.BYTE) {
+                        subType = subType.box()
+                    }
+                    methodSpec.returns(ArrayTypeName.of(subType))
+                }
+                else -> methodSpec.returns(mapType(method.return_type, method.return_sub_type))
             }
 
             val args = method.args
@@ -63,8 +66,13 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                         selectedCallbacks.add(callback[0])
                     }
                 } else if (arg.ty == AstType.VEC) {
-                    val param = ParameterSpec.builder(ArrayTypeName.of(mapType(arg.sub_ty, AstType.VOID)), arg.name)
-                    methodSpec.addParameter(param.build())
+                    if (arg.sub_ty == AstType.BYTE) {
+                        val param = ParameterSpec.builder(mapType(arg.ty, arg.sub_ty), arg.name)
+                        methodSpec.addParameter(param.build())
+                    } else {
+                        val param = ParameterSpec.builder(ArrayTypeName.of(mapType(arg.sub_ty, arg.sub_ty).box()), arg.name)
+                        methodSpec.addParameter(param.build())
+                    }
                 } else {
                     val param = ParameterSpec.builder(mapType(arg.ty, AstType.VOID), arg.name)
                     methodSpec.addParameter(param.build())
@@ -73,25 +81,31 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
 
             // arguments convert
             for (arg in args) {
-                if (arg.ty == AstType.VOID) {
-                    //skip
-                } else if (arg.ty == AstType.CALLBACK) {
-                    methodSpec.addStatement("long ${arg.name}_callback_index = globalIndex.incrementAndGet()")
+                when (arg.ty) {
+                    AstType.VOID -> {
+                        //skip
+                    }
+                    AstType.CALLBACK -> methodSpec.addStatement("long ${arg.name}_callback_index = globalIndex.incrementAndGet()")
                             .addStatement("globalCallbacks.put(${arg.name}_callback_index, ${arg.name})")
                             .addStatement("long r_${arg.name} = ${arg.name}_callback_index")
-                } else if (arg.ty == AstType.BOOLEAN) {
-                    methodSpec.addStatement("int r_${arg.name} = ${arg.name} ? 1 : 0")
-                } else if (arg.ty == AstType.VEC) {
-                    methodSpec.addStatement("String r_${arg.name} = \$T.toJSONString(${arg.name})", ClassName.get("com.alibaba.fastjson", "JSON"))
-                } else {
-                    methodSpec.addStatement("\$T r_${arg.name} = ${arg.name}", mapType(arg.ty, AstType.VOID))
+                    AstType.BOOLEAN -> methodSpec.addStatement("int r_${arg.name} = ${arg.name} ? 1 : 0")
+                    AstType.VEC -> {
+                        when (arg.sub_ty) {
+                            AstType.BYTE -> methodSpec.addStatement("\$T r_${arg.name} = ${arg.name}", mapType(arg.ty, arg.sub_ty))
+                            else -> methodSpec.addStatement("String r_${arg.name} = \$T.toJSONString(${arg.name})", ClassName.get("com.alibaba.fastjson", "JSON"))
+                        }
+                    }
+                    else -> methodSpec.addStatement("\$T r_${arg.name} = ${arg.name}", mapType(arg.ty, AstType.VOID))
                 }
             }
 
             // call native method
-            val subType = mapType(method.return_sub_type, method.return_sub_type)
             val returnType = if (method.return_type == AstType.VEC) {
-                mapType(AstType.STRING, method.return_sub_type, true)
+                if (method.return_sub_type == AstType.BYTE) {
+                    mapType(method.return_type, method.return_sub_type, true)
+                } else {
+                    mapType(AstType.STRING, method.return_sub_type, true)
+                }
             } else if (method.return_type == AstType.STRUCT) {
                 ClassName.get(String::class.java)
             } else {
@@ -120,27 +134,32 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
             }
 
             // return type convert
-            if (method.return_type == AstType.VOID) {
-                // skip
-            } else if (method.return_type == AstType.VEC) {
-                var subType = mapType(method.return_sub_type, method.return_sub_type)
-                if (method.return_sub_type == AstType.STRUCT) {
-                    val clsName = method.origin_return_ty.replace("Vec<", "").replace(">", "")
-                    subType = ClassName.get(pkg, clsName)
+            when (method.return_type) {
+                AstType.VOID -> {
+                    // skip
                 }
-                methodSpec.addStatement("\$T<\$T> list = \$T.parseArray(ret, \$T.class)",
-                        ClassName.get("java.util", "List"), subType.box(),
-                        ClassName.get("com.alibaba.fastjson", "JSON"), subType.box())
-                        .addStatement("\$T[] array = new \$T[list.size()]", subType.box(), subType.box())
-                        .addStatement("return list.toArray(array)")
-            } else if (method.return_type == AstType.BOOLEAN) {
-                methodSpec.addStatement("return ret > 0 ? true : false")
-            } else if (method.return_type == AstType.STRUCT) {
-                methodSpec.addStatement("return \$T.parseObject(ret, \$L.class)",
+                AstType.VEC -> {
+                    var subType = mapType(method.return_sub_type, method.return_sub_type)
+                    if (method.return_sub_type == AstType.STRUCT) {
+                        val clsName = method.origin_return_ty.replace("Vec<", "").replace(">", "")
+                        subType = ClassName.get(pkg, clsName)
+                    }
+
+                    if (method.return_sub_type == AstType.BYTE) {
+                        methodSpec.addStatement("return ret")
+                    } else {
+                        methodSpec.addStatement("\$T<\$T> list = \$T.parseArray(ret, \$T.class)",
+                                ClassName.get("java.util", "List"), subType.box(),
+                                ClassName.get("com.alibaba.fastjson", "JSON"), subType.box())
+                                .addStatement("\$T[] array = new \$T[list.size()]", subType.box(), subType.box())
+                                .addStatement("return list.toArray(array)")
+                    }
+                }
+                AstType.BOOLEAN -> methodSpec.addStatement("return ret > 0 ? true : false")
+                AstType.STRUCT -> methodSpec.addStatement("return \$T.parseObject(ret, \$L.class)",
                         ClassName.get("com.alibaba.fastjson", "JSON"),
-                        method.origin_return_ty);
-            } else {
-                methodSpec.addStatement("return ret");
+                        method.origin_return_ty)
+                else -> methodSpec.addStatement("return ret")
             }
 
             builder.addMethod(methodSpec.build())
@@ -168,10 +187,10 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                         }
                     }
 
-                    if (index == method.args.size - 1) {
-                        argCalls = "${argCalls}j_${arg.name}"
+                    argCalls = if (index == method.args.size - 1) {
+                        "${argCalls}j_${arg.name}"
                     } else {
-                        argCalls = "${argCalls}j_${arg.name},"
+                        "${argCalls}j_${arg.name},"
                     }
                 }
 
@@ -210,12 +229,12 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                     methodBuilder.addCode(CodeBlock.builder().addStatement("\$T result = callback.${method.name}($argCalls)", mapType(method.return_type, method.return_sub_type)).build())
                 }
 
-                if (method.return_type == AstType.BOOLEAN) {
-                    methodBuilder.addStatement("return result ? 1 : 0")
-                } else if (method.return_type == AstType.VOID) {
-                    // skip
-                } else {
-                    methodBuilder.addStatement("return result")
+                when (method.return_type) {
+                    AstType.BOOLEAN -> methodBuilder.addStatement("return result ? 1 : 0")
+                    AstType.VOID -> {
+                        // skip
+                    }
+                    else -> methodBuilder.addStatement("return result")
                 }
 
                 builder.addMethod(methodBuilder.build())
@@ -231,7 +250,7 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
     /**
      *   build global properties and methods.
      */
-     fun buildGlobal(builder: TypeSpec.Builder) {
+    private fun buildGlobal(builder: TypeSpec.Builder) {
         builder.addField(FieldSpec.builder(ClassName.get(AtomicLong::class.java), "globalIndex", Modifier.PRIVATE, Modifier.STATIC)
                 .initializer("new AtomicLong(0)")
                 .build())
@@ -247,40 +266,55 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                 .addParameter(TypeName.LONG, "index")
                 .addCode(CodeBlock.builder().addStatement("globalCallbacks.remove(index)").build())
                 .build())
-     }
+    }
 
     /**
-    * build native methods for accessing .so
-    */
-    fun buildNativeMethods(methods: Array<MethodDesc>, builder: TypeSpec.Builder) {
+     * build native methods for accessing .so
+     */
+    private fun buildNativeMethods(methods: Array<MethodDesc>, builder: TypeSpec.Builder) {
         for (method in methods) {
             val methodSpec = MethodSpec.methodBuilder("native_" + method.name)
                     .addModifiers(Modifier.PRIVATE)
                     .addModifiers(Modifier.STATIC)
                     .addModifiers(Modifier.NATIVE);
-            if(method.return_type == AstType.VOID) {
-                // skip
-            } else if (method.return_type == AstType.VEC) {
-                methodSpec.returns(mapType(AstType.STRING, AstType.VOID, true))
-            } else if (method.return_type == AstType.STRUCT) {
-                methodSpec.returns(ClassName.get(String::class.java))
-            } else {
-                methodSpec.returns(mapType(method.return_type, AstType.VOID, true))
+            when (method.return_type) {
+                AstType.VOID -> {
+                    // skip
+                }
+                AstType.VEC -> {
+                    if (method.return_sub_type == AstType.BYTE) {
+                        methodSpec.returns(mapType(AstType.VEC, AstType.BYTE, true))
+                    } else {
+                        methodSpec.returns(mapType(AstType.STRING, AstType.VOID, true))
+                    }
+                }
+                AstType.STRUCT -> methodSpec.returns(ClassName.get(String::class.java))
+                else -> methodSpec.returns(mapType(method.return_type, AstType.VOID, true))
             }
 
             val args = method.args;
             for (arg in args) {
-                if (arg.ty == AstType.VOID) {
-                    // skip
-                } else if (arg.ty == AstType.CALLBACK) {
-                    val param = ParameterSpec.builder(mapType(AstType.LONG, AstType.VOID, true), arg.name)
-                    methodSpec.addParameter(param.build())
-                } else if (arg.ty == AstType.VEC) {
-                    val param = ParameterSpec.builder(mapType(AstType.STRING, AstType.VOID, true), arg.name)
-                    methodSpec.addParameter(param.build())
-                } else {
-                    val param = ParameterSpec.builder(mapType(arg.ty, AstType.VOID, true), arg.name)
-                    methodSpec.addParameter(param.build())
+                when (arg.ty) {
+                    AstType.VOID -> {
+                        // skip
+                    }
+                    AstType.CALLBACK -> {
+                        val param = ParameterSpec.builder(mapType(AstType.LONG, AstType.VOID, true), arg.name)
+                        methodSpec.addParameter(param.build())
+                    }
+                    AstType.VEC -> {
+                        if (arg.sub_ty == AstType.BYTE) {
+                            val param = ParameterSpec.builder(mapType(arg.ty, arg.sub_ty, true), arg.name)
+                            methodSpec.addParameter(param.build())
+                        } else {
+                            val param = ParameterSpec.builder(mapType(AstType.STRING, AstType.VOID, true), arg.name)
+                            methodSpec.addParameter(param.build())
+                        }
+                    }
+                    else -> {
+                        val param = ParameterSpec.builder(mapType(arg.ty, AstType.VOID, true), arg.name)
+                        methodSpec.addParameter(param.build())
+                    }
                 }
             }
 

@@ -57,7 +57,7 @@ fun mapType(type: AstType, subType: AstType, transfer: Boolean = false): TypeNam
         AstType.DOUBLE -> TypeName.DOUBLE
         AstType.STRING -> ClassName.get("java.lang", "String")
         AstType.VOID -> TypeName.VOID
-        AstType.VEC -> ArrayTypeName.of(mapType(subType, AstType.VOID).box())
+        AstType.VEC -> ArrayTypeName.of(mapType(subType, AstType.VOID))
         else -> TypeName.VOID
     }
 }

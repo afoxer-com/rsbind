@@ -28,6 +28,9 @@ public class MainActivity extends AppCompatActivity {
         byte byteResult2 = TestContract1.test_byte_i8((byte) 3);
         Log.i(TAG, "onCreate: byteResult2 = " + byteResult2);
 
+        byte[] byteArrayResult = TestContract1.test_return_vec_u8(new byte[]{3, 4, 5});
+        Log.i(TAG, "onCreate: byte array result = " + Arrays.toString(byteArrayResult));
+
         TestContract1.test_arg_callback(new Callback() {
             @Override
             public byte on_callback_u8(byte b) {

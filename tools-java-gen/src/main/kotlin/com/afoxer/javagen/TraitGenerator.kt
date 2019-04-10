@@ -62,7 +62,7 @@ class TraitGenerator(val desc: TraitDesc, val pkg: String, val soName: String, v
                     val param = ParameterSpec.builder(ClassName.get(pkg, arg.origin_ty), arg.name)
                     methodSpec.addParameter(param.build())
                     val callback = callbacks.filter { it.name == arg.origin_ty }
-                    if (!selectedCallbacks.contains(callback[0])) {
+                    if (callback.size > 0 && !selectedCallbacks.contains(callback[0])) {
                         selectedCallbacks.add(callback[0])
                     }
                 } else if (arg.ty == AstType.VEC) {

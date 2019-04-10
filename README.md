@@ -6,6 +6,46 @@
 1. [Setup rust environment](/docs/env.md).
 2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
 3. Create a Rust library, which contains two directory, contract and imp. You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
+```rust
+// such as your code in contract dir as below:
+pub trait YourContract {
+    fn test_simple(arg1: i32, arg2: String) -> String;
+    fn test_callback(arg: Box<Callback>);
+    fn test_struct() -> StructSimple;
+}
+
+pub trait Callback {
+    fn on_callback(arg1: i64, arg2: String);
+}
+
+pub struct StructSimple {
+    pub arg3: String,
+    pub arg4: bool,
+}
+
+```rust
+// Your implementation is as below
+pub struct YourImplemetation {}
+
+impl YourContract for YourImplemetation {
+    fn test_simple(arg1: i32, arg2: String) -> String {
+        format!("Your test_simple result is {}_{}", arg1, arg2)
+    }
+
+    fn test_callback(arg: Box<Callback>) {
+        arg.on_callback(123i64, "hello callback".to_owned());
+    }
+
+    fn test_struct() -> StructSimple {
+        StructSimple {
+            arg1: "struct".to_owned(),
+            arg2: true
+        }
+    }
+}
+```
+```
+
 4. Run rsbind command as below. Then the generated code will be in _gen directory and aar/framework will be in target directory.
 
 Rsbind usage:
@@ -17,6 +57,17 @@ rsbind path-of-project android/ios/all ast/bridge/dest/header/build/all
 - dest: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android]_dest).
 - build: build bridge modules and copy output to dest project and then build dest project.
 - all: run all the steps for binding.
+
+5. It will generate java files packaged in aar or swift files packaged in framework, then you can integrated them to your android/iOS project and call the functions.
+For android, you can call like as below:
+```java
+YourContract.test_callback(new Callback(){
+       void on_callback(long arg1, String arg2) {
+           // do your things.
+       }
+})
+```
+Swift is very similar.
 
 # Configuration
 You can create a file named Rsbind.toml to add some configuration.
@@ -87,7 +138,56 @@ pub trait TestContract1 {
 1. [Rust环境搭建](/docs/env.md)
 2. 安装rsbind。```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
 3. 创建rust项目，并在项目的src目录下建立两个module，分别是contract和imp，contract用于存放Android/iOS调用的接口，而imp则是接口的实现。并需要在根目录lib.rs下将两个module开放出来。具体可以参考demo。
+   比如像下面这样：
+```rust
+// such as your code in contract dir as below:
+pub trait YourContract {
+    fn test_simple(arg1: i32, arg2: String) -> String;
+    fn test_callback(arg: Box<Callback>);
+    fn test_struct() -> StructSimple;
+}
+
+pub trait Callback {
+    fn on_callback(arg1: i64, arg2: String);
+}
+
+pub struct StructSimple {
+    pub arg3: String,
+    pub arg4: bool,
+}
+
+```rust
+// Your implementation is as below
+pub struct YourImplemetation {}
+
+impl YourContract for YourImplemetation {
+    fn test_simple(arg1: i32, arg2: String) -> String {
+        format!("Your test_simple result is {}_{}", arg1, arg2)
+    }
+
+    fn test_callback(arg: Box<Callback>) {
+        arg.on_callback(123i64, "hello callback".to_owned());
+    }
+
+    fn test_struct() -> StructSimple {
+        StructSimple {
+            arg1: "struct".to_owned(),
+            arg2: true
+        }
+    }
+}
+```
+```
 4. 执行rsbind命令(具体如下)，那么在A项目的target目录下就有生成的framework了。如果想要看接口，可以在A项目下_gen/[swift/java]_gen下查看文件。
+5. 工具生成的aar或者framework你可以集成到自己的工程中，在android中，你的调用方式类似于这样：
+```java
+YourContract.test_callback(new Callback(){
+       void on_callback(long arg1, String arg2) {
+           // do your things.
+       }
+})
+```
+Swift的调用也差不多。
 
 错误解决：
 执行rsbind，如果有Library not load的错误，在启动项中加入如下该配置即可： export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib:$LD_LIBRARY_PATH

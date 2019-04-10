@@ -22,6 +22,7 @@ pub struct StructSimple {
     pub arg3: String,
     pub arg4: bool,
 }
+```
 
 ```rust
 // Your implementation is as below
@@ -43,7 +44,6 @@ impl YourContract for YourImplemetation {
         }
     }
 }
-```
 ```
 
 4. Run rsbind command as below. Then the generated code will be in _gen directory and aar/framework will be in target directory.
@@ -155,6 +155,7 @@ pub struct StructSimple {
     pub arg3: String,
     pub arg4: bool,
 }
+```
 
 ```rust
 // Your implementation is as below
@@ -177,7 +178,7 @@ impl YourContract for YourImplemetation {
     }
 }
 ```
-```
+
 4. 执行rsbind命令(具体如下)，那么在A项目的target目录下就有生成的framework了。如果想要看接口，可以在A项目下_gen/[swift/java]_gen下查看文件。
 5. 工具生成的aar或者framework你可以集成到自己的工程中，在android中，你的调用方式类似于这样：
 ```java

@@ -50,6 +50,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             use jni::JavaVM;
             use jni::sys::{jint, jlong, jstring, jbyteArray};
             use std::os::raw::c_void;
+            use std::mem;
 
             #[cfg(feature = "rsbind")]
             #[no_mangle]
@@ -230,8 +231,25 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             }
             AstType::Vec(base) => match base {
                 AstBaseType::Byte => {
-                    quote! {
-                        let #rust_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
+                    if arg.origin_ty.contains("i8") {
+                        let tmp_arg_name = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
+                        let tmp_arg_ptr = Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
+                        let tmp_arg_len = Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
+                        let tmp_arg_cap = Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
+                        quote! {
+                            let mut #tmp_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
+                            let #tmp_arg_ptr = #tmp_arg_name.as_mut_ptr();
+                            let #tmp_arg_len = #tmp_arg_name.len();
+                            let #tmp_arg_cap = #tmp_arg_name.capacity();
+                            let #rust_arg_name = unsafe {
+                                std::mem::forget(#tmp_arg_name);
+                                Vec::from_raw_parts(#tmp_arg_ptr as (* mut i8), #tmp_arg_len, #tmp_arg_cap)
+                            };
+                        }
+                    } else {
+                        quote! {
+                            let #rust_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
+                        }
                     }
                 }
                 _ => {
@@ -282,8 +300,21 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     }
                 }
                 AstBaseType::Byte => {
-                    quote! {
-                        env.byte_array_from_slice(&ret_value).unwrap()
+                    if origin_ty.contains("i8") {
+                        quote! {
+                            let ret_value_ptr = ret_value.as_mut_ptr();
+                            let ret_value_len = ret_value.len();
+                            let ret_value_cap = ret_value.capacity();
+                            let tmp_ret_name = unsafe { 
+                                std::mem::forget(ret_value);
+                                Vec::from_raw_parts(ret_value_ptr as (* mut u8), ret_value_len, ret_value_cap)
+                            };
+                            env.byte_array_from_slice(&tmp_ret_name).unwrap()
+                        }
+                    } else {
+                        quote! {
+                            env.byte_array_from_slice(&ret_value).unwrap()
+                        }
                     }
                 }
                 _ => {

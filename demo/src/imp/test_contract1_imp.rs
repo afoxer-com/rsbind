@@ -22,7 +22,9 @@ impl TestContract1 for TestContract1Imp {
     }
 
     fn test_arg_callback(arg: Box<Callback>) -> u8 {
+        // info!("5555555555");
         arg.on_callback(1122i32, "helllllo".to_owned(), false, 2.333, 4.3333);
+        // info!("6666666666");
         arg.on_callback_complex(StructSimple {
             arg1: 0,
             arg2: 1,
@@ -31,6 +33,7 @@ impl TestContract1 for TestContract1Imp {
             arg5: 4.0,
             art6: 5.0,
         });
+        // info!("777777777");
         arg.on_callback_arg_vec(vec![StructSimple {
             arg1: 9,
             arg2: 8,
@@ -39,9 +42,13 @@ impl TestContract1 for TestContract1Imp {
             arg5: 6.0,
             art6: 5.0,
         }]);
+        // info!("888888888888");
         arg.on_callback_arg_vec_simple(vec!["Helllo vec simple".to_owned(), "d".to_owned()]);
+        // info!("999999999999");
         arg.on_callback_u8(76u8);
+        // info!("10101010110");
         arg.on_callback_i8(4i8);
+        // info!("1111111111");
         33u8
     }
 
@@ -89,9 +96,11 @@ impl TestContract1 for TestContract1Imp {
         return vec![3, 4, 5];
     }
 
-    fn test_no_return() {
-        
+    fn test_return_vec_i8(input: Vec<i8>) -> Vec<i8> {
+        return vec![7, 0, 5, 127, -127];
     }
+
+    fn test_no_return() {}
 
     //    fn test_return_callback(arg: bool) -> Box<Callback> {
     //

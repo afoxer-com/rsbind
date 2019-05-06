@@ -28,8 +28,11 @@ public class MainActivity extends AppCompatActivity {
         byte byteResult2 = TestContract1.test_byte_i8((byte) 3);
         Log.i(TAG, "onCreate: byteResult2 = " + byteResult2);
 
-        byte[] byteArrayResult = TestContract1.test_return_vec_u8(new byte[]{3, 4, 5});
+        byte[] byteArrayResult = TestContract1.test_return_vec_u8(new byte[]{(byte)255, 4, 5});
         Log.i(TAG, "onCreate: byte array result = " + Arrays.toString(byteArrayResult));
+
+        byte[] i8ArrayResult = TestContract1.test_return_vec_i8(new byte[]{127, -127, (byte)255});
+        Log.i(TAG, "onCreate: i8 vec result = " + Arrays.toString(i8ArrayResult));
 
         TestContract1.test_arg_callback(new Callback() {
             @Override

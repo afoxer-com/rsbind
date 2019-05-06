@@ -1,3 +1,4 @@
+#[warn(deprecated)]
 error_chain! {
     errors {
         FileError(msg: String) {

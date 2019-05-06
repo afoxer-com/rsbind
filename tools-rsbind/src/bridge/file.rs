@@ -335,6 +335,22 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             AstType::Void => quote! {
                 #imp_ident::#imp_fun_name(#rust_args_repeat);
             },
+            AstType::Vec(base) => {
+                let is_vec_i8 = match base {
+                    AstBaseType::Byte => method.origin_return_ty.contains("i8"),
+                    _ => false
+                };
+
+                if is_vec_i8 {
+                    quote! {
+                        let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                    }
+                } else {
+                    quote! {
+                        let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                    }
+                }
+            }
             _ => quote! {
                 let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
             },

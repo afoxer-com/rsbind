@@ -1,8 +1,8 @@
 use super::gen;
 use ast::AstResult;
-use bridge::BridgeGen::JavaGen;
-use bridge::Unpack;
-use build::BuildProcess;
+use bridges::BridgeGen::JavaGen;
+use bridge::prj::Unpack;
+use process::BuildProcess;
 use config::Config as BuildConfig;
 use errors::ErrorKind::*;
 use errors::*;

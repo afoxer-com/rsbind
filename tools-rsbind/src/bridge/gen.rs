@@ -8,7 +8,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 ///
-/// Strategy for a bridge mod.
+/// Different strategy on generating a bridge mod.
 ///
 pub(crate) trait ModGenStrategy {
     fn mod_name(&self, mod_name: &str) -> String;

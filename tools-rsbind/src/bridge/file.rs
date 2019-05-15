@@ -19,7 +19,9 @@ pub(crate) enum TypeDirection {
     Argument,
     Return,
 }
-
+///
+/// Executor for generationg core files of bridge mod.
+/// 
 pub(crate) struct BridgeFileGen<'a, T: FileGenStrategy> {
     pub out_dir: &'a PathBuf,
     pub trait_descs: &'a Vec<TraitDesc>,
@@ -29,7 +31,7 @@ pub(crate) struct BridgeFileGen<'a, T: FileGenStrategy> {
 }
 
 ///
-/// Strategy for generating bridge files.
+/// Strategy for generating core files in bridge mod.
 ///
 pub(crate) trait FileGenStrategy {
     fn gen_sdk_file(&self, mod_names: &Vec<String>) -> Result<TokenStream>;

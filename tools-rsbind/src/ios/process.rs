@@ -1,8 +1,8 @@
 use super::gen;
 use ast::AstResult;
-use bridge::BridgeGen::CGen;
-use bridge::Unpack;
-use build::BuildProcess;
+use bridges::BridgeGen::CGen;
+use bridge::prj::Unpack;
+use process::BuildProcess;
 use cbindgen;
 use cbindgen::{Config, Language};
 use config::Config as BuildConfig;

@@ -14,7 +14,7 @@ zip = "0.4.2"
 fs_extra = "1.1.0"
 toml = "0.4"
 jni = { git = "https://github.com/prevoty/jni-rs" }
-error-chain = "0.12.0"
+error-chain = "0.12.1"
 
 [dependencies.syn]
 version = "0.14"

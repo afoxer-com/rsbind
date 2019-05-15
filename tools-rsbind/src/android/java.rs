@@ -1,5 +1,5 @@
-use super::file::*;
-use super::java_callback::*;
+use bridge::file::*;
+use super::callback::*;
 use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use ast::imp::desc::*;
 use ast::types::*;

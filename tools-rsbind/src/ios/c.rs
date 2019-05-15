@@ -1,5 +1,5 @@
-use super::c_callback::*;
-use super::file::*;
+use super::callback::*;
+use bridge::file::*;
 use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;

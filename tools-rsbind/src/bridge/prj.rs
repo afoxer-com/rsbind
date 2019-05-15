@@ -6,6 +6,9 @@ use unzip;
 
 const MAGIC_NUM: &'static str = "*521%";
 
+///
+/// Unpack the bridge project for android or iOS.
+/// 
 pub(crate) struct Unpack<'a> {
     pub path: &'a PathBuf,
     pub host_crate: &'a str,
@@ -26,6 +29,7 @@ impl<'a> Unpack<'a> {
         let manifest_text = fs::read_to_string(&manifest_path)
             .map_err(|e| FileError(format!("read rust project Cargo.toml error: {:?}", e)))?;
 
+        // replace the crate name in manifest.
         let replaced =
             manifest_text.replace(&format!("$({}-host_crate)", MAGIC_NUM), &self.host_crate);
         let replaced = replaced.replace(
@@ -33,6 +37,7 @@ impl<'a> Unpack<'a> {
             &self.host_crate.replace("-", "_"),
         );
 
+        // add some features defination.
         let mut feature_defs = String::new();
         for feature in self.features.iter() {
             feature_defs = format!("{}\n", feature);
@@ -42,6 +47,7 @@ impl<'a> Unpack<'a> {
         fs::write(manifest_path, replaced)
             .map_err(|e| FileError(format!("write rust project Cargo.toml error {:?}", e)))?;
 
+        // replace the crate name in lib.rs.
         let lib_file = self.path.join("src").join("lib.rs");
         let lib_text = fs::read_to_string(&lib_file)
             .map_err(|e| FileError(format!("read lib.rs error, {:?}", e)))?;
@@ -52,6 +58,7 @@ impl<'a> Unpack<'a> {
             &format!("$({}-host_crate_underscore)", MAGIC_NUM),
             &self.host_crate.replace("-", "_"),
         );
+        
         fs::write(lib_file, lib_replaced)
             .map_err(|e| FileError(format!("write lib.rs error, {}", e)))?;
 

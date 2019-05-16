@@ -1,4 +1,4 @@
-use super::gen;
+use super::dest;
 use ast::AstResult;
 use bridges::BridgeGen::JavaGen;
 use bridge::prj::Unpack;
@@ -440,7 +440,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         unzip::unzip_to(bin_buf, &self.bin_path).unwrap();
 
         println!("generate java code.");
-        gen::gen_java_code(
+        dest::gen_java_code(
             self.origin_prj_path,
             &self.dest_prj_path,
             &self.ast_path,

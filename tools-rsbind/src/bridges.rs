@@ -8,8 +8,8 @@ use ast::imp::desc::*;
 use ast::AstResult;
 use errors::*;
 use std::path::PathBuf;
-use ios::c;
-use android::java;
+use ios::bridge as ios_bridge;
+use android::bridge as android_bridge;
 use bridge::gen;
 
 pub(crate) enum BridgeGen<'a> {
@@ -61,7 +61,7 @@ impl gen::ModGenStrategy for CGenStrategyImp {
     }
 
     fn sdk_gen(&self, out_dir: &PathBuf, file_name: &str, mod_names: &Vec<String>) -> Result<()> {
-        c::new_gen(out_dir, &vec![], &vec![], &vec![]).gen_sdk_file(file_name, mod_names)
+        ios_bridge::new_gen(out_dir, &vec![], &vec![], &vec![]).gen_sdk_file(file_name, mod_names)
     }
 
     fn file_gen(
@@ -72,7 +72,7 @@ impl gen::ModGenStrategy for CGenStrategyImp {
         struct_descs: &Vec<StructDesc>,
         imp_desc: &Vec<ImpDesc>,
     ) -> Result<()> {
-        c::new_gen(out_dir, trait_descs, struct_descs, imp_desc).gen_one_bridge_file(file_name)
+        ios_bridge::new_gen(out_dir, trait_descs, struct_descs, imp_desc).gen_one_bridge_file(file_name)
     }
 }
 
@@ -86,7 +86,7 @@ impl gen::ModGenStrategy for JavaGenStrategyImp {
     }
 
     fn sdk_gen(&self, out_dir: &PathBuf, file_name: &str, mod_names: &Vec<String>) -> Result<()> {
-        java::new_gen(out_dir, &vec![], &vec![], &vec![], &self.namespace)
+        android_bridge::new_gen(out_dir, &vec![], &vec![], &vec![], &self.namespace)
             .gen_sdk_file(file_name, mod_names)
     }
 
@@ -98,7 +98,7 @@ impl gen::ModGenStrategy for JavaGenStrategyImp {
         struct_descs: &Vec<StructDesc>,
         imp_desc: &Vec<ImpDesc>,
     ) -> Result<()> {
-        java::new_gen(
+        android_bridge::new_gen(
             out_dir,
             trait_descs,
             struct_descs,

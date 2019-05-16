@@ -1,4 +1,4 @@
-use super::gen;
+use super::dest;
 use ast::AstResult;
 use bridges::BridgeGen::CGen;
 use bridge::prj::Unpack;
@@ -352,7 +352,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let ios_template_buf: &[u8] = include_bytes!("res/template_ios.zip");
         unzip::unzip_to(ios_template_buf, &self.dest_prj_path)?;
 
-        gen::gen_swift_code(&self.dest_prj_path, &self.ast_path, &self.bin_path)?;
+        dest::gen_swift_code(&self.dest_prj_path, &self.ast_path, &self.bin_path)?;
 
         Ok(())
     }

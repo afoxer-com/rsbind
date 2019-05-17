@@ -13,23 +13,25 @@ extern crate toml;
 extern crate zip;
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
+extern crate genco;
 
 mod android;
 mod ast;
 mod bridge;
-mod process;
+mod bridges;
 mod cargo;
 mod config;
 mod errors;
 mod ios;
+mod process;
 mod unzip;
-mod bridges;
 
 use android::process::AndroidProcess;
 use ast::AstResult;
-use process::*;
 use errors::*;
 use ios::process::IosProcess;
+use process::*;
 use std::fs;
 use std::path::PathBuf;
 
@@ -234,6 +236,7 @@ impl Bind {
             crate_name,
             ast_result,
             config,
+            ast_result
         );
 
         match self.action {

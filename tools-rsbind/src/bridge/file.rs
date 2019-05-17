@@ -21,7 +21,7 @@ pub(crate) enum TypeDirection {
 }
 ///
 /// Executor for generationg core files of bridge mod.
-/// 
+///
 pub(crate) struct BridgeFileGen<'a, T: FileGenStrategy> {
     pub out_dir: &'a PathBuf,
     pub trait_descs: &'a Vec<TraitDesc>,
@@ -340,7 +340,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             AstType::Vec(base) => {
                 let is_vec_i8 = match base {
                     AstBaseType::Byte => method.origin_return_ty.contains("i8"),
-                    _ => false
+                    _ => false,
                 };
 
                 if is_vec_i8 {

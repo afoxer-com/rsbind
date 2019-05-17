@@ -1,8 +1,7 @@
 use super::dest;
 use ast::AstResult;
-use bridges::BridgeGen::CGen;
 use bridge::prj::Unpack;
-use process::BuildProcess;
+use bridges::BridgeGen::CGen;
 use cbindgen;
 use cbindgen::{Config, Language};
 use config::Config as BuildConfig;
@@ -10,6 +9,7 @@ use errors::ErrorKind::*;
 use errors::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
+use process::BuildProcess;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;

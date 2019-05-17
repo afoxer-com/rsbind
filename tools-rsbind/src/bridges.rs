@@ -1,16 +1,15 @@
-
 //!
 //! module for generate C bridge files.
 //! A C bridge file is exposed to callers of a foreign languages.
 //!
+use android::bridge as android_bridge;
 use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::AstResult;
-use errors::*;
-use std::path::PathBuf;
-use ios::bridge as ios_bridge;
-use android::bridge as android_bridge;
 use bridge::gen;
+use errors::*;
+use ios::bridge as ios_bridge;
+use std::path::PathBuf;
 
 pub(crate) enum BridgeGen<'a> {
     // create_name, ast, bridge_dir
@@ -72,7 +71,8 @@ impl gen::ModGenStrategy for CGenStrategyImp {
         struct_descs: &Vec<StructDesc>,
         imp_desc: &Vec<ImpDesc>,
     ) -> Result<()> {
-        ios_bridge::new_gen(out_dir, trait_descs, struct_descs, imp_desc).gen_one_bridge_file(file_name)
+        ios_bridge::new_gen(out_dir, trait_descs, struct_descs, imp_desc)
+            .gen_one_bridge_file(file_name)
     }
 }
 

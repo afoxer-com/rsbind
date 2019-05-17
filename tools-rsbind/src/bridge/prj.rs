@@ -8,7 +8,7 @@ const MAGIC_NUM: &'static str = "*521%";
 
 ///
 /// Unpack the bridge project for android or iOS.
-/// 
+///
 pub(crate) struct Unpack<'a> {
     pub path: &'a PathBuf,
     pub host_crate: &'a str,
@@ -58,7 +58,7 @@ impl<'a> Unpack<'a> {
             &format!("$({}-host_crate_underscore)", MAGIC_NUM),
             &self.host_crate.replace("-", "_"),
         );
-        
+
         fs::write(lib_file, lib_replaced)
             .map_err(|e| FileError(format!("write lib.rs error, {}", e)))?;
 

@@ -1,6 +1,6 @@
-use bridge::file::*;
 use ast::contract::desc::*;
 use ast::types::*;
+use bridge::file::*;
 use errors::*;
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::TokenStreamExt;

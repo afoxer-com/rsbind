@@ -1,13 +1,13 @@
-use super::dest;
 use ast::AstResult;
-use bridges::BridgeGen::JavaGen;
 use bridge::prj::Unpack;
-use process::BuildProcess;
+use bridges::BridgeGen::JavaGen;
+use android::dest::JavaCodeGen;
 use config::Config as BuildConfig;
 use errors::ErrorKind::*;
 use errors::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
+use process::BuildProcess;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
@@ -31,6 +31,7 @@ pub(crate) struct AndroidProcess<'a> {
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
     config: Option<BuildConfig>,
+    ast: &'a AstResult
 }
 
 impl<'a> AndroidProcess<'a> {
@@ -43,6 +44,7 @@ impl<'a> AndroidProcess<'a> {
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
         config: Option<BuildConfig>,
+        ast: &'a AstResult
     ) -> Self {
         AndroidProcess {
             origin_prj_path,
@@ -53,6 +55,7 @@ impl<'a> AndroidProcess<'a> {
             host_crate_name,
             ast_result,
             config,
+            ast
         }
     }
 }
@@ -434,22 +437,56 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             })?;
         }
 
-        // unpack the javabind bin
-        fs::create_dir_all(&self.bin_path)?;
-        let bin_buf: &[u8] = include_bytes!("res/javabind.zip");
-        unzip::unzip_to(bin_buf, &self.bin_path).unwrap();
-
         println!("generate java code.");
-        dest::gen_java_code(
-            self.origin_prj_path,
-            &self.dest_prj_path,
-            &self.ast_path,
-            &self.bin_path,
-            self.namespace(),
-            self.so_name(),
-            self.ext_libs(),
-        )
-        .unwrap();
+        let parent = self
+            .dest_prj_path
+            .parent()
+            .ok_or(FileError("can't find parent dir for java".to_string()))?;
+        let java_gen_path = parent.join("java_gen");
+        if java_gen_path.exists() {
+            fs::remove_dir_all(&java_gen_path)?;
+        }
+        fs::create_dir_all(&java_gen_path)?;
+        
+        JavaCodeGen{
+            origin_prj: self.origin_prj_path,
+            java_gen_dir: &java_gen_path,
+            ast: &self.ast_result,
+            namespace: self.namespace(),
+            so_name: self.so_name(),
+            ext_libs: self.ext_libs()
+        }.gen_java_code()?;
+
+        // get the output dir string
+        println!("get output dir string");
+        let mut output_dir = self.dest_prj_path
+            .join("rustlib")
+            .join("src")
+            .join("main")
+            .join("java");
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir).unwrap();
+        }
+        fs::create_dir_all(&output_dir).unwrap();
+
+        let namespace = self.namespace();
+        let pkg_split = namespace.split(".").collect::<Vec<&str>>();
+        for pkg_part in pkg_split.iter() {
+           output_dir = output_dir.join(pkg_part);
+        }
+
+        let options = CopyOptions {
+            overwrite: true,
+            skip_exist: false,
+            buffer_size: 1024,
+            copy_inside: true,
+            depth: 65535,
+        };
+
+        fs_extra::copy_items(&vec![java_gen_path], &output_dir, &options)
+            .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))
+            .unwrap();
+
         Ok(())
     }
 

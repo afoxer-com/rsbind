@@ -1,4 +1,3 @@
-#[warn(deprecated)]
 error_chain! {
     errors {
         FileError(msg: String) {
@@ -28,5 +27,6 @@ error_chain! {
         Io(::std::io::Error);
         Toml(::toml::de::Error);
         FsExt(::fs_extra::error::Error);
+        Fmt(::std::fmt::Error);
     }
 }

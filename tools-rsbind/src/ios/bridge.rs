@@ -1,8 +1,8 @@
 use super::callback::*;
-use bridge::file::*;
 use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;
+use bridge::file::*;
 use errors::ErrorKind::*;
 use errors::*;
 use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};

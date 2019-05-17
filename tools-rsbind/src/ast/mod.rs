@@ -19,9 +19,13 @@ pub(crate) struct AstHandler {
     crate_name: String,
 }
 
+/// The ast result after parsing contract and imp directories.
 pub(crate) struct AstResult {
+    /// All the traits in contract directory, key is mod name, value is all traits.
     pub trait_descs: HashMap<String, Vec<TraitDesc>>,
+    /// All the struct in contract directory, key is mod name , value is all structs.
     pub struct_descs: HashMap<String, Vec<StructDesc>>,
+    /// All the implementations.
     pub imp_desc: Vec<ImpDesc>,
 }
 

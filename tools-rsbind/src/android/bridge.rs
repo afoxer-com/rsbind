@@ -1,8 +1,8 @@
-use bridge::file::*;
 use super::callback::*;
 use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use ast::imp::desc::*;
 use ast::types::*;
+use bridge::file::*;
 use errors::ErrorKind::*;
 use errors::*;
 use proc_macro2::{Ident, Span, TokenStream};
@@ -19,7 +19,7 @@ pub(crate) fn new_gen<'a>(
     imp_desc: &'a Vec<ImpDesc>,
     java_namespace: &'a str,
 ) -> BridgeFileGen<'a, JniFileGenStrategy<'a>> {
-    return BridgeFileGen {
+    BridgeFileGen {
         out_dir,
         trait_descs,
         struct_descs,
@@ -30,7 +30,7 @@ pub(crate) fn new_gen<'a>(
                 java_namespace: java_namespace.to_owned(),
             },
         },
-    };
+    }
 }
 
 pub(crate) struct JniFileGenStrategy<'a> {
@@ -232,10 +232,14 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             AstType::Vec(base) => match base {
                 AstBaseType::Byte => {
                     if arg.origin_ty.contains("i8") {
-                        let tmp_arg_name = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-                        let tmp_arg_ptr = Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
-                        let tmp_arg_len = Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
-                        let tmp_arg_cap = Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
+                        let tmp_arg_name =
+                            Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
+                        let tmp_arg_ptr =
+                            Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
+                        let tmp_arg_len =
+                            Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
+                        let tmp_arg_cap =
+                            Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
                         quote! {
                             let mut #tmp_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
                             let #tmp_arg_ptr = #tmp_arg_name.as_mut_ptr();
@@ -305,7 +309,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                             let ret_value_ptr = ret_value.as_mut_ptr();
                             let ret_value_len = ret_value.len();
                             let ret_value_cap = ret_value.capacity();
-                            let tmp_ret_name = unsafe { 
+                            let tmp_ret_name = unsafe {
                                 std::mem::forget(ret_value);
                                 Vec::from_raw_parts(ret_value_ptr as (* mut u8), ret_value_len, ret_value_cap)
                             };

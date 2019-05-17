@@ -3,7 +3,7 @@ use std::convert::From;
 ///
 /// Ast types are bridges between rust origin types and C/Swift/Java types.
 ///
-#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
+#[derive(Debug, Clone, Serialize, Deserialize, Copy, PartialEq)]
 pub(crate) enum AstBaseType {
     Void,
     Byte,
@@ -27,7 +27,10 @@ impl<'a> From<&'a str> for AstBaseType {
             "u64" | "i64" => AstBaseType::Long,
             "str" | "String" => AstBaseType::String,
             "bool" => AstBaseType::Boolean,
+            // Right now, all callbacks are wrapped with Box
             "Box" => AstBaseType::Callback,
+            // If the ident can't recognized, we assume it is a struct,
+            // but if we add enum support, it should be changed.
             _ => AstBaseType::Struct,
         }
     }
@@ -39,7 +42,7 @@ impl From<String> for AstBaseType {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Copy)]
+#[derive(Debug, Clone, Serialize, Deserialize, Copy, PartialEq)]
 pub(crate) enum AstType {
     Void,
     Byte,
@@ -67,7 +70,10 @@ impl<'a> From<&'a str> for AstType {
             "u64" | "i64" => AstType::Long,
             "str" | "String" => AstType::String,
             "bool" => AstType::Boolean,
+            // Right now, all callbacks are wrapped with Box
             "Box" => AstType::Callback,
+            // If the ident can't recognized, we assume it is a struct,
+            // but if we add enum support, it should be changed.
             _ => AstType::Struct,
         }
     }

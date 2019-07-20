@@ -28,5 +28,6 @@ error_chain! {
         Toml(::toml::de::Error);
         FsExt(::fs_extra::error::Error);
         Fmt(::std::fmt::Error);
+        Cbind(cbindgen::Error);
     }
 }

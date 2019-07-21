@@ -34,6 +34,8 @@ use ios::process::IosProcess;
 use process::*;
 use std::fs;
 use std::path::PathBuf;
+use android::config::Android;
+use ios::config::Ios;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
@@ -184,6 +186,11 @@ impl Bind {
         ast_result: &AstResult,
         config: Option<config::Config>,
     ) -> Result<()> {
+        let ios = match config {
+            Some(ref config) => config.ios.clone(),
+            None => Some(Ios::default())
+        };
+
         let ios_process = IosProcess::new(
             &self.prj_path,
             &self.ios_dest_path,
@@ -193,7 +200,7 @@ impl Bind {
             &self.bin_path,
             crate_name,
             &ast_result,
-            config.clone(),
+            ios,
         );
 
         match self.action {
@@ -227,6 +234,11 @@ impl Bind {
         ast_result: &AstResult,
         config: Option<config::Config>,
     ) -> Result<()> {
+        let android = match config {
+            Some(ref config) => config.android.clone(),
+            None => Some(Android::default())
+        };
+
         let android_process = AndroidProcess::new(
             &self.prj_path,
             &self.android_dest_path,
@@ -235,7 +247,7 @@ impl Bind {
             &self.bin_path,
             crate_name,
             ast_result,
-            config,
+            android,
             ast_result
         );
 

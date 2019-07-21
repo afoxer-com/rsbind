@@ -2,7 +2,6 @@ use ast::AstResult;
 use bridge::prj::Unpack;
 use bridges::BridgeGen::JavaGen;
 use android::dest::JavaCodeGen;
-use config::Config as BuildConfig;
 use errors::ErrorKind::*;
 use errors::*;
 use fs_extra;
@@ -14,11 +13,7 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use unzip;
-
-const PHONE_ARCHS: [&str; 2] = ["armv7-linux-androideabi", "arm-linux-androideabi"];
-const PHONE64_ARCHS: [&str; 1] = ["aarch64-linux-android"];
-const X86_ARCHS: [&str; 1] = ["i686-linux-android"];
-const NAMESPACE: &str = "com.afoxer.xxx.ffi";
+use super::config::Android;
 
 const MAGIC_NUM: &'static str = "*521%";
 
@@ -30,7 +25,7 @@ pub(crate) struct AndroidProcess<'a> {
     bin_path: &'a PathBuf,
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
-    config: Option<BuildConfig>,
+    config: Option<Android>,
     ast: &'a AstResult
 }
 
@@ -43,7 +38,7 @@ impl<'a> AndroidProcess<'a> {
         bin_path: &'a PathBuf,
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
-        config: Option<BuildConfig>,
+        config: Option<Android>,
         ast: &'a AstResult
     ) -> Self {
         AndroidProcess {
@@ -62,163 +57,16 @@ impl<'a> AndroidProcess<'a> {
 
 impl<'a> AndroidProcess<'a> {
     fn lib_name(&self) -> String {
-        return format!(
+        format!(
             "lib{}_android_bridge_prj.so",
             &self.host_crate_name.replace("-", "_")
-        );
+        )
     }
-
-    fn namespace(&self) -> String {
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.namespace {
-                    Some(ref namespace) => namespace.to_owned(),
-                    None => NAMESPACE.to_owned(),
-                },
-                None => NAMESPACE.to_owned(),
-            },
-            None => NAMESPACE.to_owned(),
-        }
-    }
-
-    fn rustc_param(&self) -> String {
-        let init = "--features rsbind";
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.rustc_param {
-                    Some(rustc) => format!("{} {}", &rustc, init),
-                    None => init.to_owned(),
-                },
-                None => init.to_owned(),
-            },
-            None => init.to_owned(),
-        }
-    }
-
-    fn release_str(&self) -> String {
-        if self.is_release() {
-            "--release".to_owned()
-        } else {
-            "".to_owned()
-        }
-    }
-
-    fn is_release(&self) -> bool {
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.release {
-                    Some(is_release) => is_release,
-                    None => true,
-                },
-                None => true,
-            },
-            None => true,
-        }
-    }
-
-    fn phone_archs(&self) -> Vec<String> {
-        let default_phone_archs = PHONE_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.arch {
-                    Some(arch) => arch,
-                    None => default_phone_archs,
-                },
-                None => default_phone_archs,
-            },
-            None => default_phone_archs,
-        }
-    }
-
-    fn phone64_archs(&self) -> Vec<String> {
-        let default_phone64_archs = PHONE64_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.arch_64 {
-                    Some(arch) => arch,
-                    None => default_phone64_archs,
-                },
-                None => default_phone64_archs,
-            },
-            None => default_phone64_archs,
-        }
-    }
-
-    fn x86_archs(&self) -> Vec<String> {
-        let default_x86_archs = X86_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.arch_x86 {
-                    Some(arch) => arch,
-                    None => default_x86_archs,
-                },
-                None => default_x86_archs,
-            },
-            None => default_x86_archs,
-        }
-    }
-
-    fn so_name(&self) -> String {
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.so_name {
-                    Some(so_name) => so_name,
-                    None => "ffi".to_owned(),
-                },
-                None => "ffi".to_owned(),
-            },
-            None => "ffi".to_owned(),
-        }
-    }
-
-    fn ext_libs(&self) -> String {
-        let ext_libs = match self.config.clone() {
-            Some(config) => match config.android {
-                Some(android) => match android.ext_lib {
-                    Some(ext_lib) => ext_lib,
-                    None => vec![],
-                },
-                None => vec![],
-            },
-            None => vec![],
-        };
-
-        let mut result = String::new();
-        let mut index = 0;
-        for ext_lib in ext_libs.iter() {
-            if index == 0 {
-                result = ext_lib.to_owned();
-            } else if index < ext_libs.len() {
-                result = format!("{},{}", &result, ext_lib)
-            }
-            index = index + 1;
-        }
-
-        result
-    }
-
-    fn features(&self) -> Vec<String> {
-        match self.config.clone() {
-            Some(config) => match config.android {
-                Some(ios) => match ios.features_def {
-                    Some(features) => features,
-                    None => vec![],
-                },
-                None => vec![],
-            },
-            None => vec![],
+    
+    fn config(&self) -> Android {
+        match self.config {
+            Some(ref config) => config.to_owned(),
+            None => Android::default()
         }
     }
 }
@@ -237,7 +85,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 path: self.bridge_prj_path,
                 host_crate: self.host_crate_name,
                 buf,
-                features: &self.features(),
+                features: &self.config().features(),
             };
 
             unpack.unpack()?;
@@ -249,7 +97,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             self.host_crate_name.to_owned(),
             self.ast_result,
             &bridge_c_src_path,
-            self.namespace(),
+            self.config().namespace(),
         )
         .gen_bridges()
         .unwrap();
@@ -265,44 +113,44 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
     fn build_bridge_prj(&self) -> Result<()> {
         println!("building android bridge project");
 
-        let phone_archs = self.phone_archs();
+        let phone_archs = self.config().phone_archs();
         let mut build_cmds = String::from("true");
         for phone_arch in phone_archs.iter() {
             let tmp = format!(
                 "cargo rustc --target {}  --lib {} --target-dir {} {}",
                 phone_arch,
-                self.release_str(),
+                self.config().release_str(),
                 "target",
-                &self.rustc_param()
+                &self.config().rustc_param()
             );
             build_cmds = format!("{} && {}", &build_cmds, &tmp);
         }
 
-        let phone64_archs = self.phone64_archs();
+        let phone64_archs = self.config().phone64_archs();
         for phone64_arch in phone64_archs.iter() {
             let tmp = format!(
                 "cargo rustc --target {}  --lib {} --target-dir {} {}",
                 phone64_arch,
-                self.release_str(),
+                self.config().release_str(),
                 "target",
-                &self.rustc_param()
+                &self.config().rustc_param()
             );
             build_cmds = format!("{} && {}", &build_cmds, &tmp);
         }
 
-        let x86_archs = self.x86_archs();
+        let x86_archs = self.config().x86_archs();
         for x86_arch in x86_archs.iter() {
             let tmp = format!(
                 "cargo rustc --target {}  --lib {} --target-dir {} {}",
                 x86_arch,
-                self.release_str(),
+                self.config().release_str(),
                 "target",
-                &self.rustc_param()
+                &self.config().rustc_param()
             );
             build_cmds = format!("{} && {}", &build_cmds, &tmp);
         }
 
-        let debug_release = if self.is_release() {
+        let debug_release = if self.config().is_release() {
             "release"
         } else {
             "debug"
@@ -368,7 +216,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
 
         println!("copy output files to android project.");
 
-        let debug_release = if self.is_release() {
+        let debug_release = if self.config().is_release() {
             "release"
         } else {
             "debug"
@@ -397,7 +245,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))?;
             fs::rename(
                 &armeabi_dest.join(&self.lib_name()),
-                &armeabi_dest.join(format!("lib{}.so", &self.so_name())),
+                &armeabi_dest.join(format!("lib{}.so", &self.config().so_name())),
             )?;
         }
 
@@ -428,7 +276,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 ))
             })?;
             let replaced =
-                manifest_text.replace(&format!("$({}-namespace)", MAGIC_NUM), &self.namespace());
+                manifest_text.replace(&format!("$({}-namespace)", MAGIC_NUM), &self.config().namespace());
             fs::write(manifest_path, replaced).map_err(|e| {
                 FileError(format!(
                     "write android dest project AndroidManifest  error {:?}",
@@ -452,9 +300,9 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             origin_prj: self.origin_prj_path,
             java_gen_dir: &java_gen_path,
             ast: &self.ast_result,
-            namespace: self.namespace(),
-            so_name: self.so_name(),
-            ext_libs: self.ext_libs()
+            namespace: self.config().namespace(),
+            so_name: self.config().so_name(),
+            ext_libs: self.config().ext_libs()
         }.gen_java_code()?;
 
         // get the output dir string
@@ -469,7 +317,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         }
         fs::create_dir_all(&output_dir).unwrap();
 
-        let namespace = self.namespace();
+        let namespace = self.config().namespace();
         let pkg_split = namespace.split(".").collect::<Vec<&str>>();
         for pkg_part in pkg_split.iter() {
            output_dir = output_dir.join(pkg_part);

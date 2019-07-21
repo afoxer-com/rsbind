@@ -4,7 +4,6 @@ use bridge::prj::Unpack;
 use bridges::BridgeGen::CGen;
 use cbindgen;
 use cbindgen::{Config, Language};
-use config::Config as BuildConfig;
 use errors::ErrorKind::*;
 use errors::*;
 use fs_extra;
@@ -15,10 +14,9 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use unzip;
+use super::config::Ios;
 
 const IOS_ARCH: &str = "universal";
-const PHONE_ARCHS: [&str; 2] = ["aarch64-apple-ios", "armv7-apple-ios"];
-const SIMULATOR_ARCHS: [&str; 2] = ["i386-apple-ios", "x86_64-apple-ios"];
 
 pub(crate) struct IosProcess<'a> {
     origin_prj_path: &'a PathBuf,
@@ -29,7 +27,7 @@ pub(crate) struct IosProcess<'a> {
     bin_path: &'a PathBuf,
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
-    config: Option<BuildConfig>,
+    config: Option<Ios>,
 }
 
 impl<'a> IosProcess<'a> {
@@ -42,7 +40,7 @@ impl<'a> IosProcess<'a> {
         bin_path: &'a PathBuf,
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
-        config: Option<BuildConfig>,
+        config: Option<Ios>,
     ) -> Self {
         IosProcess {
             origin_prj_path,
@@ -87,86 +85,10 @@ impl<'a> IosProcess<'a> {
         )
     }
 
-    fn rustc_param(&self) -> String {
-        match self.config.clone() {
-            Some(config) => match config.ios {
-                Some(ios) => match ios.rustc_param {
-                    Some(rustc) => rustc,
-                    None => "".to_owned(),
-                },
-                None => "".to_owned(),
-            },
-            None => "".to_owned(),
-        }
-    }
-
-    fn release_str(&self) -> String {
-        if self.is_release() {
-            "--release".to_owned()
-        } else {
-            "".to_owned()
-        }
-    }
-
-    fn is_release(&self) -> bool {
-        match self.config.clone() {
-            Some(config) => match config.ios {
-                Some(ios) => match ios.release {
-                    Some(is_release) => is_release,
-                    None => true,
-                },
-                None => true,
-            },
-            None => true,
-        }
-    }
-
-    fn iphoneos_archs(&self) -> Vec<String> {
-        let default_phone_archs = PHONE_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
-        match self.config.clone() {
-            Some(config) => match config.ios {
-                Some(ios) => match ios.arch_phone {
-                    Some(arch) => arch,
-                    None => default_phone_archs,
-                },
-                None => default_phone_archs,
-            },
-            None => default_phone_archs,
-        }
-    }
-
-    fn simulator_archs(&self) -> Vec<String> {
-        let default_phone_archs = SIMULATOR_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
-        match self.config.clone() {
-            Some(config) => match config.ios {
-                Some(ios) => match ios.arch_simu {
-                    Some(arch) => arch,
-                    None => default_phone_archs,
-                },
-                None => default_phone_archs,
-            },
-            None => default_phone_archs,
-        }
-    }
-
-    fn features(&self) -> Vec<String> {
-        match self.config.clone() {
-            Some(config) => match config.ios {
-                Some(ios) => match ios.features_def {
-                    Some(features) => features,
-                    None => vec![],
-                },
-                None => vec![],
-            },
-            None => vec![],
+    fn config(&self) -> Ios {
+        match self.config {
+            Some(ref config) => config.to_owned(),
+            None => Ios::default()
         }
     }
 }
@@ -183,7 +105,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             path: self.bridge_prj_path,
             host_crate: self.host_crate_name,
             buf,
-            features: &self.features(),
+            features: &self.config().features(),
         };
 
         unpack.unpack()?;
@@ -208,7 +130,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
     fn build_bridge_prj(&self) -> Result<()> {
         println!("run building rust project for iOS");
 
-        let debug_release = if self.is_release() {
+        let debug_release = if self.config().is_release() {
             "release"
         } else {
             "debug"
@@ -225,14 +147,14 @@ impl<'a> BuildProcess for IosProcess<'a> {
             debug_release,
             self.lib_name()
         );
-        let iphoneos_archs = self.iphoneos_archs();
+        let iphoneos_archs = self.config().iphoneos_archs();
         for iphoneos_arch in iphoneos_archs.iter() {
             let tmp = format!(
                 "cargo rustc --target {}  --lib {} --target-dir {} {}",
                 iphoneos_arch,
-                self.release_str(),
+                self.config().release_str(),
                 "target",
-                &self.rustc_param()
+                &self.config().rustc_param()
             );
             build_cmds = format!("{} && {}", &build_cmds, &tmp);
             lipo_cmd = format!(
@@ -244,14 +166,14 @@ impl<'a> BuildProcess for IosProcess<'a> {
             );
         }
 
-        let simulator_archs = self.simulator_archs();
+        let simulator_archs = self.config().simulator_archs();
         for simulator_arch in simulator_archs.iter() {
             let tmp = format!(
                 "cargo rustc --target {}  --lib {} --target-dir {} {}",
                 simulator_arch,
-                self.release_str(),
+                self.config().release_str(),
                 "target",
-                &self.rustc_param()
+                &self.config().rustc_param()
             );
             build_cmds = format!("{} && {}", &build_cmds, &tmp);
             lipo_cmd = format!(
@@ -315,7 +237,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             depth: 65535,
         };
 
-        let debug_release = if self.is_release() {
+        let debug_release = if self.config().is_release() {
             "release"
         } else {
             "debug"

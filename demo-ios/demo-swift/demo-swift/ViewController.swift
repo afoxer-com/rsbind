@@ -9,7 +9,7 @@
 import UIKit
 import rustlib.Swift
 
-class ViewController: UIViewController, Callback{cv 
+class ViewController: UIViewController, Callback{
     func on_callback_u8(arg1: Int8) -> Int8 {
         print("on_callback_u8 \(arg1)")
         return 55

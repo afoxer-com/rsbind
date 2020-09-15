@@ -3,7 +3,7 @@ const SIMULATOR_ARCHS: [&str; 2] = ["i386-apple-ios", "x86_64-apple-ios"];
 
 ///
 /// iOS Configuration struct
-/// 
+///
 #[derive(Clone, Deserialize, Debug)]
 pub struct Ios {
     pub rustc_param: Option<String>,
@@ -15,24 +15,28 @@ pub struct Ios {
 
 impl Default for Ios {
     fn default() -> Self {
-        let arch_phone = Some(PHONE_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|item| item.to_owned())
-            .collect());
-        
-        let arch_simu = Some(SIMULATOR_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|item| item.to_owned())
-            .collect());
+        let arch_phone = Some(
+            PHONE_ARCHS
+                .to_vec()
+                .into_iter()
+                .map(|item| item.to_owned())
+                .collect(),
+        );
+
+        let arch_simu = Some(
+            SIMULATOR_ARCHS
+                .to_vec()
+                .into_iter()
+                .map(|item| item.to_owned())
+                .collect(),
+        );
 
         Self {
             rustc_param: None,
             arch_phone,
             arch_simu,
             release: Some(true),
-            features_def: None
+            features_def: None,
         }
     }
 }

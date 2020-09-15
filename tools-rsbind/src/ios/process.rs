@@ -1,3 +1,4 @@
+use super::config::Ios;
 use super::dest;
 use ast::AstResult;
 use bridge::prj::Unpack;
@@ -14,7 +15,6 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
 use unzip;
-use super::config::Ios;
 
 const IOS_ARCH: &str = "universal";
 
@@ -88,7 +88,7 @@ impl<'a> IosProcess<'a> {
     fn config(&self) -> Ios {
         match self.config {
             Some(ref config) => config.to_owned(),
-            None => Ios::default()
+            None => Ios::default(),
         }
     }
 }

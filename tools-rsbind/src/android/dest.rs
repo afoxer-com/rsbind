@@ -416,7 +416,8 @@ impl<'a> TraitGen<'a> {
                         method.return_type,
                         self.pkg.clone(),
                         method.origin_return_ty.clone(),
-                    ).to_transfer();
+                    )
+                    .to_transfer();
                 }
 
                 let mut arg_calls = String::new();
@@ -424,11 +425,8 @@ impl<'a> TraitGen<'a> {
                 argument.modifiers = vec![];
                 m.arguments.push(argument);
                 for (index, arg) in method.args.iter().enumerate() {
-                    let arg_type = JavaType::new(
-                        arg.ty,
-                        self.pkg.clone(),
-                        arg.origin_ty.clone(),
-                    ).to_transfer();
+                    let arg_type = JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone())
+                        .to_transfer();
                     let mut argument = Argument::new(arg_type, arg.name.clone());
                     argument.modifiers = vec![];
                     m.arguments.push(argument);

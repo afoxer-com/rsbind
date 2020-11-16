@@ -2,6 +2,7 @@
 - This Repository provide tools to build mobile applications in Rust.
 - It generate bindings from a Rust package and packaged to android aar or iOS framework. You don't need to write jni or other ffi code with this tool.
 
+
 # Step by step.
 1. [Setup rust environment](/docs/env.md).
 2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```

@@ -211,6 +211,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             skip_exist: false,
             buffer_size: 1024,
             copy_inside: true,
+            content_only: false,
             depth: 65535,
         };
 
@@ -332,6 +333,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             skip_exist: false,
             buffer_size: 1024,
             copy_inside: true,
+            content_only: false,
             depth: 65535,
         };
 
@@ -365,6 +367,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             skip_exist: false,
             buffer_size: 1024,
             copy_inside: true,
+            content_only: false,
             depth: 65535,
         };
 

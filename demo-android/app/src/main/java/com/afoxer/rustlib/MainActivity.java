@@ -1,4 +1,4 @@
-package com.bytedance.ee.bear.rustlib;
+package com.afoxer.rustlib;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;

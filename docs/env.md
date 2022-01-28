@@ -22,7 +22,7 @@ rustup component add rustfmt --toolchain nightly-x86_64-apple-darwin
 
 ### 安装targes
 ```sh
-rustup target add aarch64-linux-android arm-linux-androideabi armv7-linux-androideabi i686-linux-android
+rustup target add aarch64-linux-android arm-linux-androideabi armv7-linux-androideabi i686-linux-android x86_64-linux-android
 ```
 
 ~~windows & linux~~
@@ -32,10 +32,11 @@ rustup target add aarch64-linux-android arm-linux-androideabi armv7-linux-androi
 ### 安装NDK和SDK 
 ```sh
 brew install coreutils
-brew tap caskroom/cask;\
-brew cask install android-sdk;\
-brew cask install android-ndk
+brew install android-sdk
+brew install android-ndk
 ```
+https://dl.google.com/android/repository/android-ndk-r22b-darwin-x86_64.zip
+
 ### 增加环境变量
 ```sh
 export ANDROID_SDK=/usr/local/share/android-sdk
@@ -62,20 +63,19 @@ sudo ${ANDROID_NDK}/build/tools/make_standalone_toolchain.py \
 ```
 
 ### 增加下面的配置到文件 ~/.cargo/config
-Note: change ndk standalone version to your version
+Note: change ndk path to your own path.
 ```toml
-[target.arm-linux-androideabi]
-linker = "/usr/local/ndk/ndk-standalone-21-armeabi/bin/arm-linux-androideabi-gcc"
-ar = "/usr/local/ndk/ndk-standalone-21-armeabi/bin/arm-linux-androideabi-ar"
-[target.i686-linux-android]
-linker = "/usr/local/ndk/ndk-standalone-21-x86/bin/i686-linux-android-gcc"
-ar = "/usr/local/ndk/ndk-standalone-21-x86/bin/i686-linux-android-ar"
-[target.aarch64-linux-android]
-linker = "/usr/local/ndk/ndk-standalone-21-arm64-v8a/bin/aarch64-linux-android-gcc"
-ar = "/usr/local/ndk/ndk-standalone-21-arm64-v8a/bin/aarch64-linux-android-ar"
 [target.armv7-linux-androideabi]
-linker = "/usr/local/ndk/ndk-standalone-21-armeabi/bin/arm-linux-androideabi-gcc"
-ar = "/usr/local/ndk/ndk-standalone-21-armeabi/bin/arm-linux-androideabi-ar"
+linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi21-clang"
+
+[target.i686-linux-android]
+linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android21-clang"
+
+[target.aarch64-linux-android]
+linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang"
+
+[target.x86_64-linux-android]
+linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android21-clang"
 ```
  
 ### 测试环境是否搭建ok

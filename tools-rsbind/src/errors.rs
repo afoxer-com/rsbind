@@ -29,5 +29,6 @@ error_chain! {
         FsExt(::fs_extra::error::Error);
         Fmt(::std::fmt::Error);
         Cbind(cbindgen::Error);
+        NdkError(ndk_build::error::NdkError);
     }
 }

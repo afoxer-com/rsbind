@@ -15,6 +15,7 @@ extern crate zip;
 extern crate error_chain;
 #[macro_use]
 extern crate genco;
+extern crate ndk_build;
 
 mod android;
 mod ast;

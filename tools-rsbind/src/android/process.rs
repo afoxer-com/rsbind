@@ -1,19 +1,25 @@
-use super::config::Android;
-use android::dest::JavaCodeGen;
-use ast::AstResult;
-use bridge::prj::Unpack;
-use bridges::BridgeGen::JavaGen;
-use errors::ErrorKind::*;
-use errors::*;
-use fs_extra;
-use fs_extra::dir::CopyOptions;
-use process::BuildProcess;
 use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
+
+use fs_extra;
+use fs_extra::dir::CopyOptions;
+use ndk_build::cargo::cargo_ndk;
+use ndk_build::target::Target;
+use syn::__private::str;
+
+use android::dest::JavaCodeGen;
+use ast::AstResult;
+use bridge::prj::Unpack;
+use bridges::BridgeGen::JavaGen;
+use errors::*;
+use errors::ErrorKind::*;
+use process::BuildProcess;
 use unzip;
+
+use super::config::Android;
 
 const MAGIC_NUM: &'static str = "*521%";
 
@@ -99,8 +105,8 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             &bridge_c_src_path,
             self.config().namespace(),
         )
-        .gen_bridges()
-        .unwrap();
+            .gen_bridges()
+            .unwrap();
 
         let _ = Command::new("cargo")
             .arg("fmt")
@@ -113,87 +119,74 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
     fn build_bridge_prj(&self) -> Result<()> {
         println!("building android bridge project");
 
-        let phone_archs = self.config().phone_archs();
-        let mut build_cmds = String::from("true");
-        for phone_arch in phone_archs.iter() {
-            let tmp = format!(
-                "cargo rustc --target {}  --lib {} --target-dir {} {}",
-                phone_arch,
-                self.config().release_str(),
-                "target",
-                &self.config().rustc_param()
-            );
-            build_cmds = format!("{} && {}", &build_cmds, &tmp);
-        }
+        let ndk = ndk_build::ndk::Ndk::from_env()?;
 
-        let phone64_archs = self.config().phone64_archs();
-        for phone64_arch in phone64_archs.iter() {
-            let tmp = format!(
-                "cargo rustc --target {}  --lib {} --target-dir {} {}",
-                phone64_arch,
-                self.config().release_str(),
-                "target",
-                &self.config().rustc_param()
-            );
-            build_cmds = format!("{} && {}", &build_cmds, &tmp);
-        }
+        let mut phone_archs = self.config().phone_archs();
+        let mut phone64_archs = self.config().phone64_archs();
+        let mut x86_archs = self.config().x86_archs();
 
-        let x86_archs = self.config().x86_archs();
-        for x86_arch in x86_archs.iter() {
-            let tmp = format!(
-                "cargo rustc --target {}  --lib {} --target-dir {} {}",
-                x86_arch,
-                self.config().release_str(),
-                "target",
-                &self.config().rustc_param()
-            );
-            build_cmds = format!("{} && {}", &build_cmds, &tmp);
-        }
+        let mut archs = vec![];
+        archs.extend(phone_archs.drain(..));
+        archs.extend(phone64_archs.drain(..));
+        archs.extend(x86_archs.drain(..));
 
-        let debug_release = if self.config().is_release() {
-            "release"
-        } else {
-            "debug"
-        };
+        for arch in archs.iter() {
+            let target = Target::from_rust_triple(arch)?;
+            let mut cargo = cargo_ndk(&ndk, target, 21)?;
+            cargo.arg("rustc")
+                .arg("--target").arg(arch)
+                .arg("--lib")
+                .arg(self.config().release_str())
+                .arg("--target-dir").arg("target")
+                // .arg(&self.config().rustc_param())
+                .current_dir(self.bridge_prj_path);
 
-        let mut strip_cmds = String::from("true");
-        for phone_arch in phone_archs.iter() {
-            let tmp = format!(
-                "arm-linux-androideabi-strip -s target/{}/{}/{}",
-                phone_arch,
-                debug_release,
-                self.lib_name()
-            );
-            strip_cmds = format!("{} && {}", &strip_cmds, &tmp);
-        }
+            // Workaround for https://github.com/rust-windowing/android-ndk-rs/issues/149:
+            // Rust (1.56 as of writing) still requires libgcc during linking, but this does
+            // not ship with the NDK anymore since NDK r23 beta 3.
+            // See https://github.com/rust-lang/rust/pull/85806 for a discussion on why libgcc
+            // is still required even after replacing it with libunwind in the source.
+            // XXX: Add an upper-bound on the Rust version whenever this is not necessary anymore.
+            if ndk.build_tag() > 7272597 {
+                cargo.arg("--");
+                let cargo_apk_link_dir = self
+                    .bridge_prj_path
+                    .join("target")
+                    .join("cargo-apk-temp-extra-link-libraries");
+                std::fs::create_dir_all(&cargo_apk_link_dir)?;
+                let libgccfile = cargo_apk_link_dir.join("libgcc.a");
+                if !libgccfile.exists() {
+                    std::fs::write(libgccfile, "INPUT(-lunwind)")
+                        .expect("Failed to write");
+                }
 
-        for phone64_arch in phone64_archs.iter() {
-            let tmp = format!(
-                "aarch64-linux-android-strip -s target/{}/{}/{}",
-                phone64_arch,
-                debug_release,
-                self.lib_name()
-            );
-            strip_cmds = format!("{} && {}", &strip_cmds, &tmp);
-        }
+                cargo.arg("-L").arg(PathBuf::new().join("target").join("cargo-apk-temp-extra-link-libraries"));
+            }
 
-        let cmds = format!("{} && {}", &build_cmds, &strip_cmds);
+            let output = cargo.output()?;
 
-        println!("run building => {}", &cmds);
+            io::stdout().write_all(&output.stdout)?;
+            io::stderr().write_all(&output.stderr)?;
 
-        let output = Command::new("sh")
-            .arg("-c")
-            .arg(cmds)
-            .current_dir(self.bridge_prj_path)
-            .output()?;
+            let status = cargo.status()?;
+            println!("process '{:?}' finished with: {}", cargo, status);
 
-        io::stdout().write_all(&output.stdout)?;
-        io::stderr().write_all(&output.stderr)?;
+            let debug_release = if self.config().is_release() {
+                "release"
+            } else {
+                "debug"
+            };
+            let strip = ndk.toolchain_bin("strip", target)?;
+            let mut strip_comm = Command::new(strip);
+            let strip_output = strip_comm.arg("-s").arg(format!("target/{}/{}/{}", arch, debug_release, self.lib_name()))
+                .current_dir(self.bridge_prj_path)
+                .output()?;
 
-        if !output.status.success() {
-            return Err(
-                CommandError(format!("run build android rust project build failed. ")).into(),
-            );
+            io::stdout().write_all(&strip_output.stdout)?;
+            io::stderr().write_all(&strip_output.stderr)?;
+
+            let strip_status = strip_comm.status()?;
+            println!("process '{:?}' finished with: {}", strip_comm, strip_status);
         }
 
         Ok(())
@@ -242,6 +235,12 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 .join("main")
                 .join("jniLibs")
                 .join(entry.1);
+            if !armeabi_dest.exists() {
+                std::fs::create_dir_all(&armeabi_dest)?;
+            }
+
+            println!("copying {:?} --> {:?}", armeabi_src, armeabi_dest);
+
             fs_extra::copy_items(&vec![armeabi_src], &armeabi_dest, &options)
                 .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))?;
             fs::rename(
@@ -307,7 +306,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             so_name: self.config().so_name(),
             ext_libs: self.config().ext_libs(),
         }
-        .gen_java_code()?;
+            .gen_java_code()?;
 
         // get the output dir string
         println!("get output dir string");

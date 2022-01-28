@@ -26,6 +26,7 @@ mod errors;
 mod ios;
 mod process;
 mod unzip;
+mod test;
 
 use android::config::Android;
 use android::process::AndroidProcess;

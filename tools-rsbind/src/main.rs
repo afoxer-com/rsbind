@@ -12,7 +12,7 @@ fn main() {
         Some(real) => real,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project java/ios/all ast/bridge/dest/header/build/all"
+                "Usage: rsbind path-to-project android/ios/all ast/bridge/dest/header/build/all"
             );
             process::exit(1);
         }
@@ -29,7 +29,7 @@ fn main() {
         "all" => Target::All,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project java/ios/all ast/bridge/dest/header/build/all"
+                "Usage: rsbind path-to-project android/ios/all ast/bridge/dest/header/build/all"
             );
             process::exit(1);
         }
@@ -39,7 +39,7 @@ fn main() {
         Some(option) => option,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project java/ios/all ast/bridge/dest/header/build/all"
+                "Usage: rsbind path-to-project android/ios/all ast/bridge/dest/header/build/all"
             );
             process::exit(1);
         }

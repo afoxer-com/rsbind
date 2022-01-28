@@ -27,7 +27,7 @@ impl<'a> Unpack<'a> {
 
         let manifest_path = self.path.join("Cargo.toml");
         let manifest_text = fs::read_to_string(&manifest_path)
-            .map_err(|e| FileError(format!("read rust project Cargo.toml error: {:?}", e)))?;
+            .map_err(|e| FileError(format!("read rust project Cargo.toml error: {:?} path = {:?}", e, manifest_path)))?;
 
         // replace the crate name in manifest.
         let replaced =

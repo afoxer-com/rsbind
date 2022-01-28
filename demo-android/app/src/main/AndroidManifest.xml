@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.bytedance.ee.bear.rustlib">
+    package="com.afoxer.rustlib">
 
     <application>
-        <activity android:name=".MainActivity" android:theme="@style/Theme.AppCompat">
+        <activity android:name="com.afoxer.rustlib.MainActivity" android:theme="@style/Theme.AppCompat">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

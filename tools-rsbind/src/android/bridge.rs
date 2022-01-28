@@ -166,7 +166,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
 
         let ret_ty_tokens = self.ty_to_tokens(&method.return_type, TypeDirection::Return)?;
 
-        let method_sig = if arg_names.len() <= 0 {
+        let method_sig = if arg_names.is_empty() {
             match method.return_type {
                 AstType::Void => quote! {
                     #[no_mangle]

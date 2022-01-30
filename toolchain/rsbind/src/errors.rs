@@ -30,5 +30,6 @@ error_chain! {
         Fmt(::std::fmt::Error);
         Cbind(cbindgen::Error);
         NdkError(ndk_build::error::NdkError);
+        NdkBuild(ndk_tool::error::Error);
     }
 }

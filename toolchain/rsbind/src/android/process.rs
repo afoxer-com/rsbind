@@ -16,6 +16,7 @@ use bridge::prj::Unpack;
 use bridges::BridgeGen::JavaGen;
 use errors::ErrorKind::*;
 use errors::*;
+use ndk_tool::{build, BuildConfig};
 use process::BuildProcess;
 use unzip;
 
@@ -130,77 +131,17 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         archs.extend(phone64_archs.drain(..));
         archs.extend(x86_archs.drain(..));
 
-        for arch in archs.iter() {
-            let target = Target::from_rust_triple(arch)?;
-            let mut cargo = cargo_ndk(&ndk, target, 21)?;
-            cargo
-                .arg("rustc")
-                .arg("--target")
-                .arg(arch)
-                .arg("--lib")
-                .arg(self.config().release_str())
-                .arg("--target-dir")
-                .arg("target")
-                // .arg(&self.config().rustc_param())
-                .current_dir(self.bridge_prj_path);
+        let config = BuildConfig {
+            lib_name: self.config().so_name(),
+            arch_list: archs,
+            is_release: self.config().is_release(),
+            target_dir: "target".to_string(),
+            project_dir: self.bridge_prj_path.to_path_buf(),
+            sdk_version: 21
+        };
 
-            // Workaround for https://github.com/rust-windowing/android-ndk-rs/issues/149:
-            // Rust (1.56 as of writing) still requires libgcc during linking, but this does
-            // not ship with the NDK anymore since NDK r23 beta 3.
-            // See https://github.com/rust-lang/rust/pull/85806 for a discussion on why libgcc
-            // is still required even after replacing it with libunwind in the source.
-            // XXX: Add an upper-bound on the Rust version whenever this is not necessary anymore.
-            if ndk.build_tag() > 7272597 {
-                cargo.arg("--");
-                let cargo_apk_link_dir = self
-                    .bridge_prj_path
-                    .join("target")
-                    .join("cargo-apk-temp-extra-link-libraries");
-                std::fs::create_dir_all(&cargo_apk_link_dir)?;
-                let libgccfile = cargo_apk_link_dir.join("libgcc.a");
-                if !libgccfile.exists() {
-                    std::fs::write(libgccfile, "INPUT(-lunwind)").expect("Failed to write");
-                }
+        build(&config)?;
 
-                cargo.arg("-L").arg(
-                    PathBuf::new()
-                        .join("target")
-                        .join("cargo-apk-temp-extra-link-libraries"),
-                );
-            }
-
-            let output = cargo.output()?;
-
-            io::stdout().write_all(&output.stdout)?;
-            io::stderr().write_all(&output.stderr)?;
-
-            let status = cargo.status()?;
-            println!("process '{:?}' finished with: {}", cargo, status);
-
-            let debug_release = if self.config().is_release() {
-                "release"
-            } else {
-                "debug"
-            };
-            let strip = ndk.toolchain_bin("strip", target)?;
-            let mut strip_comm = Command::new(strip);
-            let strip_output = strip_comm
-                .arg("-s")
-                .arg(format!(
-                    "target/{}/{}/{}",
-                    arch,
-                    debug_release,
-                    self.lib_name()
-                ))
-                .current_dir(self.bridge_prj_path)
-                .output()?;
-
-            io::stdout().write_all(&strip_output.stdout)?;
-            io::stderr().write_all(&strip_output.stderr)?;
-
-            let strip_status = strip_comm.status()?;
-            println!("process '{:?}' finished with: {}", strip_comm, strip_status);
-        }
 
         Ok(())
     }

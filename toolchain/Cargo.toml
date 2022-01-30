@@ -1,10 +1,8 @@
 [workspace]
 members = [
-    "tools-swift-gen",
+    "swift-gen",
     "template",
-    "tools-rsbind",
-#    "demo",
-#    "demo-android",
-#    "demo-ios",
+    "rsbind",
+    "ndk-tool",
     "build-script",
 ]

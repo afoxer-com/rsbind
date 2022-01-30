@@ -1,5 +1,5 @@
 # What's this?
-- This Repository provide tools to build mobile applications in Rust.
+- This Repository provide tools to bind rust interface with other language and export library artifact directly.
 - It generate bindings from a Rust package and packaged to android aar or iOS framework. You don't need to write jni or other ffi code with this tool.
 
 

@@ -12,3 +12,4 @@ target
 .iml
 *.xcuserdatad
 local.properties
+.out

@@ -1,0 +1,13 @@
+# Just want to use cargo, you don't need to use it in real project.
+
+[package]
+name = "template"
+version = "0.1.0"
+authors = ["sidney.wang <sidney.wang@foxmail.com>"]
+
+[build-dependencies]
+build-script = {path="../build-script"}
+
+[lib]
+name = "mock_template"
+path = ".mock/lib.rs"

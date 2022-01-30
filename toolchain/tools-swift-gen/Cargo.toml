@@ -1,0 +1,8 @@
+[package]
+name = "tools-swift-gen"
+version = "0.1.0"
+authors = ["sidney.wang <sidney.wang@foxmail.com>"]
+
+[lib]
+name = "mock_swift_gen"
+path = ".mock/lib.rs"

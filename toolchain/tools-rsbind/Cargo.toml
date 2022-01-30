@@ -1,0 +1,33 @@
+[package]
+name = "rsbind"
+version = "0.1.0"
+authors = ["sidney.wang <sidney.wang@foxmail.com>"]
+
+[dependencies]
+quote = "1.0.14"
+proc-macro2 = "1.0.36"
+cbindgen = "0.20.0"
+serde_json = "1.0"
+serde_derive = "1.0"
+serde = "1.0"
+zip = "0.5.13"
+fs_extra = "1.1.0"
+toml = "0.5.1"
+error-chain = "0.12.1"
+ndk-build = "0.4.3"
+genco = {git = "https://github.com/sidneywang/genco", branch="master"}
+tools-swift-gen = {path ="../tools-swift-gen"}
+template = {path="../template"}
+
+[dependencies.syn]
+version = "1.0.84"
+default_features = false
+features = ["parsing", "full", "extra-traits"]
+
+[lib]
+name = "rsbind_core"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rsbind"
+path = "src/main.rs"

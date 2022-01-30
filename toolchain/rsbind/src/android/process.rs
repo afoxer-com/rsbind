@@ -10,7 +10,7 @@ use ndk_build::cargo::cargo_ndk;
 use ndk_build::target::Target;
 use syn::__private::str;
 
-use android::dest::JavaCodeGen;
+use android::artifact::JavaCodeGen;
 use ast::AstResult;
 use bridge::prj::Unpack;
 use bridges::BridgeGen::JavaGen;
@@ -26,7 +26,7 @@ const MAGIC_NUM: &'static str = "*521%";
 
 pub(crate) struct AndroidProcess<'a> {
     origin_prj_path: &'a PathBuf,
-    dest_prj_path: &'a PathBuf,
+    artifact_prj_path: &'a PathBuf,
     bridge_prj_path: &'a PathBuf,
     ast_path: &'a PathBuf,
     bin_path: &'a PathBuf,
@@ -39,7 +39,7 @@ pub(crate) struct AndroidProcess<'a> {
 impl<'a> AndroidProcess<'a> {
     pub fn new(
         origin_prj_path: &'a PathBuf,
-        dest_prj_path: &'a PathBuf,
+        artifact_prj_path: &'a PathBuf,
         bridge_prj_path: &'a PathBuf,
         ast_path: &'a PathBuf,
         bin_path: &'a PathBuf,
@@ -50,7 +50,7 @@ impl<'a> AndroidProcess<'a> {
     ) -> Self {
         AndroidProcess {
             origin_prj_path,
-            dest_prj_path,
+            artifact_prj_path,
             bridge_prj_path,
             ast_path,
             bin_path,
@@ -182,50 +182,50 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
                 continue;
             }
 
-            let armeabi_dest = self
-                .dest_prj_path
+            let armeabi_artifact = self
+                .artifact_prj_path
                 .join("rustlib")
                 .join("src")
                 .join("main")
                 .join("jniLibs")
                 .join(entry.1);
-            if !armeabi_dest.exists() {
-                std::fs::create_dir_all(&armeabi_dest)?;
+            if !armeabi_artifact.exists() {
+                std::fs::create_dir_all(&armeabi_artifact)?;
             }
 
-            println!("copying {:?} --> {:?}", armeabi_src, armeabi_dest);
+            println!("copying {:?} --> {:?}", armeabi_src, armeabi_artifact);
 
-            fs_extra::copy_items(&vec![armeabi_src], &armeabi_dest, &options)
+            fs_extra::copy_items(&vec![armeabi_src], &armeabi_artifact, &options)
                 .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))?;
             fs::rename(
-                &armeabi_dest.join(&self.lib_name()),
-                &armeabi_dest.join(format!("lib{}.so", &self.config().so_name())),
+                &armeabi_artifact.join(&self.lib_name()),
+                &armeabi_artifact.join(format!("lib{}.so", &self.config().so_name())),
             )?;
         }
 
         Ok(())
     }
 
-    fn gen_bind_code(&self) -> Result<()> {
-        // unpack the dest java project
+    fn gen_artifact_code(&self) -> Result<()> {
+        // unpack the artifact java project
         {
             println!("begin unzip android template");
-            if self.dest_prj_path.exists() {
-                fs::remove_dir_all(&self.dest_prj_path).unwrap();
+            if self.artifact_prj_path.exists() {
+                fs::remove_dir_all(&self.artifact_prj_path).unwrap();
             }
-            fs::create_dir_all(&self.dest_prj_path).unwrap();
+            fs::create_dir_all(&self.artifact_prj_path).unwrap();
             let android_template_buf: &[u8] = include_bytes!("res/template_android.zip");
-            unzip::unzip_to(android_template_buf, &self.dest_prj_path).unwrap();
+            unzip::unzip_to(android_template_buf, &self.artifact_prj_path).unwrap();
 
             let manifest_path = self
-                .dest_prj_path
+                .artifact_prj_path
                 .join("rustlib")
                 .join("src")
                 .join("main")
                 .join("AndroidManifest.xml");
             let manifest_text = fs::read_to_string(&manifest_path).map_err(|e| {
                 FileError(format!(
-                    "read android dest project AndroidManifest.xml error: {:?}",
+                    "read android artifact project AndroidManifest.xml error: {:?}",
                     e
                 ))
             })?;
@@ -235,7 +235,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             );
             fs::write(manifest_path, replaced).map_err(|e| {
                 FileError(format!(
-                    "write android dest project AndroidManifest  error {:?}",
+                    "write android artifact project AndroidManifest  error {:?}",
                     e
                 ))
             })?;
@@ -243,7 +243,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
 
         println!("generate java code.");
         let parent = self
-            .dest_prj_path
+            .artifact_prj_path
             .parent()
             .ok_or(FileError("can't find parent dir for java".to_string()))?;
         let java_gen_path = parent.join("java_gen");
@@ -265,7 +265,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         // get the output dir string
         println!("get output dir string");
         let mut output_dir = self
-            .dest_prj_path
+            .artifact_prj_path
             .join("rustlib")
             .join("src")
             .join("main")
@@ -297,22 +297,22 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         Ok(())
     }
 
-    fn build_dest_prj(&self) -> Result<()> {
-        println!("build java dest project.");
+    fn build_artifact_prj(&self) -> Result<()> {
+        println!("build java artifact project.");
 
         let build_cmd = format!("chmod a+x ./gradlew && ./gradlew aR");
 
         let output = Command::new("sh")
             .arg("-c")
             .arg(&build_cmd)
-            .current_dir(self.dest_prj_path)
+            .current_dir(self.artifact_prj_path)
             .output()?;
 
         io::stdout().write_all(&output.stdout)?;
         io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!("run building java dest project failed.")).into());
+            return Err(CommandError(format!("run building java artifact project failed.")).into());
         }
 
         let options = CopyOptions {
@@ -325,7 +325,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         };
 
         let src_arr = self
-            .dest_prj_path
+            .artifact_prj_path
             .join("rustlib")
             .join("build")
             .join("outputs")

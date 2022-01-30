@@ -43,15 +43,15 @@ use std::path::PathBuf;
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
 const AST_DIR: &str = "ast";
-const IOS_PROJ: &str = "ios_dest";
+const IOS_PROJ: &str = "ios_artifact";
 const IOS_BRIDGE_PROJ: &str = "ios_bridge";
 const ANDROID_BRIDGE_PROJ: &str = "android_bridge";
-const ANDROID_PROJ: &str = "android_dest";
+const ANDROID_PROJ: &str = "android_artifact";
 const BIN_DIR: &str = "bin";
 
 pub struct Bind {
     prj_path: PathBuf,
-    ios_dest_path: PathBuf,
+    ios_artifact_path: PathBuf,
     ios_bridge_path: PathBuf,
     android_bridge_path: PathBuf,
     android_dest_path: PathBuf,
@@ -95,8 +95,8 @@ impl Bind {
         // ./_gen/header/
         let header_path = root.join(GEN_DIR_NAME).join(HEADER_NAME);
 
-        // ./_gen/ios_dest/
-        let ios_dest_path = root.join(GEN_DIR_NAME).join(IOS_PROJ);
+        // ./_gen/ios_artifact/
+        let ios_artifact_path = root.join(GEN_DIR_NAME).join(IOS_PROJ);
 
         // ./_gen/ios_bridge
         let ios_bridge_path = root.join(GEN_DIR_NAME).join(IOS_BRIDGE_PROJ);
@@ -107,7 +107,7 @@ impl Bind {
 
         return Bind {
             prj_path: root,
-            ios_dest_path,
+            ios_artifact_path,
             ios_bridge_path,
             android_bridge_path,
             android_dest_path,
@@ -196,7 +196,7 @@ impl Bind {
 
         let ios_process = IosProcess::new(
             &self.prj_path,
-            &self.ios_dest_path,
+            &self.ios_artifact_path,
             &self.ios_bridge_path,
             &self.header_path,
             &self.ast_path,
@@ -209,19 +209,19 @@ impl Bind {
         match self.action {
             Action::GenAst => (),
             Action::GenBridge => ios_process.gen_bridge_src()?,
-            Action::GenBindSrc => ios_process.gen_bind_code()?,
+            Action::GenBindSrc => ios_process.gen_artifact_code()?,
             Action::GenCHeader => ios_process.gen_c_header()?,
             Action::Build => {
                 ios_process.build_bridge_prj()?;
                 ios_process.copy_bridge_outputs()?;
-                ios_process.build_dest_prj()?;
+                ios_process.build_artifact_prj()?;
             }
             Action::All => {
                 ios_process.gen_bridge_src()?;
-                ios_process.gen_bind_code()?;
+                ios_process.gen_artifact_code()?;
                 ios_process.build_bridge_prj()?;
                 ios_process.copy_bridge_outputs()?;
-                ios_process.build_dest_prj()?;
+                ios_process.build_artifact_prj()?;
             }
         }
 
@@ -257,19 +257,19 @@ impl Bind {
         match self.action {
             Action::GenAst => (),
             Action::GenBridge => android_process.gen_bridge_src()?,
-            Action::GenBindSrc => android_process.gen_bind_code()?,
+            Action::GenBindSrc => android_process.gen_artifact_code()?,
             Action::GenCHeader => (),
             Action::Build => {
                 android_process.build_bridge_prj()?;
                 android_process.copy_bridge_outputs()?;
-                android_process.build_dest_prj()?;
+                android_process.build_artifact_prj()?;
             }
             Action::All => {
                 android_process.gen_bridge_src()?;
-                android_process.gen_bind_code()?;
+                android_process.gen_artifact_code()?;
                 android_process.build_bridge_prj()?;
                 android_process.copy_bridge_outputs()?;
-                android_process.build_dest_prj()?;
+                android_process.build_artifact_prj()?;
             }
         };
 

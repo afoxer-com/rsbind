@@ -51,12 +51,12 @@ impl YourContract for YourImplemetation {
 
 Rsbind usage:
 ```sh
-rsbind path-of-project android/ios/all ast/bridge/dest/header/build/all
+rsbind path-of-project android/ios/all ast/bridge/artifact/header/build/all
 ```
 - ast: generate simplified ast files with json format to _gen/ast.
 - bridge: generate c methods to expose our interface to _gen/[ios/android]_bridge.
-- dest: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android]_dest).
-- build: build bridge modules and copy output to dest project and then build dest project.
+- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android]_artifact).
+- build: build bridge modules and copy output to artifact project and then build artifact project.
 - all: run all the steps for binding.
 
 5. It will generate java files packaged in aar or swift files packaged in framework, then you can integrated them to your android/iOS project and call the functions.
@@ -196,14 +196,14 @@ Swift的调用也差不多。
 
 rsbind的使用方式：
 ```sh
-rsbind path-of-project android/ios/all ast/bridge/dest/header/build/all
+rsbind path-of-project android/ios/all ast/bridge/artifact/header/build/all
 ```
 
 - ast：生成简化的ast，并以json保存在_gen/ast中
 - bridge：生成暴露的c接口，并建立一个module放到_gen/[ios/android]_bridge中
-- dest: 生成java、swift的wrapper代码以及c的头文件，并将工程放到_gen/[ios/android]_dest中
+- artifact: 生成java、swift的wrapper代码以及c的头文件，并将工程放到_gen/[ios/android]_artifact中
 - header：单独诚生c header，并放到_gen/header中
-- build: 编译bridge模块生成.a或者.so并拷贝到dest工程，然后编译dest工程生成最终产物。
+- build: 编译bridge模块生成.a或者.so并拷贝到artifact工程，然后编译artifact工程生成最终产物。
 - all: 执行所有的步骤，并生成产物。
 
 # 编译参数配置

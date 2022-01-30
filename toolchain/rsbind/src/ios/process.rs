@@ -1,5 +1,5 @@
 use super::config::Ios;
-use super::dest;
+use super::artifact;
 use ast::AstResult;
 use bridge::prj::Unpack;
 use bridges::BridgeGen::CGen;
@@ -20,7 +20,7 @@ const IOS_ARCH: &str = "universal";
 
 pub(crate) struct IosProcess<'a> {
     origin_prj_path: &'a PathBuf,
-    dest_prj_path: &'a PathBuf,
+    artifact_prj_path: &'a PathBuf,
     bridge_prj_path: &'a PathBuf,
     header_path: &'a PathBuf,
     ast_path: &'a PathBuf,
@@ -44,7 +44,7 @@ impl<'a> IosProcess<'a> {
     ) -> Self {
         IosProcess {
             origin_prj_path,
-            dest_prj_path,
+            artifact_prj_path: dest_prj_path,
             bridge_prj_path,
             header_path,
             ast_path,
@@ -228,7 +228,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         println!("copy output files to swift project.");
 
         let header_file = self.header_path.join("ffi.h");
-        let header_dest = self.dest_prj_path.join("rustlib");
+        let header_dest = self.artifact_prj_path.join("rustlib");
         let options = CopyOptions {
             overwrite: true,
             skip_exist: false,
@@ -254,11 +254,11 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .join(debug_release)
             .join(&self.lib_name());
 
-        let lib_dest = self.dest_prj_path.join("rustlib");
-        fs_extra::copy_items(&vec![lib_file], &lib_dest, &options)
+        let lib_artifact = self.artifact_prj_path.join("rustlib");
+        fs_extra::copy_items(&vec![lib_file], &lib_artifact, &options)
             .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
 
-        fs::rename(&lib_dest.join(&self.lib_name()), &lib_dest.join("ffi.a"))
+        fs::rename(&lib_artifact.join(&self.lib_name()), &lib_artifact.join("ffi.a"))
             .map_err(|e| FileError(format!("rename ffi.a failed. {:?}", e)))?;
 
         println!("copy output files to swift project over.");
@@ -266,25 +266,25 @@ impl<'a> BuildProcess for IosProcess<'a> {
         Ok(())
     }
 
-    fn gen_bind_code(&self) -> Result<()> {
+    fn gen_artifact_code(&self) -> Result<()> {
         println!("begin unzip ios template");
-        if self.dest_prj_path.exists() {
-            fs::remove_dir_all(&self.dest_prj_path)?;
+        if self.artifact_prj_path.exists() {
+            fs::remove_dir_all(&self.artifact_prj_path)?;
         }
-        fs::create_dir_all(&self.dest_prj_path)?;
+        fs::create_dir_all(&self.artifact_prj_path)?;
         let ios_template_buf: &[u8] = include_bytes!("res/template_ios.zip");
-        unzip::unzip_to(ios_template_buf, &self.dest_prj_path)?;
+        unzip::unzip_to(ios_template_buf, &self.artifact_prj_path)?;
 
-        dest::gen_swift_code(&self.dest_prj_path, &self.ast_path, &self.bin_path)?;
+        artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
 
         Ok(())
     }
 
-    fn build_dest_prj(&self) -> Result<()> {
+    fn build_artifact_prj(&self) -> Result<()> {
         println!("run building swift project");
 
         // prj file
-        let prj_file = self.dest_prj_path.join("rustlib.xcodeproj");
+        let prj_file = self.artifact_prj_path.join("rustlib.xcodeproj");
         let prj_file_path = prj_file.canonicalize()?;
         let prj_file_str = prj_file_path
             .to_str()
@@ -349,7 +349,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let output = Command::new("sh")
             .arg("-c")
             .arg(&build_cmd)
-            .current_dir(self.dest_prj_path)
+            .current_dir(self.artifact_prj_path)
             .output()?;
 
         io::stdout().write_all(&output.stdout)?;

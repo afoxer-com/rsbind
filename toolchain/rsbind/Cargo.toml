@@ -15,7 +15,7 @@ fs_extra = "1.1.0"
 toml = "0.5.1"
 error-chain = "0.12.1"
 ndk-build = "0.4.3"
-genco = { git = "https://github.com/sidneywang/genco", branch = "master" }
+rsgen = { git = "https://github.com/sidneywang/genco", branch = "master" }
 swift-gen = { path = "../swift-gen" }
 template = { path = "../template" }
 ndk-tool = { path = "../ndk-tool" }

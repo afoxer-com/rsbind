@@ -26,7 +26,7 @@ pub fn build(config: &BuildConfig) -> Result<()> {
 
     let ndk = ndk_build::ndk::Ndk::from_env()?;
 
-    let mut archs = &config.arch_list;
+    let archs = &config.arch_list;
 
     for arch in archs.iter() {
         let target = Target::from_rust_triple(arch)?;

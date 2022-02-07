@@ -69,11 +69,17 @@ pub enum Target {
 }
 
 pub enum Action {
+    /// Parse src/contract and src/imp, generate simplified ast json file to _gen/ast.
     GenAst,
+    /// Generate rust bridge code to _gen/ios_bridge or _gen/android_bridge, for iOS it's c ffi functions, for android it's jni ffi functions.
     GenBridge,
-    GenBindSrc,
+    /// Generate code in artifact(iOS framework or android aar)
+    GenArtifactCode,
+    // Generate c header file
     GenCHeader,
-    Build,
+    // Build and generate artifact.
+    BuildArtifact,
+    // Do all the process and generate artifacts.
     All,
 }
 
@@ -101,6 +107,7 @@ impl Bind {
         // ./_gen/ios_bridge
         let ios_bridge_path = root.join(GEN_DIR_NAME).join(IOS_BRIDGE_PROJ);
 
+        // ./_gen/android_bridge
         let android_bridge_path = root.join(GEN_DIR_NAME).join(ANDROID_BRIDGE_PROJ);
 
         let android_dest_path = root.join(GEN_DIR_NAME).join(ANDROID_PROJ);
@@ -155,7 +162,7 @@ impl Bind {
 
     fn get_ast_if_need(&self, crate_name: String) -> Result<AstResult> {
         match self.action {
-            Action::GenBridge | Action::GenBindSrc | Action::All => {
+            Action::GenBridge | Action::GenArtifactCode | Action::All => {
                 self.parse_ast(crate_name.clone())
             }
             _ => {
@@ -209,9 +216,9 @@ impl Bind {
         match self.action {
             Action::GenAst => (),
             Action::GenBridge => ios_process.gen_bridge_src()?,
-            Action::GenBindSrc => ios_process.gen_artifact_code()?,
+            Action::GenArtifactCode => ios_process.gen_artifact_code()?,
             Action::GenCHeader => ios_process.gen_c_header()?,
-            Action::Build => {
+            Action::BuildArtifact => {
                 ios_process.build_bridge_prj()?;
                 ios_process.copy_bridge_outputs()?;
                 ios_process.build_artifact_prj()?;
@@ -257,9 +264,9 @@ impl Bind {
         match self.action {
             Action::GenAst => (),
             Action::GenBridge => android_process.gen_bridge_src()?,
-            Action::GenBindSrc => android_process.gen_artifact_code()?,
+            Action::GenArtifactCode => android_process.gen_artifact_code()?,
             Action::GenCHeader => (),
-            Action::Build => {
+            Action::BuildArtifact => {
                 android_process.build_bridge_prj()?;
                 android_process.copy_bridge_outputs()?;
                 android_process.build_artifact_prj()?;

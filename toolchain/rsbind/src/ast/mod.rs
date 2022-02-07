@@ -38,8 +38,8 @@ impl AstHandler {
         let imp_dir_path = origin_prj_path.join(IMP_DIR);
         let imp_desc = imp::parser::parse_dir(&imp_dir_path)?;
 
-        let mut trait_descs = HashMap::new();
-        let mut struct_descs = HashMap::new();
+        let mut trait_desc_map = HashMap::new();
+        let mut struct_desc_map = HashMap::new();
         let contract_dir_path = origin_prj_path.join(CONTRACT_DIR);
         let contract_dir = fs::read_dir(&contract_dir_path)?;
         for file in contract_dir {
@@ -58,13 +58,13 @@ impl AstHandler {
                 .unwrap()
                 .to_string();
             let results = contract::parser::parse(self.crate_name.clone(), &path).unwrap();
-            trait_descs.insert(mod_name.to_owned(), results.0);
-            struct_descs.insert(mod_name.to_owned(), results.1);
+            trait_desc_map.insert(mod_name.to_owned(), results.0);
+            struct_desc_map.insert(mod_name.to_owned(), results.1);
         }
 
         Ok(AstResult {
-            trait_descs,
-            struct_descs,
+            trait_descs: trait_desc_map,
+            struct_descs: struct_desc_map,
             imp_desc,
         })
     }
@@ -73,8 +73,8 @@ impl AstHandler {
 impl AstResult {
     pub(crate) fn flush(self, ast_dir: &PathBuf) -> Result<Self> {
         for each_mod in self.trait_descs.iter() {
-            let trait_descs = each_mod.1;
-            for trait_desc in trait_descs {
+            let trait_desc_list = each_mod.1;
+            for trait_desc in trait_desc_list {
                 let json =
                     serde_json::to_string(trait_desc).map_err(|e| GenerateError(e.to_string()))?;
 
@@ -88,8 +88,8 @@ impl AstResult {
         }
 
         for each_mod in self.struct_descs.iter() {
-            let struct_descs = each_mod.1;
-            for struct_desc in struct_descs {
+            let struct_desc_list = each_mod.1;
+            for struct_desc in struct_desc_list {
                 let json =
                     serde_json::to_string(struct_desc).map_err(|e| GenerateError(e.to_string()))?;
 

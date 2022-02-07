@@ -48,9 +48,9 @@ fn main() {
     let action_enum = match action.as_ref() {
         "ast" => Action::GenAst,
         "bridge" => Action::GenBridge,
-        "artifact" => Action::GenBindSrc,
+        "artifact" => Action::GenArtifactCode,
         "header" => Action::GenCHeader,
-        "build" => Action::Build,
+        "build" => Action::BuildArtifact,
         "all" => Action::All,
         _ => {
             eprintln!(

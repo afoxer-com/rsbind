@@ -65,10 +65,10 @@ impl<'a> JavaCodeGen<'a> {
                         ext_libs: self.ext_libs.clone(),
                         callbacks: callbacks.clone(),
                     };
-                    let strs = gen.gen()?;
+                    let str = gen.gen()?;
                     let file_name = format!("{}.java", &each.name);
                     let path = self.java_gen_dir.clone().join(file_name);
-                    fs::write(path, strs)?;
+                    fs::write(path, str)?;
                 }
             }
         }

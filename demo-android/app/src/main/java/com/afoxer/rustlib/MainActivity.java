@@ -1,7 +1,7 @@
 package com.afoxer.rustlib;
 
+import android.app.Activity;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
 import com.afoxer.xxx.ffi.Callback;
@@ -11,7 +11,7 @@ import com.afoxer.xxx.ffi.TestContract1;
 import java.util.Arrays;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
 
     @Override

@@ -75,11 +75,11 @@ pub enum Action {
     GenBridge,
     /// Generate code in artifact(iOS framework or android aar)
     GenArtifactCode,
-    // Generate c header file
+    /// Generate c header file
     GenCHeader,
-    // Build and generate artifact.
+    /// Build and generate artifact.
     BuildArtifact,
-    // Do all the process and generate artifacts.
+    /// Do all the process and generate artifacts.
     All,
 }
 
@@ -112,7 +112,7 @@ impl Bind {
 
         let android_dest_path = root.join(GEN_DIR_NAME).join(ANDROID_PROJ);
 
-        return Bind {
+        Bind {
             prj_path: root,
             ios_artifact_path,
             ios_bridge_path,
@@ -123,7 +123,7 @@ impl Bind {
             bin_path,
             target,
             action,
-        };
+        }
     }
 
     ///
@@ -135,15 +135,12 @@ impl Bind {
 
         let crate_name = self.parse_crate_name()?;
 
-        match self.action {
-            Action::GenAst => {
-                self.parse_ast(crate_name.clone())?;
-                return Ok(());
-            }
-            _ => (),
+        if let Action::GenAst = self.action {
+            self.parse_ast(crate_name.clone())?;
+            return Ok(());
         }
 
-        Ok(match self.target {
+        match self.target {
             Target::Ios => {
                 let ast = &self.get_ast_if_need(crate_name.clone())?;
                 self.gen_for_ios(&crate_name, ast, config.clone())?;
@@ -157,7 +154,8 @@ impl Bind {
                 self.gen_for_ios(&crate_name, &ast_result, config.clone())?;
                 self.gen_for_android(&crate_name, &ast_result, config.clone())?;
             }
-        })
+        };
+        Ok(())
     }
 
     fn get_ast_if_need(&self, crate_name: String) -> Result<AstResult> {
@@ -183,9 +181,9 @@ impl Bind {
             fs::remove_dir_all(&self.ast_path)?;
         }
         fs::create_dir_all(&self.ast_path)?;
-        return ast::AstHandler::new(crate_name)
+        ast::AstHandler::new(crate_name)
             .parse(&prj_path)?
-            .flush(&self.ast_path);
+            .flush(&self.ast_path)
     }
 
     ///

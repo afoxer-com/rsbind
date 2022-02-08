@@ -3,7 +3,8 @@
     package="com.afoxer.rustlib">
 
     <application>
-        <activity android:name="com.afoxer.rustlib.MainActivity" android:theme="@style/Theme.AppCompat">
+        <activity android:name="com.afoxer.rustlib.MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

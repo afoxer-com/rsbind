@@ -1,1 +1,3 @@
 include ':app'
+include ':rustlib'
+project(":rustlib").projectDir = file("rustlib/_gen/android_artifact/rustlib")

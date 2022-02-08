@@ -152,6 +152,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         copy_map.insert("armv7-linux-androideabi", "armeabi-v7a");
         copy_map.insert("aarch64-linux-android", "arm64-v8a");
         copy_map.insert("i686-linux-android", "x86");
+        copy_map.insert("x86_64-linux-android", "x86_64");
 
         let options = CopyOptions {
             overwrite: true,

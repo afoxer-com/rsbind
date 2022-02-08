@@ -1,0 +1,1 @@
+cargo run --manifest-path ../toolchain/rsbind/Cargo.toml rustlib  android all

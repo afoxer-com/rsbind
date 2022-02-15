@@ -132,12 +132,14 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         archs.extend(x86_archs.drain(..));
 
         let config = BuildConfig {
-            lib_name: self.config().so_name(),
+            lib_name: self.lib_name(),
             arch_list: archs,
             is_release: self.config().is_release(),
             target_dir: "target".to_string(),
             project_dir: self.bridge_prj_path.to_path_buf(),
-            sdk_version: 21
+            sdk_version: 21,
+            rustc_param: self.config().rustc_param(),
+            features_def: self.config().features(),
         };
 
         build(&config)?;

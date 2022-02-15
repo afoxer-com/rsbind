@@ -50,7 +50,7 @@ impl Default for Android {
 
         Self {
             ndk_stand_alone: None,
-            rustc_param: Some("--features rsbind".to_owned()),
+            rustc_param: None,
             arch,
             arch_64,
             arch_x86,
@@ -72,10 +72,9 @@ impl Android {
     }
 
     pub fn rustc_param(&self) -> String {
-        let init = "--features rsbind";
         match self.rustc_param {
-            Some(ref rustc) => format!("{} {}", rustc, init),
-            None => init.to_owned(),
+            Some(ref rustc) => rustc.to_owned(),
+            None => "".to_owned(),
         }
     }
 
@@ -162,8 +161,12 @@ impl Android {
 
     pub fn features(&self) -> Vec<String> {
         match self.features_def {
-            Some(ref features) => features.to_owned(),
-            None => vec![],
+            Some(ref features) => {
+                let mut all_features = features.clone();
+                all_features.extend(vec!["rsbind".to_owned()]);
+                all_features
+            },
+            None => vec!["rsbind".to_owned()],
         }
     }
 }

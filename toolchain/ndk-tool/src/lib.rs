@@ -19,6 +19,8 @@ pub struct BuildConfig {
     pub target_dir: String,
     pub project_dir: PathBuf,
     pub sdk_version: u32,
+    pub rustc_param: String,
+    pub features_def: Vec<String>,
 }
 
 pub fn build(config: &BuildConfig) -> Result<()> {
@@ -37,12 +39,15 @@ pub fn build(config: &BuildConfig) -> Result<()> {
             .arg(arch)
             .arg("--lib")
             .arg("--target-dir")
-            .arg(&config.target_dir)
-            // .arg(&self.config().rustc_param())
-            .current_dir(&config.project_dir);
+            .arg(&config.target_dir);
 
         if config.is_release {
             cargo.arg("--release");
+        }
+
+        if !config.features_def.is_empty() {
+            let features = config.features_def.join(",");
+            cargo.arg("--features").arg(features);
         }
 
         // Workaround for https://github.com/rust-windowing/android-ndk-rs/issues/149:
@@ -67,15 +72,20 @@ pub fn build(config: &BuildConfig) -> Result<()> {
                     .join("target")
                     .join("cargo-apk-temp-extra-link-libraries"),
             );
+
+            if !config.rustc_param.is_empty() {
+                cargo.arg(&config.rustc_param);
+            }
         }
 
-        let output = cargo.output()?;
-
-        io::stdout().write_all(&output.stdout)?;
-        io::stderr().write_all(&output.stderr)?;
+        cargo.current_dir(&config.project_dir);
 
         let status = cargo.status()?;
         println!("process '{:?}' finished with: {}", cargo, status);
+
+        // let cargo_output = cargo.output()?;
+        // io::stdout().write_all(&cargo_output.stderr)?;
+        // io::stdout().write_all(&cargo_output.stdout)?;
 
         let debug_release = if config.is_release {
             "release"
@@ -93,8 +103,8 @@ pub fn build(config: &BuildConfig) -> Result<()> {
             .current_dir(&config.project_dir)
             .output()?;
 
-        io::stdout().write_all(&strip_output.stdout)?;
-        io::stderr().write_all(&strip_output.stderr)?;
+        // io::stdout().write_all(&strip_output.stderr)?;
+        // io::stdout().write_all(&strip_output.stdout)?;
 
         let strip_status = strip_comm.status()?;
         println!("process '{:?}' finished with: {}", strip_comm, strip_status);
@@ -123,6 +133,8 @@ mod tests {
             target_dir: "target".to_string(),
             project_dir: Path::new(".").to_path_buf(),
             sdk_version: 21,
+            rustc_param: "--features rsbind".to_owned(),
+            features_def: vec![]
         };
         build(&config).unwrap()
     }

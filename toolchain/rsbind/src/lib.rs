@@ -110,14 +110,14 @@ impl Bind {
         // ./_gen/android_bridge
         let android_bridge_path = root.join(GEN_DIR_NAME).join(ANDROID_BRIDGE_PROJ);
 
-        let android_dest_path = root.join(GEN_DIR_NAME).join(ANDROID_PROJ);
+        let android_artifact_path = root.join(GEN_DIR_NAME).join(ANDROID_PROJ);
 
         Bind {
             prj_path: root,
             ios_artifact_path,
             ios_bridge_path,
             android_bridge_path,
-            android_dest_path,
+            android_dest_path: android_artifact_path,
             header_path,
             ast_path,
             bin_path,

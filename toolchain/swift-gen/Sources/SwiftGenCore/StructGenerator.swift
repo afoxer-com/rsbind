@@ -19,7 +19,7 @@ class StructGenerator {
     
     public func generate() -> StructSpecBuilder {
         let classBuilder = StructSpecBuilder.init(name: "\(self.structDesc.name)")
-            .add(import: self.libModName)
+//             .add(import: self.libModName)
             .add(modifier: .Public)
             .add(superType: TypeName.init(keyword: "Codable"))
         

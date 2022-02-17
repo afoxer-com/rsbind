@@ -258,8 +258,8 @@ impl<'a> BuildProcess for IosProcess<'a> {
         fs_extra::copy_items(&vec![lib_file], &lib_artifact, &options)
             .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
 
-        fs::rename(&lib_artifact.join(&self.lib_name()), &lib_artifact.join("ffi.a"))
-            .map_err(|e| FileError(format!("rename ffi.a failed. {:?}", e)))?;
+        fs::rename(&lib_artifact.join(&self.lib_name()), &lib_artifact.join("libFfi.a"))
+            .map_err(|e| FileError(format!("rename libFfi.a failed. {:?}", e)))?;
 
         println!("copy output files to swift project over.");
 

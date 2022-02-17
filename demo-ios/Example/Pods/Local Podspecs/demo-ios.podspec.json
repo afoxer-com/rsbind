@@ -1,0 +1,36 @@
+{
+  "name": "demo-ios",
+  "version": "0.1.0",
+  "summary": "A short description of demo-ios.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/sidneywang/demo-ios",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "sidneywang": "sidney.wang@foxmail.com"
+  },
+  "source": {
+    "git": "https://github.com/sidneywang/demo-ios.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "9.0"
+  },
+  "source_files": [
+    "demo-ios/Classes/**/*",
+    "rustlib/_gen/ios_artifact/rustlib/*.{swift,m}"
+  ],
+  "subspecs": [
+    {
+      "name": "rustlib",
+      "vendored_libraries": "rustlib/_gen/ios_artifact/rustlib/*.a",
+      "source_files": "rustlib/_gen/ios_artifact/rustlib/*.h",
+      "public_header_files": "rustlib/_gen/ios_artifact/rustlib/*.h",
+      "xcconfig": {
+        "HEADER_SEARCH_PATHS": "\"rustlib/_gen/ios_artifact/rustlib/\""
+      }
+    }
+  ]
+}

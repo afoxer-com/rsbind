@@ -219,14 +219,16 @@ impl Bind {
             Action::BuildArtifact => {
                 ios_process.build_bridge_prj()?;
                 ios_process.copy_bridge_outputs()?;
-                ios_process.build_artifact_prj()?;
+                // we don't generate artifact now. TODO generate cocoapods lib
+                // ios_process.build_artifact_prj()?;
             }
             Action::All => {
                 ios_process.gen_bridge_src()?;
                 ios_process.gen_artifact_code()?;
                 ios_process.build_bridge_prj()?;
                 ios_process.copy_bridge_outputs()?;
-                ios_process.build_artifact_prj()?;
+                // we don't generate artifact now. TODO generate cocoapods lib
+                // ios_process.build_artifact_prj()?;
             }
         }
 

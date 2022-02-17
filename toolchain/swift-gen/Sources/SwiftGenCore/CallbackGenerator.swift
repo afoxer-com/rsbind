@@ -18,7 +18,7 @@ class CallbackGenerator {
     
     public func generate() -> ProtocolSpecBuilder {
         let classBuilder = ProtocolSpec.builder(for: "\(self.traitDesc.name)")
-            .add(import: self.libModName)
+//             .add(import: self.libModName)
             .add(modifier: .Public)
         
         for method in self.traitDesc.methods {

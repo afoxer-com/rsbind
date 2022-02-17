@@ -21,7 +21,7 @@ class TraitGenerator {
         print("generate swift begin for \(callbacks)")
         
         let classBuilder = ClassSpec.builder(for: "\(self.traitDesc.name)")
-            .add(import: self.libModName)
+//             .add(import: self.libModName)
             .add(modifier: .Public);
         
         for method in self.traitDesc.methods {

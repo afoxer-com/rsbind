@@ -1,0 +1,18 @@
+PODS:
+  - demo-ios (0.1.0):
+    - demo-ios/rustlib (= 0.1.0)
+  - demo-ios/rustlib (0.1.0)
+
+DEPENDENCIES:
+  - demo-ios (from `../`)
+
+EXTERNAL SOURCES:
+  demo-ios:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  demo-ios: 8ce6a6bbb8438be1f46f958ce4223d5bc2243371
+
+PODFILE CHECKSUM: c7024e42b23375e3a9df60d46abea786345a4661
+
+COCOAPODS: 1.11.2

@@ -23,3 +23,13 @@ jobs:
     - name: Build-Demo
       run: cd demo-android && pwd && ./gradlew assembleDebug
     
+  build-ios:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build-Rust
+      run: cd demo-ios/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . ios all
+ #   - name: Build-Demo
+ #     run: cd ../Example && pod install && xcodebuild build -workspace demo-ios.xcworkspace -scheme demo-ios-Example

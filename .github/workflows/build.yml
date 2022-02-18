@@ -16,8 +16,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Setup-Env
+      run: rustup target add aarch64-linux-android arm-linux-androideabi armv7-linux-androideabi i686-linux-android x86_64-linux-android
     - name: Build-Rust
-      run: cd demo-android/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . android all
+      run: cd demo-android/rustlib && pwd && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . android all
     - name: Build-Demo
-      run: cd .. && ./gredlew assembleDebug
+      run: cd demo-android && pwd && ./gredlew assembleDebug
     

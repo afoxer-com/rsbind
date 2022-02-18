@@ -195,11 +195,11 @@
 			);
 			inputPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-demo-ios_Example/Pods-demo-ios_Example-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/demo-ios/demo_ios.framework",
+				"${BUILT_PRODUCTS_DIR}/rustlib/rustlib.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/demo_ios.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/rustlib.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

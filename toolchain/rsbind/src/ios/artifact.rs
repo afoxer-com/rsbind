@@ -43,7 +43,7 @@ pub fn gen_swift_code(prj_dir: &PathBuf, ast_dir: &PathBuf, bin_dir: &PathBuf) -
         .to_str()
         .ok_or(FileError("get swift gen dir str wrong.".to_string()))?;
 
-    let output_dir_tmp = prj_dir.join("rustlib").canonicalize().unwrap();
+    let output_dir_tmp = prj_dir.join("rustlib").join("Classes").canonicalize().unwrap();
     let output_dir_str = output_dir_tmp
         .to_str()
         .ok_or(FileError("get swift dir path string error.".to_string()))?;

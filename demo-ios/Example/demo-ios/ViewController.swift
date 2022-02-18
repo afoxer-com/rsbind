@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import demo_ios
+import rustlib
 
 class ViewController: UIViewController, Callback{
     func on_callback_u8(arg1: Int8) -> Int8 {

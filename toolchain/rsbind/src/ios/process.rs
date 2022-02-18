@@ -228,7 +228,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         println!("copy output files to swift project.");
 
         let header_file = self.header_path.join("ffi.h");
-        let header_dest = self.artifact_prj_path.join("rustlib");
+        let header_dest = self.artifact_prj_path.join("rustlib").join("Classes");
         let options = CopyOptions {
             overwrite: true,
             skip_exist: false,
@@ -254,7 +254,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .join(debug_release)
             .join(&self.lib_name());
 
-        let lib_artifact = self.artifact_prj_path.join("rustlib");
+        let lib_artifact = self.artifact_prj_path.join("rustlib").join("Libraries");
         fs_extra::copy_items(&vec![lib_file], &lib_artifact, &options)
             .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
 
@@ -280,6 +280,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         Ok(())
     }
 
+    /// No more framework any more.
     fn build_artifact_prj(&self) -> Result<()> {
         println!("run building swift project");
 

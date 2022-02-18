@@ -33,5 +33,10 @@ jobs:
       run: rustup target add aarch64-apple-ios x86_64-apple-ios
     - name: Build-Rust
       run: cd demo-ios/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . ios all
- #   - name: Build-Demo
- #     run: cd ../Example && pod install && xcodebuild build -workspace demo-ios.xcworkspace -scheme demo-ios-Example
+    - name: Xcodebuild Action
+      uses: sersoft-gmbh/xcodebuild-action@v1.8.0
+      with:
+        workspace: demo-ios/Example/demo-ios.xcworkspace
+        scheme: demo-ios-Example
+        destination: platform=iOS
+        action: build

@@ -1,3 +1,5 @@
+![](https://github.com/sidneywang/rsbind/workflows/Rust/badge.svg)
+
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.
 - It generate bindings from a Rust package and packaged to android aar or iOS lib. You don't need to write jni or other ffi code with this tool.

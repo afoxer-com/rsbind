@@ -59,7 +59,7 @@ rsbind path-of-project android/ios/all ast/bridge/artifact/header/build/all
 - build: build bridge modules and copy output to artifact project and then build artifact project.
 - all: run all the steps for binding.
 
-5. It will generate java files packaged in aar or swift files packaged in framework, then you can integrated them to your android/iOS project and call the functions.
+5. It will generate java files packaged in aar or cocoapods lib, then you can integrated them to your android/iOS project and call the functions.
 For android, you can call like as below:
 ```java
 YourContract.test_callback(new Callback(){

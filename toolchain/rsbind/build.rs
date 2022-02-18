@@ -2,6 +2,8 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
+    println!("cargo:rerun-if-changed=../.out");
+
     if !Path::new("../.out/swift_gen").exists() {
         panic!("../.out/swift_gen doesn't exist.")
     }

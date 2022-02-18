@@ -444,7 +444,7 @@ dependencies = [
 [[package]]
 name = "rsgen"
 version = "0.3.29"
-source = "git+https://github.com/sidneywang/genco?branch=master#2382f804470511cac16cb3269f5f5b0c2ed7bd80"
+source = "git+https://github.com/sidneywang/rsgen?branch=master#2382f804470511cac16cb3269f5f5b0c2ed7bd80"
 
 [[package]]
 name = "rustc-demangle"

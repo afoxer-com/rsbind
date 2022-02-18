@@ -44,7 +44,7 @@ impl<'a> Unpack<'a> {
         // add some features defination.
         let mut feature_defs = String::new();
         for feature in self.features.iter() {
-            feature_defs = format!("{}\n", feature);
+            feature_defs = format!("{}\n{} = []", feature_defs, feature);
         }
 
         let replaced = replaced.replace(&format!("$({}-features)", MAGIC_NUM), &feature_defs);

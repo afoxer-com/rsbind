@@ -5,10 +5,10 @@ use std::fs;
 use std::path::Path;
 
 fn main() {
-    println!("cargo:rerun-if-changed=./template-android");
-    println!("cargo:rerun-if-changed=./template-ios");
-    println!("cargo:rerun-if-changed=./template-bridge-android");
-    println!("cargo:rerun-if-changed=./template-bridge-ios");
+    println!("cargo:rerun-if-changed=template-android");
+    println!("cargo:rerun-if-changed=template-ios");
+    println!("cargo:rerun-if-changed=template-bridge-android");
+    println!("cargo:rerun-if-changed=template-bridge-ios");
 
     println!("begin zip tempalate...");
 

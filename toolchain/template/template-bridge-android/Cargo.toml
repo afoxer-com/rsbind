@@ -20,5 +20,4 @@ android_logger = "0.7"
 log = "0.4"
 
 [features]
-rsbind = []
 $(*521%-features)

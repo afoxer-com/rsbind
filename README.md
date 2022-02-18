@@ -1,4 +1,4 @@
-![](https://github.com/sidneywang/rsbind/workflows/Rust/badge.svg)
+[![Build](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
 
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.

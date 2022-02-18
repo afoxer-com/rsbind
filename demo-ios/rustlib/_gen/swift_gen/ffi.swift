@@ -71,7 +71,7 @@ public class TestContract1 {
     /**
         :param:    arg
     */
-    public static func test_byte(arg: Int8) -> Int8 {
+    static public func test_byte(arg: Int8) -> Int8 {
         
         let s_arg = Int8(arg)
         let result = test_contract1_test_byte(s_arg)
@@ -82,7 +82,7 @@ public class TestContract1 {
     /**
         :param:    arg
     */
-    public static func test_byte_i8(arg: Int8) -> Int8 {
+    static public func test_byte_i8(arg: Int8) -> Int8 {
         
         let s_arg = Int8(arg)
         let result = test_contract1_test_byte_i8(s_arg)
@@ -125,7 +125,7 @@ public class TestContract1 {
     /**
         :param:    arg
     */
-    static public func test_arg_callback(arg: Callback) -> Int8 {
+    public static func test_arg_callback(arg: Callback) -> Int8 {
         
         let arg_index = globalIndex + 1
         globalIndex = arg_index
@@ -230,7 +230,7 @@ public class TestContract1 {
     /**
         :param:    arg1
     */
-    public static func test_bool(arg1: Bool) -> Bool {
+    static public func test_bool(arg1: Bool) -> Bool {
         
         let s_arg1: Int32 = arg1 ? 1 : 0
         let result = test_contract1_test_bool(s_arg1)
@@ -253,7 +253,7 @@ public class TestContract1 {
         return s_result
     }
 
-    public static func test_struct_vec() -> Array<StructSimple> {
+    static public func test_struct_vec() -> Array<StructSimple> {
         
         let result = test_contract1_test_struct_vec()
         let ret_str = String(cString:result!)
@@ -307,7 +307,7 @@ public class TestContract1 {
     /**
         :param:    input
     */
-    static public func test_return_vec_i8(input: Array<Int8>) -> Array<Int8> {
+    public static func test_return_vec_i8(input: Array<Int8>) -> Array<Int8> {
         
         let encoder = JSONEncoder()
         let data_input = try! encoder.encode(input)
@@ -325,7 +325,7 @@ public class TestContract1 {
         return s_result
     }
 
-    public static func test_no_return() {
+    static public func test_no_return() {
         
         test_contract1_test_no_return()
     }

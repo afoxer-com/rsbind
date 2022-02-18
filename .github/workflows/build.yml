@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [ dev, master ]
   pull_request:
     branches: [ master ]
 
@@ -33,10 +33,7 @@ jobs:
       run: rustup target add aarch64-apple-ios x86_64-apple-ios
     - name: Build-Rust
       run: cd demo-ios/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . ios all
-    - name: Xcodebuild Action
-      uses: sersoft-gmbh/xcodebuild-action@v1.8.0
-      with:
-        workspace: demo-ios/Example/demo-ios.xcworkspace
-        scheme: demo-ios-Example
-        destination: platform=iOS
-        action: build
+    - name: Pod-Install
+      run: cd demo-ios/Example && pod install
+    - name: Build-Demo
+      run: xcodebuild -workspace "demo-ios/Example/demo-ios.xcworkspace" -scheme "demo-ios-Example" -sdk iphonesimulator -configuration "Debug" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" ARCHS="x86_64" clean build

@@ -10,13 +10,14 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-android:
 
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --manifest-path toolchain/rsbind/Cargo.toml --verbose
-    - name: Run tests
-      run: cargo test --manifest-path toolchain/rsbind/Cargo.toml --verbose
+    - name: Build-Rust
+      run: cd demo-android/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . android all
+    - name: Build-Demo
+      run: cd .. && ./gredlew assembleDebug
+    

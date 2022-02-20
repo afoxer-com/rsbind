@@ -4,11 +4,6 @@ use std::path::Path;
 fn main() {
     println!("cargo:rerun-if-changed=../.out");
 
-    if !Path::new("../.out/swift_gen").exists() {
-        panic!("../.out/swift_gen doesn't exist.")
-    }
-    fs::copy("../.out/swift_gen", "src/ios/res/swift_gen").unwrap();
-
     if !Path::new("../.out/template-android.zip").exists() {
         panic!("../.out/template-android.zip doesn't exist.")
     }

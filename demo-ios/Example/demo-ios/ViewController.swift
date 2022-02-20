@@ -10,6 +10,11 @@ import UIKit
 import rustlib
 
 class ViewController: UIViewController, Callback{
+    func on_callback(arg1: Int32, arg2: String, arg3: Bool, arg4: Float, arg5: Double) -> Int32 {
+        print("on_callback \(arg1)")
+        return 100
+    }
+    
     func on_callback_u8(arg1: Int8) -> Int8 {
         print("on_callback_u8 \(arg1)")
         return 55

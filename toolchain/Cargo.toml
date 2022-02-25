@@ -1,6 +1,5 @@
 [workspace]
 members = [
-    "swift-gen",
     "template",
     "rsbind",
     "ndk-tool",

@@ -14,6 +14,7 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
+use ios::artifact::SwiftCodeGen;
 use unzip;
 
 const IOS_ARCH: &str = "universal";
@@ -255,6 +256,9 @@ impl<'a> BuildProcess for IosProcess<'a> {
             .join(&self.lib_name());
 
         let lib_artifact = self.artifact_prj_path.join("rustlib").join("Libraries");
+        if !lib_artifact.exists() {
+            fs::create_dir_all(&lib_artifact);
+        }
         fs_extra::copy_items(&vec![lib_file], &lib_artifact, &options)
             .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
 
@@ -275,7 +279,50 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let ios_template_buf: &[u8] = include_bytes!("res/template_ios.zip");
         unzip::unzip_to(ios_template_buf, &self.artifact_prj_path)?;
 
-        artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
+        let parent = self
+            .artifact_prj_path
+            .parent()
+            .ok_or(FileError("can't find parent dir for swift".to_string()))?;
+        let swift_gen_path = parent.join("swift_gen");
+        if swift_gen_path.exists() {
+            fs::remove_dir_all(&swift_gen_path)?;
+        }
+        fs::create_dir_all(&swift_gen_path)?;
+
+        SwiftCodeGen{
+            origin_prj: &self.origin_prj_path,
+            swift_gen_dir: &swift_gen_path,
+            ast: &self.ast_result,
+            module_name: self.host_crate_name.to_owned()
+        }.gen_swift_code();
+        // artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
+
+        // get the output dir string
+        println!("get output dir string");
+        let mut output_dir = self
+            .artifact_prj_path
+            .join("rustlib")
+            .join("Classes");
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir).unwrap();
+        }
+        fs::create_dir_all(&output_dir).unwrap();
+
+        let options = CopyOptions {
+            overwrite: true,
+            skip_exist: false,
+            buffer_size: 1024,
+            copy_inside: true,
+            content_only: false,
+            depth: 65535,
+        };
+        let dir = fs::read_dir(&swift_gen_path)?;
+        for file in dir {
+            let path = file?.path();
+            fs_extra::copy_items(&vec![path], &output_dir, &options)
+                .map_err(|e| FileError(format!("copy iOS swift outputs failed. {:?}", e)))
+                .unwrap();
+        }
 
         Ok(())
     }

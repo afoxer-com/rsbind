@@ -6,3 +6,7 @@ authors = ["sidney.wang <sidney.wang@foxmail.com>"]
 [features]
 drive_ios = []
 drive = []
+
+[dependencies]
+android_logger = "0.10.1"
+log = "0.4.14"

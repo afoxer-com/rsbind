@@ -6,6 +6,7 @@ use ast::types::AstType;
 use ast::AstResult;
 use errors::*;
 use rsgen::java::{self, *};
+use rsgen::swift::Swift;
 use rsgen::Custom;
 use rsgen::Formatter;
 use rsgen::IntoTokens;
@@ -162,6 +163,7 @@ pub(crate) struct TraitGen<'a> {
 }
 
 impl<'a> TraitGen<'a> {
+    /// Generate Java Code for rust trait.
     pub(crate) fn gen(&self) -> Result<String> {
         let mut class = Class::new(self.desc.name.clone());
         class.modifiers = vec![Modifier::Public];
@@ -169,72 +171,35 @@ impl<'a> TraitGen<'a> {
             .implements
             .push(java::imported("java.io", "Serializable"));
 
-        let mut body = Tokens::new();
-        body.push("static {");
-        body.nested({
-            let mut load_lib_tokens = Tokens::new();
-            load_lib_tokens.push(toks!("System.loadLibrary(\"", self.so_name.clone(), "\");"));
-            let ext_libs = self.ext_libs.split(",").collect::<Vec<&str>>();
-            for ext_lib in ext_libs.iter() {
-                if !ext_lib.to_owned().is_empty() {
-                    load_lib_tokens.push(toks!("System.loadLibrary(\"", ext_lib.clone(), "\");"));
-                }
-            }
-            load_lib_tokens
-        });
-        body.push("}");
-        class.body = body;
-
-        let mut index_field = Field::new(
-            java::imported("java.util.concurrent.atomic", "AtomicLong"),
-            "globalIndex",
-        );
-        index_field.initializer("new AtomicLong(0)");
-        index_field.modifiers = vec![Modifier::Private, Modifier::Static];
-        class.fields.push(index_field);
-
-        let callbacks_ty = java::imported("java.util.concurrent", "ConcurrentHashMap")
-            .with_arguments(vec![java::LONG, java::imported("java.lang", "Object")]);
-        let mut callbacks_field = Field::new(callbacks_ty, "globalCallbacks");
-        callbacks_field.initializer("new ConcurrentHashMap<>()");
-        callbacks_field.modifiers = vec![Modifier::Private, Modifier::Static];
-        class.fields.push(callbacks_field);
-
-        let mut free_method = Method::new("free_callback");
-        free_method.modifiers = vec![Modifier::Public, Modifier::Static];
-        free_method.arguments = vec![java::Argument::new(java::LONG, "index")];
-        free_method.body = toks!("globalCallbacks.remove(index);");
-        class.methods.push(free_method);
-
-        let mut sel_callbacks = vec![];
+        self.fill_global_block(&mut class)?;
+        self.fill_global_fields(&mut class)?;
 
         let methods = self.desc.methods.clone();
-        let methods = methods.into_iter();
-        for method in methods {
-            let mut m = java::Method::new(method.name.clone());
-            m.modifiers = vec![Modifier::Public, Modifier::Static];
-
-            let return_ty = JavaType::new(
-                method.return_type.clone(),
-                self.pkg.clone(),
-                method.origin_return_ty.clone(),
-            );
-            m.returns = Java::from(return_ty.clone());
+        for method in methods.into_iter() {
+            // Method signature
+            let mut m = self.fill_method_sig(&method)?;
 
             let mut method_body: Tokens<Java> = Tokens::new();
-            for arg in method.args.clone().into_iter() {
-                // Add arguments
-                match arg.ty {
-                    AstType::Void => (),
-                    _ => {
-                        let java =
-                            JavaType::new(arg.ty.clone(), self.pkg.clone(), arg.origin_ty.clone());
-                        let mut argument = Argument::new(java, arg.name.clone());
-                        argument.modifiers = vec![];
-                        m.arguments.push(argument);
-                    }
-                }
 
+            // Argument convert
+            self.fill_arg_convert(&mut method_body, &method)?;
+
+            // Call native method
+            self.fill_call_native_method(&mut method_body, &method)?;
+
+            // Return type convert
+            self.fill_return_ty_convert(&mut method_body, &method)?;
+
+            m.body = method_body;
+            class.methods.push(m);
+        }
+
+        self.fill_free_freecb_method(&mut class)?;
+
+        let mut sel_callbacks = vec![];
+        let methods = self.desc.methods.clone();
+        for method in methods.into_iter() {
+            for arg in method.args.clone().into_iter() {
                 // Select the callbacks in arguments
                 match arg.ty {
                     AstType::Callback => {
@@ -251,324 +216,24 @@ impl<'a> TraitGen<'a> {
                     _ => (),
                 }
             }
-
-            // Argument convert
-            for arg in method.args.clone().into_iter() {
-                let converted = format!("r_{}", &arg.name);
-                match arg.ty {
-                    AstType::Void => (),
-                    AstType::Callback => {
-                        let index_name = format!("{}_callback_index", &arg.name);
-                        method_body.push(toks!(
-                            "long ",
-                            index_name.clone(),
-                            " = globalIndex.incrementAndGet()",
-                            ";"
-                        ));
-                        method_body.push(toks!(
-                            "globalCallbacks.put(",
-                            index_name.clone(),
-                            ",",
-                            arg.name.clone(),
-                            ");"
-                        ));
-                        method_body.push(toks!(
-                            "long ",
-                            converted.clone(),
-                            " = ",
-                            index_name.clone(),
-                            ";"
-                        ));
-                    }
-                    AstType::Boolean => {
-                        method_body.push(toks!(
-                            "int ",
-                            converted.clone(),
-                            " = ",
-                            arg.name.clone(),
-                            " ? 1 : 0;"
-                        ));
-                    }
-                    AstType::Vec(base) => match base {
-                        AstBaseType::Byte => {
-                            let java = JavaType::new(
-                                arg.ty.clone(),
-                                self.pkg.clone(),
-                                arg.origin_ty.clone(),
-                            );
-                            let java = Java::from(java);
-                            method_body.push(toks!(
-                                java,
-                                " ",
-                                converted.clone(),
-                                " = ",
-                                arg.name.clone(),
-                                ";"
-                            ));
-                        }
-                        _ => {
-                            let json_cls = java::imported("com.alibaba.fastjson", "JSON");
-                            method_body.push(toks!(
-                                "String ",
-                                converted.clone(),
-                                " = ",
-                                json_cls,
-                                ".toJSONString(",
-                                arg.name.clone(),
-                                ");"
-                            ));
-                        }
-                    },
-                    _ => {
-                        let java =
-                            JavaType::new(arg.ty.clone(), self.pkg.clone(), arg.origin_ty.clone());
-                        let java = Java::from(java);
-                        method_body.push(toks!(java, " ", converted, " = ", arg.name.clone(), ";"));
-                    }
-                }
-            }
-
-            // Call native method
-            let return_java_ty = return_ty.to_transfer();
-            match return_ty.ast_type.clone() {
-                AstType::Void => {
-                    method_body.push(toks!("native_", method.name.clone(), "("));
-                }
-                _ => {
-                    method_body.push(toks!(
-                        return_java_ty,
-                        " ret = native_",
-                        method.name.clone(),
-                        "("
-                    ));
-                }
-            }
-
-            for (index, item) in method.args.clone().into_iter().enumerate() {
-                let converted = format!("r_{}", &item.name);
-                if index == method.args.len() - 1 {
-                    method_body.append(toks!(converted));
-                } else {
-                    method_body.append(toks!(converted, ", "));
-                }
-            }
-            method_body.append(toks!(");"));
-
-            // Return type convert
-            match return_ty.ast_type.clone() {
-                AstType::Void => (),
-                AstType::Vec(base) => match base {
-                    AstBaseType::Byte => {
-                        method_body.push(toks!("return ret;"));
-                    }
-                    _ => {
-                        let sub_ty = return_ty.clone().get_base_ty();
-                        let json = java::imported("com.alibaba.fastjson", "JSON");
-                        let list_type = java::imported("java.util", "List")
-                            .with_arguments(vec![sub_ty.clone()]);
-                        method_body.push(toks!(
-                            list_type,
-                            " list = ",
-                            json,
-                            ".parseArray(ret, ",
-                            sub_ty.clone().as_boxed(),
-                            ".class);"
-                        ));
-                        method_body.push(toks!(
-                            Java::from(return_ty.clone()),
-                            " array = new ",
-                            sub_ty.clone().as_boxed(),
-                            "[list.size()];"
-                        ));
-                        method_body.push(toks!("return list.toArray(array);"));
-                    }
-                },
-                AstType::Boolean => {
-                    method_body.push(toks!("return ret > 0 ? true : false;"));
-                }
-                AstType::Struct => {
-                    let json = java::imported("com.alibaba.fastjson", "JSON");
-                    method_body.push(toks!(
-                        "return ",
-                        json,
-                        ".parseObject(ret,",
-                        method.origin_return_ty,
-                        ".class);"
-                    ));
-                }
-                _ => {
-                    method_body.push(toks!("return ret;"));
-                }
-            }
-            m.body = method_body;
-            class.methods.push(m);
         }
 
         // invoke callback functions
         for callback in sel_callbacks.iter() {
-            for method in callback.methods.iter() {
-                let method_name = format!("invoke_{}_{}", &callback.name, &method.name);
-                let mut m = java::Method::new(method_name);
-                m.modifiers = vec![Modifier::Public, Modifier::Static];
+            for cb_method in callback.methods.iter() {
+                let mut m = self.fill_cb_method_sig(&cb_method, &callback)?;
 
-                if method.return_type != AstType::Void {
-                    m.returns = JavaType::new(
-                        method.return_type,
-                        self.pkg.clone(),
-                        method.origin_return_ty.clone(),
-                    )
-                    .to_transfer();
-                }
-
-                let mut arg_calls = String::new();
-                let mut argument = Argument::new(java::LONG, "index");
-                argument.modifiers = vec![];
-                m.arguments.push(argument);
-                for (index, arg) in method.args.iter().enumerate() {
-                    let arg_type = JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone())
-                        .to_transfer();
-                    let mut argument = Argument::new(arg_type, arg.name.clone());
-                    argument.modifiers = vec![];
-                    m.arguments.push(argument);
-
-                    if index == method.args.len() - 1 {
-                        arg_calls = format!("{}j_{}", arg_calls, &arg.name);
-                    } else {
-                        arg_calls = format!("{}j_{}, ", arg_calls, &arg.name);
-                    }
-                }
-
-                let mut body = toks!();
-
+                let mut cb_body = toks!();
                 // argument convert
-                for arg in method.args.iter() {
-                    match arg.ty {
-                        AstType::Boolean => {
-                            body.push(toks!(
-                                "boolean ",
-                                "j_",
-                                arg.name.clone(),
-                                " = ",
-                                arg.name.clone(),
-                                " > 0 ? true : false;"
-                            ));
-                        }
-                        AstType::Struct => {
-                            let json = java::imported("com.alibaba.fastjson", "JSON");
-                            body.push(toks!(
-                                arg.origin_ty.clone(),
-                                " j_",
-                                arg.name.clone(),
-                                " = ",
-                                json,
-                                ".parseObject(",
-                                arg.name.clone(),
-                                ", ",
-                                arg.origin_ty.clone(),
-                                ".class);"
-                            ));
-                        }
-                        AstType::Vec(_) => {
-                            let list = java::imported("java.util", "List");
-                            let json = java::imported("com.alibaba.fastjson", "JSON");
-                            let java =
-                                JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone());
-                            body.push(toks!(
-                                list,
-                                "<",
-                                java.get_base_ty(),
-                                "> ",
-                                arg.name.clone(),
-                                "_list",
-                                " = ",
-                                json,
-                                ".parseArray(",
-                                arg.name.clone(),
-                                ", ",
-                                java.get_base_ty(),
-                                ".class);"
-                            ));
-                            body.push(toks!(
-                                java.get_base_ty(),
-                                "[] ",
-                                arg.name.clone(),
-                                "_array = new ",
-                                java.get_base_ty(),
-                                "[",
-                                arg.name.clone(),
-                                "_list.size()];"
-                            ));
-                            body.push(toks!(
-                                java.get_base_ty(),
-                                "[] ",
-                                "j_",
-                                arg.name.clone(),
-                                " = ",
-                                arg.name.clone(),
-                                "_list.toArray(",
-                                arg.name.clone(),
-                                "_array);"
-                            ));
-                        }
-                        _ => {
-                            let java =
-                                JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone());
-                            body.push(toks!(
-                                Java::from(java),
-                                " j_",
-                                arg.name.clone(),
-                                " = ",
-                                arg.name.clone(),
-                                ";"
-                            ));
-                        }
-                    }
-                }
+                self.fill_cb_arg_convert(&mut cb_body, &cb_method)?;
 
-                body.push(toks!(
-                    callback.name.clone(),
-                    " callback = (",
-                    callback.name.clone(),
-                    ") globalCallbacks.get(index);"
-                ));
-                match method.return_type.clone() {
-                    AstType::Void => {
-                        body.push(toks!(
-                            "callback.",
-                            method.name.clone(),
-                            "(",
-                            arg_calls.clone(),
-                            ");"
-                        ));
-                    }
-                    _ => {
-                        let java = JavaType::new(
-                            method.return_type.clone(),
-                            self.pkg.clone(),
-                            method.origin_return_ty.clone(),
-                        );
-                        body.push(toks!(
-                            Java::from(java),
-                            " result = callback.",
-                            method.name.clone(),
-                            "(",
-                            arg_calls.clone(),
-                            ");"
-                        ));
-                    }
-                }
+                // callback invoke
+                self.fill_cb_invoke(&mut cb_body, &cb_method, &callback)?;
 
-                match method.return_type.clone() {
-                    AstType::Boolean => {
-                        body.push(toks!("return result ? 1 : 0;"));
-                    }
-                    AstType::Void => (),
-                    _ => {
-                        body.push(toks!("return result;"));
-                    }
-                }
+                // return type convert
+                self.fill_cb_return_convert(&mut cb_body, &cb_method)?;
 
-                m.body = body;
+                m.body = cb_body;
 
                 class.methods.push(m);
             }
@@ -577,6 +242,423 @@ impl<'a> TraitGen<'a> {
         self.build_native_methods(self.desc.methods.clone(), &mut class);
 
         to_java_file(self.pkg.as_ref(), class.into_tokens())
+    }
+
+    fn fill_global_block(&'a self, class: &mut Class<'a>) -> Result<()> {
+        let mut body = Tokens::new();
+        body.push("static {");
+        body.nested({
+            let mut load_lib_tokens = Tokens::new();
+            load_lib_tokens.push(toks!("System.loadLibrary(\"", self.so_name.clone(), "\");"));
+            let ext_libs = self.ext_libs.split(",").collect::<Vec<&str>>();
+            for ext_lib in ext_libs.iter() {
+                if !ext_lib.to_owned().is_empty() {
+                    load_lib_tokens.push(toks!("System.loadLibrary(\"", ext_lib.clone(), "\");"));
+                }
+            }
+            load_lib_tokens
+        });
+        body.push("}");
+
+        class.body = body;
+        Ok(())
+    }
+
+    fn fill_global_fields(&self, class: &mut Class<'a>) -> Result<()> {
+        let mut index_field = Field::new(
+            java::imported("java.util.concurrent.atomic", "AtomicLong"),
+            "globalIndex",
+        );
+        index_field.initializer("new AtomicLong(0)");
+        index_field.modifiers = vec![Modifier::Private, Modifier::Static];
+        class.fields.push(index_field);
+
+        let callbacks_ty = java::imported("java.util.concurrent", "ConcurrentHashMap")
+            .with_arguments(vec![java::LONG, java::imported("java.lang", "Object")]);
+        let mut callbacks_field = Field::new(callbacks_ty, "globalCallbacks");
+        callbacks_field.initializer("new ConcurrentHashMap<>()");
+        callbacks_field.modifiers = vec![Modifier::Private, Modifier::Static];
+        class.fields.push(callbacks_field);
+
+        Ok(())
+    }
+
+    fn fill_free_freecb_method(&self, class: &mut Class<'a>) -> Result<()> {
+        let mut free_method = Method::new("free_callback");
+        free_method.modifiers = vec![Modifier::Public, Modifier::Static];
+        free_method.arguments = vec![java::Argument::new(java::LONG, "index")];
+        free_method.body = toks!("globalCallbacks.remove(index);");
+        class.methods.push(free_method);
+
+        Ok(())
+    }
+
+    fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
+        let mut m = java::Method::new(method.name.clone());
+        m.modifiers = vec![Modifier::Public, Modifier::Static];
+
+        let return_ty = JavaType::new(
+            method.return_type.clone(),
+            self.pkg.clone(),
+            method.origin_return_ty.clone(),
+        );
+        m.returns = Java::from(return_ty.clone());
+
+        for arg in method.args.clone().into_iter() {
+            // Add arguments
+            match arg.ty {
+                AstType::Void => (),
+                _ => {
+                    let java =
+                        JavaType::new(arg.ty.clone(), self.pkg.clone(), arg.origin_ty.clone());
+                    let mut argument = Argument::new(java, arg.name.clone());
+                    argument.modifiers = vec![];
+                    m.arguments.push(argument);
+                }
+            }
+        }
+        Ok(m)
+    }
+
+    fn fill_arg_convert(&self, method_body: &mut Tokens<Java>, method: &MethodDesc) -> Result<()> {
+        for arg in method.args.clone().into_iter() {
+            let converted = format!("r_{}", &arg.name);
+            match arg.ty {
+                AstType::Void => (),
+                AstType::Callback => {
+                    let index_name = format!("{}_callback_index", &arg.name);
+                    method_body.push(toks!(
+                        "long ",
+                        index_name.clone(),
+                        " = globalIndex.incrementAndGet()",
+                        ";"
+                    ));
+                    method_body.push(toks!(
+                        "globalCallbacks.put(",
+                        index_name.clone(),
+                        ",",
+                        arg.name.clone(),
+                        ");"
+                    ));
+                    method_body.push(toks!(
+                        "long ",
+                        converted.clone(),
+                        " = ",
+                        index_name.clone(),
+                        ";"
+                    ));
+                }
+                AstType::Boolean => {
+                    method_body.push(toks!(
+                        "int ",
+                        converted.clone(),
+                        " = ",
+                        arg.name.clone(),
+                        " ? 1 : 0;"
+                    ));
+                }
+                AstType::Vec(base) => match base {
+                    AstBaseType::Byte => {
+                        let java =
+                            JavaType::new(arg.ty.clone(), self.pkg.clone(), arg.origin_ty.clone());
+                        let java = Java::from(java);
+                        method_body.push(toks!(
+                            java,
+                            " ",
+                            converted.clone(),
+                            " = ",
+                            arg.name.clone(),
+                            ";"
+                        ));
+                    }
+                    _ => {
+                        let json_cls = java::imported("com.google.gson", "Gson");
+                        method_body.push(toks!(
+                            "String ",
+                            converted.clone(),
+                            " = new ",
+                            json_cls,
+                            "().toJson(",
+                            arg.name.clone(),
+                            ");"
+                        ));
+                    }
+                },
+                _ => {
+                    let java =
+                        JavaType::new(arg.ty.clone(), self.pkg.clone(), arg.origin_ty.clone());
+                    let java = Java::from(java);
+                    method_body.push(toks!(java, " ", converted, " = ", arg.name.clone(), ";"));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn fill_call_native_method(
+        &self,
+        method_body: &mut Tokens<Java>,
+        method: &MethodDesc,
+    ) -> Result<()> {
+        let return_ty = JavaType::new(
+            method.return_type.clone(),
+            self.pkg.clone(),
+            method.origin_return_ty.clone(),
+        );
+
+        let return_java_ty = return_ty.to_transfer();
+        match return_ty.ast_type.clone() {
+            AstType::Void => {
+                method_body.push(toks!("native_", method.name.clone(), "("));
+            }
+            _ => {
+                method_body.push(toks!(
+                    return_java_ty,
+                    " ret = native_",
+                    method.name.clone(),
+                    "("
+                ));
+            }
+        }
+
+        for (index, item) in method.args.clone().into_iter().enumerate() {
+            let converted = format!("r_{}", &item.name);
+            if index == method.args.len() - 1 {
+                method_body.append(toks!(converted));
+            } else {
+                method_body.append(toks!(converted, ", "));
+            }
+        }
+        method_body.append(toks!(");"));
+        Ok(())
+    }
+
+    fn fill_return_ty_convert(
+        &self,
+        method_body: &mut Tokens<Java>,
+        method: &MethodDesc,
+    ) -> Result<()> {
+        let return_ty = JavaType::new(
+            method.return_type.clone(),
+            self.pkg.clone(),
+            method.origin_return_ty.clone(),
+        );
+
+        match return_ty.ast_type.clone() {
+            AstType::Void => (),
+            AstType::Vec(base) => match base {
+                AstBaseType::Byte => {
+                    method_body.push(toks!("return ret;"));
+                }
+                _ => {
+                    let sub_ty = return_ty.clone().get_base_ty();
+                    let json = java::imported("com.google.gson", "Gson");
+                    method_body.push(toks!(
+                        "return new ",
+                        json,
+                        "().fromJson(ret, ",
+                        sub_ty.clone().as_boxed(),
+                        "[].class);"
+                    ));
+                }
+            },
+            AstType::Boolean => {
+                method_body.push(toks!("return ret > 0 ? true : false;"));
+            }
+            AstType::Struct => {
+                let json = java::imported("com.google.gson", "Gson");
+                method_body.push(toks!(
+                    "return new ",
+                    json,
+                    "().fromJson(ret,",
+                    method.origin_return_ty.clone(),
+                    ".class);"
+                ));
+            }
+            _ => {
+                method_body.push(toks!("return ret;"));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn fill_cb_method_sig(&self, cb_method: &MethodDesc, callback: &TraitDesc) -> Result<Method> {
+        let method_name = format!("invoke_{}_{}", &callback.name, &cb_method.name);
+        let mut m = java::Method::new(method_name);
+        m.modifiers = vec![Modifier::Public, Modifier::Static];
+
+        if cb_method.return_type != AstType::Void {
+            m.returns = JavaType::new(
+                cb_method.return_type,
+                self.pkg.clone(),
+                cb_method.origin_return_ty.clone(),
+            )
+            .to_transfer();
+        }
+
+        let mut argument = Argument::new(java::LONG, "index");
+        argument.modifiers = vec![];
+        m.arguments.push(argument);
+        for arg in cb_method.args.iter() {
+            let arg_type =
+                JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone()).to_transfer();
+            let mut argument = Argument::new(arg_type, arg.name.clone());
+            argument.modifiers = vec![];
+            m.arguments.push(argument);
+        }
+
+        Ok(m)
+    }
+
+    fn fill_cb_arg_convert(
+        &self,
+        cb_body: &mut Tokens<Java>,
+        cb_method: &MethodDesc,
+    ) -> Result<()> {
+        for arg in cb_method.args.iter() {
+            match arg.ty {
+                AstType::Boolean => {
+                    cb_body.push(toks!(
+                        "boolean ",
+                        "j_",
+                        arg.name.clone(),
+                        " = ",
+                        arg.name.clone(),
+                        " > 0 ? true : false;"
+                    ));
+                }
+                AstType::Struct => {
+                    let json = java::imported("com.google.gson", "Gson");
+                    cb_body.push(toks!(
+                        arg.origin_ty.clone(),
+                        " j_",
+                        arg.name.clone(),
+                        " = new ",
+                        json,
+                        "().fromJson(",
+                        arg.name.clone(),
+                        ", ",
+                        arg.origin_ty.clone(),
+                        ".class);"
+                    ));
+                }
+                AstType::Vec(base) => match base.clone() {
+                    AstBaseType::Byte => {
+                        let java = JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone());
+                        cb_body.push(toks!(
+                            java.get_base_ty(),
+                            "[] ",
+                            "j_",
+                            arg.name.clone(),
+                            " = ",
+                            arg.name.clone(),
+                            ";"
+                        ));
+                    }
+                    _ => {
+                        let json = java::imported("com.google.gson", "Gson");
+                        let java = JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone());
+                        cb_body.push(toks!(
+                            java.get_base_ty().as_boxed(),
+                            "[] ",
+                            "j_",
+                            arg.name.clone(),
+                            " = new ",
+                            json,
+                            "().fromJson(",
+                            arg.name.clone(),
+                            ", ",
+                            java.get_base_ty().as_boxed(),
+                            "[].class);"
+                        ));
+                    }
+                },
+                _ => {
+                    let java = JavaType::new(arg.ty, self.pkg.clone(), arg.origin_ty.clone());
+                    cb_body.push(toks!(
+                        Java::from(java),
+                        " j_",
+                        arg.name.clone(),
+                        " = ",
+                        arg.name.clone(),
+                        ";"
+                    ));
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    fn fill_cb_invoke(
+        &self,
+        cb_body: &mut Tokens<Java>,
+        cb_method: &MethodDesc,
+        callback: &TraitDesc,
+    ) -> Result<()> {
+        let mut arg_calls = String::new();
+
+        for (index, arg) in cb_method.args.iter().enumerate() {
+            if index == cb_method.args.len() - 1 {
+                arg_calls = format!("{}j_{}", arg_calls, &arg.name);
+            } else {
+                arg_calls = format!("{}j_{}, ", arg_calls, &arg.name);
+            }
+        }
+
+        cb_body.push(toks!(
+            callback.name.clone(),
+            " callback = (",
+            callback.name.clone(),
+            ") globalCallbacks.get(index);"
+        ));
+        match cb_method.return_type.clone() {
+            AstType::Void => {
+                cb_body.push(toks!(
+                    "callback.",
+                    cb_method.name.clone(),
+                    "(",
+                    arg_calls.clone(),
+                    ");"
+                ));
+            }
+            _ => {
+                let java = JavaType::new(
+                    cb_method.return_type.clone(),
+                    self.pkg.clone(),
+                    cb_method.origin_return_ty.clone(),
+                );
+                cb_body.push(toks!(
+                    Java::from(java),
+                    " result = callback.",
+                    cb_method.name.clone(),
+                    "(",
+                    arg_calls.clone(),
+                    ");"
+                ));
+            }
+        }
+
+        Ok(())
+    }
+
+    fn fill_cb_return_convert(
+        &self,
+        cb_body: &mut Tokens<Java>,
+        cb_method: &MethodDesc,
+    ) -> Result<()> {
+        match cb_method.return_type.clone() {
+            AstType::Boolean => {
+                cb_body.push(toks!("return result ? 1 : 0;"));
+            }
+            AstType::Void => (),
+            _ => {
+                cb_body.push(toks!("return result;"));
+            }
+        }
+        Ok(())
     }
 
     ///

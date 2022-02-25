@@ -16,6 +16,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
         trait_desc: &TraitDesc,
         callbacks: &Vec<&TraitDesc>,
     ) -> TokenStream {
+        println!(
+            "[bridge] 🔆  begin quote callback argument in method convert => {}.{}",
+            &arg.name, &arg.origin_ty
+        );
         let rust_arg_name = Ident::new(
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
             Span::call_site(),
@@ -44,6 +48,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
         let callback_desc = callback_desc.unwrap();
         let mut methods_result = TokenStream::new();
         for method in callback_desc.methods.iter() {
+            println!(
+                "[bridge] 🔆  begin quote callback method => {}.{}",
+                &callback_desc.name, &method.name
+            );
             // arguments converting in callback
             let mut args_convert = TokenStream::new();
             let mut method_java_sig = "(J".to_owned();
@@ -86,6 +94,24 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                                     let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                                     let #cb_tmp_arg_name = serde_json::to_string(&#cb_tmp_vec_arg_name);
                                     let #cb_arg_name = env.new_string(#cb_tmp_arg_name.unwrap()).unwrap().into();
+                                }
+                            }
+                            AstBaseType::Byte => {
+                                if cb_arg.origin_ty.clone().contains("i8") {
+                                    let tmp_arg_name =
+                                        Ident::new(&format!("tmp_{}", &cb_arg.name), Span::call_site());
+                                    let tmp_converted_arg_name =
+                                        Ident::new(&format!("tmp_converted_{}", &cb_arg.name), Span::call_site());
+                                    vec![1u8].as_slice();
+                                    quote! {
+                                        let #tmp_arg_name = #cb_origin_arg_name.as_slice();
+                                        let #tmp_converted_arg_name = unsafe { std::mem::transmute::<&[i8], &[u8]>(#tmp_arg_name) };
+                                        let #cb_arg_name = env.byte_array_from_slice(#tmp_converted_arg_name).unwrap();
+                                    }
+                                } else {
+                                    quote! {
+                                        let #cb_arg_name = env.byte_array_from_slice(#cb_origin_arg_name.as_slice()).unwrap();
+                                    }
                                 }
                             }
                             _ => {
@@ -141,6 +167,18 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         JValue::Double(#cb_arg_name),
                     },
 
+                    AstType::Vec(base) => {
+                        if base == AstBaseType::Byte {
+                            quote! {
+                                JValue::Object(JObject::from(#cb_arg_name)),
+                            }
+                        } else {
+                            quote! {
+                                JValue::Object(#cb_arg_name),
+                            }
+                        }
+                    },
+
                     _ => quote! {
                         JValue::Object(#cb_arg_name),
                     },
@@ -183,6 +221,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 })
                 .collect::<Vec<TokenStream>>();
 
+            println!(
+                "[bridge] 🔆  begin quote callback return type ident => {}.{}",
+                &callback_desc.name, &method.name
+            );
             let ret_ty_tokens = match method.return_type {
                 AstType::Void => quote!(()),
                 _ => {
@@ -190,6 +232,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     quote!(#ident)
                 }
             };
+            println!(
+                "[bridge] ✅  end quote callback return type ident => {}.{}",
+                &callback_desc.name, &method.name
+            );
 
             let return_convert = match method.return_type {
                 AstType::Void => quote!(),
@@ -318,11 +364,16 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     #return_result_ident
                 }
             };
+
+            println!(
+                "[bridge] ✅ end quote callback method => {}.{}",
+                &callback_desc.name, &method.name
+            );
         }
 
         let callback_ident = Ident::new(&callback_desc.name, Span::call_site());
         let _callback_str_ident = Ident::new(&format!("r_{}_str", &arg.name), Span::call_site());
-        quote! {
+        let result = quote! {
             #callback_struct
 
             impl #callback_ident for #struct_ident {
@@ -342,7 +393,13 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             }
 
             let #rust_arg_name: Box<#struct_ident> = Box::new(#struct_ident{index: #arg_name_ident});
-        }
+        };
+
+        println!(
+            "[bridge] ✅  end quote callback argument in method convert => {}.{}",
+            &arg.name, &arg.origin_ty
+        );
+        result
     }
 }
 

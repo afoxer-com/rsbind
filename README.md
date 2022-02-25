@@ -102,7 +102,17 @@ supported types in Callback:
 - Parameters: Basic types, Vec, Struct
 - Return: Basic types.
 
-TODO: add callback support for return types.
+## Note:
+These is not supported yet:
+- Vec<Struct>
+- Struct in trait paramters.
+- Callback in return type.
+
+In Callback:
+- Return String.
+- TODO: add callback support for return types.
+
+Will support it in near future.
 
 It is different to define a callback and a normal trait.
 It should contains &self in every callback but not in normal trait.

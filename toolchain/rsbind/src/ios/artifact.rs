@@ -410,13 +410,14 @@ impl<'a> TraitGen<'a> {
                             );
                         }
 
+                        let free_fn_name = format!("{}_callback_free", &arg.name);
                         method_body.push(toks!(
-                                "let callback_free : @convention(c)(Int64) -> () = {\n",
+                                "let ", free_fn_name.clone(), " : @convention(c)(Int64) -> () = {\n",
                                 "(index) in\n",
                                 "globalCallbacks.removeValue(forKey: index)\n",
                                 "}\n",
-                                format!("let s_{} = {}_{}_Model({}free_callback: callback_free, index: {}_index)\n",
-                                    &arg.name, &self.desc.mod_name, &cb.name, cb_args_model, &arg.name)
+                                format!("let s_{} = {}_{}_Model({}free_callback: {}, index: {}_index)\n",
+                                    &arg.name, &self.desc.mod_name, &cb.name, cb_args_model, &free_fn_name, &arg.name)
                             ));
                     }
                     AstType::Boolean => method_body.push(toks!(
@@ -427,11 +428,12 @@ impl<'a> TraitGen<'a> {
                         " ? 1 : 0"
                     )),
                     AstType::Vec(_) => {
-                        method_body.push(toks!("let encoder = JSONEncoder()"));
+                        let encoder_name = format!("{}_encoder", &arg.name);
+                        method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
                         method_body.push(toks!(
                             "let ",
                             format!("data_{}", &arg.name),
-                            " = try! encoder.encode(",
+                            " = try! ", encoder_name.clone(), ".encode(",
                             arg.name.clone(),
                             ")"
                         ));
@@ -649,7 +651,7 @@ impl SwiftType {
             AstType::Long => "Int64".to_string(),
             AstType::Float => "Float".to_string(),
             AstType::Double => "Double".to_string(),
-            AstType::Boolean => "Boolean".to_string(),
+            AstType::Boolean => "Bool".to_string(),
             AstType::String => "String".to_string(),
             AstType::Vec(base) => {
                 let sub_origin_ty = self.origin_ty.replace("Vec<", "").replace(">", "");

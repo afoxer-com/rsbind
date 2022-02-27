@@ -1,1 +1,0 @@
-{"name":"StructSimple","ty":"struct","mod_name":"test_contract1","crate_name":"demo","fields":[{"name":"arg1","ty":"Int","origin_ty":"i32"},{"name":"arg2","ty":"Byte","origin_ty":"i8"},{"name":"arg3","ty":"String","origin_ty":"String"},{"name":"arg4","ty":"Boolean","origin_ty":"bool"},{"name":"arg5","ty":"Float","origin_ty":"f32"},{"name":"art6","ty":"Double","origin_ty":"f64"}]}

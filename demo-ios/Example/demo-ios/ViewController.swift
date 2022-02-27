@@ -9,80 +9,92 @@
 import UIKit
 import rustlib
 
-class ViewController: UIViewController, Callback{
-    func on_callback(arg1: Int32, arg2: String, arg3: Bool, arg4: Float, arg5: Double) -> Int32 {
-        print("on_callback \(arg1)")
-        return 100
+class ViewController: UIViewController, DemoCallback {
+    func test_u8_1(arg: Int8, arg2: Int8) -> Int8 {
+        1
     }
     
-    func on_callback_u8(arg1: Int8) -> Int8 {
-        print("on_callback_u8 \(arg1)")
-        return 55
+    func test_i8_2(arg: Int8, arg2: Int8) -> Int8 {
+        2
     }
     
-    func on_callback_i8(arg1: Int8) -> Int8 {
-        print("on_callback_i8 \(arg1)")
-        return 3
+    func test_i16_3(arg: Int32, arg2: Int32) -> Int32 {
+        3
     }
     
-    func on_empty_callback() {
-        print("on_empty_callback")
-        }
-    
-    func on_callback(arg1: Int, arg2: String, arg3: Bool, arg4: Double, arg5: Double) -> Int {
-        print("on_callback: \(arg1)")
-        return 3
+    func test_u16_4(arg: Int32, arg2: Int32) -> Int32 {
+        4
     }
     
-    func on_callback2(arg1: Bool) -> Bool {
-        print("on_callback2: \(arg1)")
-        return true
+    func test_i32_5(arg: Int32, arg2: Int32) -> Int32 {
+        5
     }
     
-    func on_callback_complex(arg1: StructSimple) -> Bool {
-        print("on_callback_complex: \(arg1)")
-        return true
+    func test_u32_6(arg: Int32, arg2: Int32) -> Int32 {
+        6
     }
     
-    func on_callback_arg_vec(arg1: Array<StructSimple>) -> Bool {
-        print("on_callback_arg_vec: \(arg1)")
-        return true
+    func test_bool_false(arg_true: Bool, arg_false: Bool) -> Bool {
+        false
     }
     
-    func on_callback_arg_vec_simple(arg1: Array<String>) -> Bool {
-        print("on_callback_arg_vec_simple: \(arg1)")
-        return true
+    func test_arg_vec_str_18(arg: [String]) -> Int32 {
+        18
     }
     
-    func update_progress(key: String, status: Int, bytes_transferred: Int64, bytes_total: Int64) -> Bool {
-        print("update process \(key), \(status), \(bytes_transferred), \(bytes_total)")
-        return true
+    func test_arg_vec_u8_7(arg: [Int8]) -> Int32 {
+        7
     }
     
-
+    func test_arg_vec_i8_8(arg: [Int8]) -> Int32 {
+        8
+    }
+    
+    func test_arg_vec_i16_9(arg: [Int32]) -> Int32 {
+        9
+    }
+    
+    func test_arg_vec_u16_10(arg: [Int32]) -> Int32 {
+        10
+    }
+    
+    func test_arg_vec_i32_11(arg: [Int32]) -> Int32 {
+        11
+    }
+    
+    func test_arg_vec_u32_12(arg: [Int32]) -> Int32 {
+        12
+    }
+    
+    func test_arg_vec_bool_true(arg_true: [Bool]) -> Bool {
+        true
+    }
+    
+    func test_arg_vec_struct_17(arg: [DemoStruct]) -> Int32 {
+        17
+    }
+    
+    func test_two_vec_arg_13(arg: [Int32], arg1: [Int32]) -> Int32 {
+        13
+    }
+    
+    func test_arg_struct_14(arg: DemoStruct) -> Int32 {
+        14
+    }
+    
+    func test_two_arg_struct_15(arg: DemoStruct, arg1: DemoStruct) -> Int32 {
+        15
+    }
+    
+    func test_no_return() {
+        
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let result = TestContract1.test_struct_vec()
-        print("result = \(result)")
-        // Do any additional setup after loading the view, typically from a nib.
-        
-        TestContract1.test_arg_callback(arg: self)
-        let struct_imp = TestContract1.test_struct();
-        print("struct = \(struct_imp)")
-        
-        let struct_vec = TestContract1.test_struct_vec()
-        print("struct_vec = \(struct_imp)")
-        
-        let return_vec = TestContract1.test_return_vec(arg: 43)
-        print("return_vec = \(return_vec)")
-        
-        let byte_result = TestContract1.test_byte(arg: 44)
-        print("byte result = \(byte_result)")
-        
-        let i8_result = TestContract1.test_byte_i8(arg: 55)
-        print("i8 result = \(i8_result)")
-
+        DemoTrait.setup()
+        DemoTrait.test_arg_callback_16(arg: self)
     }
 
     override func didReceiveMemoryWarning() {

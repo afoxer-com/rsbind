@@ -27,22 +27,6 @@ export ANDROID_SDK_ROOT=/Users/{username}/Library/Android/sdk
 export JAVA_HOME=/usr/local/opt/openjdk@11
 export PATH=$ANDROID_SDK_ROOT/tools:$ANDROID_SDK_ROOT/platform-tools:$PATH
 ```
-
-### 增加下面的配置到文件 ~/.cargo/config
-Note: change ndk path to your own path.
-```toml
-[target.armv7-linux-androideabi]
-linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/armv7a-linux-androideabi21-clang"
-
-[target.i686-linux-android]
-linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/i686-linux-android21-clang"
-
-[target.aarch64-linux-android]
-linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/aarch64-linux-android21-clang"
-
-[target.x86_64-linux-android]
-linker = "/usr/local/Caskroom/android-ndk/23b/android-ndk-r23b/toolchains/llvm/prebuilt/darwin-x86_64/bin/x86_64-linux-android21-clang"
-```
  
 ### Test if env is ok.
 Create a new project： cargo new my_project --lib

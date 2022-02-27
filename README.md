@@ -104,7 +104,7 @@ supported types in Callback:
 
 ## Note:
 These is not supported yet:
-- Vec<Struct>
+- Vec < Struct >
 - Struct in trait paramters.
 - Callback in return type.
 

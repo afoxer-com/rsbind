@@ -9,7 +9,7 @@ use errors::ErrorKind::*;
 use errors::*;
 use fs_extra;
 use fs_extra::dir::CopyOptions;
-use process::BuildProcess;
+use base::process::BuildProcess;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;

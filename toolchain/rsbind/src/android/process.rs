@@ -17,7 +17,7 @@ use bridges::BridgeGen::JavaGen;
 use errors::ErrorKind::*;
 use errors::*;
 use ndk_tool::{build, BuildConfig};
-use process::BuildProcess;
+use base::process::BuildProcess;
 use unzip;
 
 use super::config::Android;

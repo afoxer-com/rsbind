@@ -4,11 +4,7 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 
-import com.afoxer.xxx.ffi.Callback;
-import com.afoxer.xxx.ffi.StructSimple;
-import com.afoxer.xxx.ffi.TestContract1;
-
-import java.util.Arrays;
+import com.afoxer.xxx.ffi.*;
 
 
 public class MainActivity extends Activity {
@@ -19,63 +15,125 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        StructSimple[] structSimple = TestContract1.test_struct_vec();
-        Log.i(TAG, "xxxxx onCreate: result = " + structSimple[1].arg3);
-
-        byte byteResult = TestContract1.test_byte((byte) 2);
-        Log.i(TAG, "onCreate: byte result = " + byteResult);
-
-        byte byteResult2 = TestContract1.test_byte_i8((byte) 3);
-        Log.i(TAG, "onCreate: byteResult2 = " + byteResult2);
-
-        byte[] byteArrayResult = TestContract1.test_return_vec_u8(new byte[]{(byte)255, 4, 5});
-        Log.i(TAG, "onCreate: byte array result = " + Arrays.toString(byteArrayResult));
-
-        byte[] i8ArrayResult = TestContract1.test_return_vec_i8(new byte[]{127, -127, (byte)255});
-        Log.i(TAG, "onCreate: i8 vec result = " + Arrays.toString(i8ArrayResult));
-
-        TestContract1.test_arg_callback(new Callback() {
+        DemoTrait.init();
+        DemoTrait.test_arg_callback_16(new DemoCallback() {
             @Override
-            public byte on_callback_u8(byte b) {
-                Log.i(TAG, "on_callback_u8: " + b);
-                return 0;
+            public byte test_u8_1(byte arg, byte arg2) {
+                Log.e(TAG, "test_u8_1 -> arg: " + arg + " arg2: " + arg2);
+                return 1;
             }
 
             @Override
-            public byte on_callback_i8(byte b) {
-                Log.i(TAG, "on_callback_i8: " + b);
-                return 0;
+            public byte test_i8_2(byte arg, byte arg2) {
+                Log.e(TAG, "test_i8_2 -> arg: " + arg + " arg2: " + arg2);
+                return 2;
             }
 
             @Override
-            public int on_callback(int i, String s, boolean b, float v, double v1) {
-                Log.i(TAG, "xxxxx on_callback: " + i + ", " + s + ", " + b + ", " + v + ", " + v1);
-                return 0;
+            public int test_i16_3(int arg, int arg2) {
+                Log.e(TAG, "test_i16_3 -> arg: " + arg + " arg2: " + arg2);
+                return 3;
             }
 
             @Override
-            public boolean on_callback2(boolean b) {
+            public int test_u16_4(int arg, int arg2) {
+                Log.e(TAG, "test_u16_4 -> arg: " + arg + " arg2: " + arg2);
+                return 4;
+            }
+
+            @Override
+            public int test_i32_5(int arg, int arg2) {
+                Log.e(TAG, "test_i32_5 -> arg: " + arg + " arg2: " + arg2);
+                return 5;
+            }
+
+            @Override
+            public int test_u32_6(int arg, int arg2) {
+                Log.e(TAG, "test_u32_6 -> arg: " + arg + " arg2: " + arg2);
+                return 6;
+            }
+
+            @Override
+            public boolean test_bool_false(boolean arg_true, boolean arg_false) {
+                Log.e(TAG, "test_bool_false -> arg_true: " + arg_true + " arg_false: " + arg_false);
                 return false;
             }
 
-            public boolean on_callback_complex(StructSimple arg1) {
-                Log.i(TAG, "xxxxx on_callback_complex: " + arg1.arg1 + arg1.arg2 + arg1.arg3 + arg1.arg4 + arg1.arg5 + arg1.art6);
-                return true;
+            @Override
+            public int test_arg_vec_str_18(String[] arg) {
+                Log.e(TAG, "test_arg_vec_str_18 -> arg: " + arg[0]);
+                return 18;
             }
 
-            public boolean on_callback_arg_vec(StructSimple[] arg1) {
-                Log.i(TAG, "xxxxx on_callback_arg_vec: " + arg1[0].arg1 + arg1[0].arg2 + arg1[0].arg3 + arg1[0].arg4 + arg1[0].arg5 + arg1[0].art6);
-                return true;
+            @Override
+            public int test_arg_vec_u8_7(byte[] arg) {
+                Log.e(TAG, "test_arg_vec_u8_7 -> arg: " + arg[0]);
+                return 7;
             }
 
-            public boolean on_callback_arg_vec_simple(String[] arg1) {
-                Log.i(TAG, "xxxxxx on_callback_arg_vec_simple" + Arrays.toString(arg1));
+            @Override
+            public int test_arg_vec_i8_8(byte[] arg) {
+                Log.e(TAG, "test_arg_vec_i8_8 -> arg: " + arg[0]);
+                return 8;
+            }
+
+            @Override
+            public int test_arg_vec_i16_9(Integer[] arg) {
+                Log.e(TAG, "test_arg_vec_i8_8 -> arg: " + arg[0]);
+                return 9;
+            }
+
+            @Override
+            public int test_arg_vec_u16_10(Integer[] arg) {
+                Log.e(TAG, "test_arg_vec_u16_10 -> arg: " + arg[0]);
+                return 10;
+            }
+
+            @Override
+            public int test_arg_vec_i32_11(Integer[] arg) {
+                Log.e(TAG, "test_arg_vec_i32_11 -> arg: " + arg[0]);
+                return 11;
+            }
+
+            @Override
+            public int test_arg_vec_u32_12(Integer[] arg) {
+                Log.e(TAG, "test_arg_vec_u32_12 -> arg: " + arg[0]);
+                return 12;
+            }
+
+            @Override
+            public boolean test_arg_vec_bool_true(Boolean[] arg_true) {
+                Log.e(TAG, "test_arg_vec_bool_true -> arg_true: " + arg_true[0]);
                 return true;
             }
 
             @Override
-            public void on_empty_callback() {
-                Log.i(TAG, "on_empty_callback: ");
+            public int test_arg_vec_struct_17(DemoStruct[] arg) {
+                Log.e(TAG, "test_arg_vec_struct_17 -> arg: " + arg[0]);
+                return 17;
+            }
+
+            @Override
+            public int test_two_vec_arg_13(Integer[] arg, Integer[] arg1) {
+                Log.e(TAG, "test_two_vec_arg_13 -> arg: " + arg[0]);
+                return 13;
+            }
+
+            @Override
+            public int test_arg_struct_14(DemoStruct arg) {
+                Log.e(TAG, "test_arg_struct_14 -> arg: " + arg);
+                return 14;
+            }
+
+            @Override
+            public int test_two_arg_struct_15(DemoStruct arg, DemoStruct arg1) {
+                Log.e(TAG, "test_two_arg_struct_15 -> arg: " + arg + " arg1: " + arg1);
+                return 15;
+            }
+
+            @Override
+            public void test_no_return() {
+                Log.e(TAG, "test_no_return");
             }
         });
     }

@@ -144,6 +144,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         _callbacks: &Vec<&TraitDesc>,
         _structs: &Vec<StructDesc>,
     ) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}.{}]  🔆  begin quote jni bridge method signature.",
+            &trait_desc.name, &method.name
+        );
         let namespace = self.java_namespace.replace(".", "_");
         let method_name = format!(
             "Java_{}_{}_native_1{}",
@@ -194,7 +198,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 },
             }
         };
-
+        println!(
+            "[bridge][{}.{}]  ✅  end quote jni bridge method signature.",
+            &trait_desc.name, &method.name
+        );
         Ok(method_sig)
     }
 
@@ -204,6 +211,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         arg: &ArgDesc,
         callbacks: &Vec<&TraitDesc>,
     ) -> Result<TokenStream> {
+        println!(
+            "[bridge]  🔆  begin quote jni bridge method argument convert => {}:{}",
+            &arg.name, &arg.origin_ty
+        );
         let rust_arg_name = Ident::new(
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
             Span::call_site(),
@@ -212,7 +223,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let _class_name =
             format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
 
-        Ok(match arg.ty {
+        let result = match arg.ty {
             AstType::Byte | AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
                 let origin_type_ident = Ident::new(&arg.origin_ty, Span::call_site());
                 quote! {
@@ -265,15 +276,21 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     }
                 }
             },
-            AstType::Callback => self
-                .java_callback_strategy
-                .arg_convert(arg, trait_desc, callbacks),
+            AstType::Callback => {
+                self.java_callback_strategy
+                    .arg_convert(arg, trait_desc, callbacks)
+            }
             _ => {
                 return Err(
                     GenerateError(format!("find unsupported type in arg, {:?}", &arg.ty)).into(),
                 );
             }
-        })
+        };
+        println!(
+            "[bridge] ✅ end quote jni bridge method argument convert => {}:{}",
+            &arg.name, &arg.origin_ty
+        );
+        Ok(result)
     }
 
     fn quote_return_convert(
@@ -282,9 +299,13 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         ret_name: &str,
         origin_ty: &str,
     ) -> Result<TokenStream> {
+        println!(
+            "[bridge]  🔆  begin quote jni bridge method return convert => {}",
+            origin_ty
+        );
         let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
-        Ok(match *return_ty {
+        let result = match *return_ty {
             AstType::Void => quote!(),
             AstType::Boolean => quote! {
                 if #ret_name_ident {1} else {0}
@@ -344,7 +365,13 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     #ret_name_ident as #ty_ident
                 }
             }
-        })
+        };
+        println!(
+            "[bridge]  ✅  end quote jni bridge method return convert => {}",
+            origin_ty
+        );
+
+        Ok(result)
     }
 
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {

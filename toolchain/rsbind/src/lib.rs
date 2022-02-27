@@ -26,9 +26,9 @@ mod cargo;
 mod config;
 mod errors;
 mod ios;
-mod process;
 mod test;
 mod unzip;
+mod base;
 
 use android::config::Android;
 use android::process::AndroidProcess;
@@ -36,7 +36,7 @@ use ast::AstResult;
 use errors::*;
 use ios::config::Ios;
 use ios::process::IosProcess;
-use process::*;
+use base::process::*;
 use std::fs;
 use std::path::PathBuf;
 

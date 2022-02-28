@@ -13,7 +13,7 @@
 // such as your code in contract dir as below:
 pub trait YourContract {
     fn test_simple(arg1: i32, arg2: String) -> String;
-    fn test_callback(arg: Box<Callback>);
+    fn test_callback(arg: Box<dyn Callback>);
     fn test_struct() -> StructSimple;
 }
 
@@ -133,7 +133,7 @@ Normal trait:
 pub trait TestContract1 {
     fn test_arg_vec(arg: Vec<String>) -> i32;
     fn test_return_vec(arg: u8) -> Vec<i32>;
-    fn test_arg_callback(arg: Box<Callback>) -> u8;
+    fn test_arg_callback(arg: Box<dyn Callback>) -> u8;
     fn test_bool(arg1: bool) -> bool;
     fn test_struct() -> StructSimple;
     fn test_struct_vec() -> Vec<StructSimple>;

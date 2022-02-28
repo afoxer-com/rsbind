@@ -38,8 +38,8 @@ pub trait DemoTrait {
     fn test_return_vec_struct() -> Vec<DemoStruct>;
 
     // Callback
-    fn test_arg_callback_16(arg: Box<DemoCallback>) -> u8;
-    fn test_two_arg_callback_20(arg: Box<DemoCallback>, arg1: Box<DemoCallback>) -> u8;
+    fn test_arg_callback_16(arg: Box<dyn DemoCallback>) -> u8;
+    fn test_two_arg_callback_20(arg: Box<dyn DemoCallback>, arg1: Box<dyn DemoCallback>) -> u8;
 
     // Struct
     fn test_return_struct() -> DemoStruct;

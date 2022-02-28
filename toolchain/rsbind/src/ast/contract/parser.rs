@@ -10,6 +10,8 @@ use errors::*;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
+use syn::token::Trait;
+use syn::TypeParamBound;
 
 ///
 /// parse a syn file to TraitDesc which depicting the structure of the trait.
@@ -24,6 +26,21 @@ pub(crate) fn parse(
     file.read_to_string(&mut src)
         .map_err(|e| ParseError(e.to_string()))?;
 
+    let mod_name = PathBuf::from(file_path)
+        .file_stem()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .to_string();
+
+    parse_from_str(&crate_name, &mod_name, &src)
+}
+
+pub(crate) fn parse_from_str(
+    crate_name: &str,
+    mod_name: &str,
+    src: &str,
+) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
     let syn_file = syn::parse_file(&src).map_err(|e| ParseError(e.to_string()))?;
 
     let mut trait_descs = vec![];
@@ -31,13 +48,6 @@ pub(crate) fn parse(
 
     // loop all the trait
     for item in syn_file.items.iter() {
-        let mod_name = PathBuf::from(file_path)
-            .file_stem()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
-
         match *item {
             syn::Item::Trait(ref trait_inner) => {
                 let trait_name = trait_inner.ident.to_string();
@@ -48,8 +58,8 @@ pub(crate) fn parse(
                 let trait_desc = TraitDesc {
                     name: trait_name,
                     ty: "trait".to_string(),
-                    mod_name,
-                    crate_name: crate_name.clone(),
+                    mod_name: mod_name.to_string(),
+                    crate_name: crate_name.to_string(),
                     is_callback: methods.1,
                     methods: methods.0,
                 };
@@ -88,8 +98,8 @@ pub(crate) fn parse(
                 let struct_desc = StructDesc {
                     name: stuct_name,
                     ty: "struct".to_string(),
-                    mod_name,
-                    crate_name: crate_name.clone(),
+                    mod_name: mod_name.to_string(),
+                    crate_name: crate_name.to_string(),
                     fields: field_descs,
                 };
                 struct_descs.push(struct_desc);
@@ -253,6 +263,7 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                         let angle_bracketed = &segments[segments.len() - 1].arguments;
                         match angle_bracketed {
                             syn::PathArguments::AngleBracketed(t) => {
+                                println!("parsing Boxed inner.");
                                 let arg = &t.args[0];
                                 match arg {
                                     syn::GenericArgument::Type(ty) => match ty {
@@ -263,6 +274,26 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                                                 (&segments[segments.len() - 1].ident).to_string();
                                             arg_type = Some(AstType::from("Box"));
                                             origin_arg_ty = Some(ident.clone());
+                                        }
+                                        syn::Type::TraitObject(ref trait_obj) => {
+                                            if let Some(dyn_token) = trait_obj.dyn_token {
+                                                let bounds = &trait_obj.bounds;
+                                                for bound in bounds.iter() {
+                                                    match bound.clone() {
+                                                        TypeParamBound::Trait(trait_bound) => {
+                                                            let segments =
+                                                                trait_bound.path.segments;
+                                                            let ident = (&segments
+                                                                [segments.len() - 1]
+                                                                .ident)
+                                                                .to_string();
+                                                            arg_type = Some(AstType::from("Box"));
+                                                            origin_arg_ty = Some(ident.clone());
+                                                        }
+                                                        _ => {}
+                                                    }
+                                                }
+                                            }
                                         }
                                         _ => {}
                                     },

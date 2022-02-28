@@ -150,11 +150,11 @@ impl DemoTrait for TestContract1Imp {
         vec![new_struct()]
     }
 
-    fn test_arg_callback_16(arg: Box<DemoCallback>) -> u8 {
+    fn test_arg_callback_16(arg: Box<dyn DemoCallback>) -> u8 {
         handle_callback(arg)
     }
 
-    fn test_two_arg_callback_20(arg: Box<DemoCallback>, arg1: Box<DemoCallback>) -> u8 {
+    fn test_two_arg_callback_20(arg: Box<dyn DemoCallback>, arg1: Box<dyn DemoCallback>) -> u8 {
         handle_callback(arg);
         handle_callback(arg1);
         20
@@ -167,7 +167,7 @@ impl DemoTrait for TestContract1Imp {
     fn test_no_return() {}
 }
 
-fn handle_callback(arg: Box<DemoCallback>) -> u8 {
+fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     error!("We call handle_callback test_u8_1");
     assert_eq(&arg.test_u8_1(100, 101), &1, "handle_callback");
     error!("We call handle_callback test_i8_2");

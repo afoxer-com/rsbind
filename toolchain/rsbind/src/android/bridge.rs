@@ -165,10 +165,17 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let arg_types = method
             .args
             .iter()
-            .map(|arg| self.ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap())
+            .map(|arg| {
+                self.ty_to_tokens(&arg.ty, &arg.origin_ty, TypeDirection::Argument)
+                    .unwrap()
+            })
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = self.ty_to_tokens(&method.return_type, TypeDirection::Return)?;
+        let ret_ty_tokens = self.ty_to_tokens(
+            &method.return_type,
+            &method.origin_return_ty,
+            TypeDirection::Return,
+        )?;
 
         let method_sig = if arg_names.is_empty() {
             match method.return_type {
@@ -276,10 +283,9 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     }
                 }
             },
-            AstType::Callback => {
-                self.java_callback_strategy
-                    .arg_convert(arg, trait_desc, callbacks)
-            }
+            AstType::Callback => self
+                .java_callback_strategy
+                .arg_convert(arg, trait_desc, callbacks),
             _ => {
                 return Err(
                     GenerateError(format!("find unsupported type in arg, {:?}", &arg.ty)).into(),
@@ -359,7 +365,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             }
             _ => {
                 let ty_ident = self
-                    .ty_to_tokens(&return_ty, TypeDirection::Return)
+                    .ty_to_tokens(&return_ty, origin_ty, TypeDirection::Return)
                     .unwrap();
                 quote! {
                     #ret_name_ident as #ty_ident
@@ -374,7 +380,12 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         Ok(result)
     }
 
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
+    fn ty_to_tokens(
+        &self,
+        ast_type: &AstType,
+        origin_ty: &str,
+        direction: TypeDirection,
+    ) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match *ast_type {
             AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),

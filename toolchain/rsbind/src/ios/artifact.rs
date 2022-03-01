@@ -146,6 +146,21 @@ impl<'a> TraitGen<'a> {
 
             let mut method_body: Tokens<Swift> = Tokens::new();
 
+            let mut byte_count = 0;
+            for arg in method.args.iter() {
+                if let AstType::Vec(base) = arg.ty.clone() {
+                    if let AstBaseType::Byte = base.clone() {
+                        byte_count = byte_count + 1;
+                        method_body.push(toks!(
+                            arg.name.clone(),
+                            ".withUnsafeBufferPointer { ",
+                            arg.name.clone(),
+                            "_buffer in"
+                        ));
+                    }
+                }
+            }
+
             // Argument convert
             self.fill_arg_convert(&mut method_body, &method)?;
 
@@ -154,6 +169,10 @@ impl<'a> TraitGen<'a> {
 
             // Return type convert
             self.fill_return_type_convert(&mut method_body, &method)?;
+
+            for i in 0..byte_count {
+                method_body.push("}");
+            }
 
             m.body = method_body;
             class.methods.push(m);
@@ -193,24 +212,114 @@ impl<'a> TraitGen<'a> {
         Ok(m)
     }
 
-    fn fill_arg_convert(&self, method_body: & mut Tokens<Swift>, method: &MethodDesc) -> Result<()> {
+    fn fill_arg_convert(&self, method_body: &mut Tokens<Swift>, method: &MethodDesc) -> Result<()> {
         for arg in method.args.clone().iter() {
             // Argument convert
             println!("quote arg convert for {}", arg.name.clone());
             let s_arg_name = format!("s_{}", &arg.name);
             match arg.ty {
                 AstType::Void => {}
+                AstType::Boolean => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    ": Int32 = ",
+                    arg.name.clone(),
+                    " ? 1 : 0"
+                )),
+                AstType::Vec(base) => {
+                    if let AstBaseType::Byte = base {
+                        let arg_buffer_name = format!("{}_buffer", &arg.name);
+                        method_body.push(toks!(
+                            "let ",
+                            s_arg_name.clone(),
+                            " = CInt8Array(ptr: ",
+                            arg_buffer_name.clone(),
+                            ".baseAddress, len: Int32(",
+                            arg_buffer_name.clone(),
+                            ".count))"
+                        ))
+                    // } else if arg.origin_ty.clone().contains("u8") {
+                    //     let arg_buffer_name = format!("{}_buffer", &arg.name);
+                    //     method_body.push(toks!(
+                    //         "let ",
+                    //         s_arg_name.clone(),
+                    //         " = CUInt8Array(ptr: ",
+                    //         arg_buffer_name.clone(),
+                    //         ".baseAddress, len: Int32(",
+                    //         arg_buffer_name.clone(),
+                    //         ".count))"
+                    //     ))
+                    } else {
+                        let encoder_name = format!("{}_encoder", &arg.name);
+                        method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
+                        method_body.push(toks!(
+                            "let ",
+                            format!("data_{}", &arg.name),
+                            " = try! ",
+                            encoder_name.clone(),
+                            ".encode(",
+                            arg.name.clone(),
+                            ")"
+                        ));
+                        method_body.push(toks!(
+                            "let ",
+                            format!("s_{}", &arg.name),
+                            " = String(data: ",
+                            format!("data_{}", &arg.name),
+                            ", encoding: .utf8)!"
+                        ))
+                    }
+                }
+                AstType::Byte => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    " = Int8(",
+                    arg.name.clone(),
+                    ")"
+                )),
+                AstType::Int => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    " = Int32(",
+                    arg.name.clone(),
+                    ")"
+                )),
+                AstType::Long => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    " = Int64(",
+                    arg.name.clone(),
+                    ")"
+                )),
+                AstType::Float => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    " = Float32(",
+                    arg.name.clone(),
+                    ")"
+                )),
+                AstType::Double => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    " = Float64(",
+                    arg.name.clone(),
+                    ")"
+                )),
+                AstType::String => {
+                    method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
+                }
+                AstType::Struct => {}
                 AstType::Callback => {
                     // Store the callback to global callback map.
                     let index_name = format!("{}_index", &arg.name);
                     method_body.push(toks!("let ", index_name.clone(), " = globalIndex + 1"));
                     method_body.push(toks!("globalIndex = ", index_name.clone()));
                     method_body.push(toks!(
-                            "globalCallbacks[",
-                            index_name.clone(),
-                            "] = ",
-                            arg.name.clone()
-                        ));
+                        "globalCallbacks[",
+                        index_name.clone(),
+                        "] = ",
+                        arg.name.clone()
+                    ));
 
                     // Find the callback.
                     let callbacks = self
@@ -251,20 +360,20 @@ impl<'a> TraitGen<'a> {
                         arg_params = format!("{} -> {}", &arg_params, &cb_return_ty);
 
                         method_body.push(toks!(
-                                "let ",
-                                format!("{}_{}", &arg.name, &cb_method.name),
-                                ": @convention(c) ",
-                                closure,
-                                " = {"
-                            ));
+                            "let ",
+                            format!("{}_{}", &arg.name, &cb_method.name),
+                            ": @convention(c) ",
+                            closure,
+                            " = {"
+                        ));
                         method_body.push(toks!(
-                                arg_params.clone(),
-                                " in\n",
-                                "let ",
-                                format!("{}_callback", &arg.name),
-                                " = globalCallbacks[index] as! ",
-                                cb.name.clone()
-                            ));
+                            arg_params.clone(),
+                            " in\n",
+                            "let ",
+                            format!("{}_callback", &arg.name),
+                            " = globalCallbacks[index] as! ",
+                            cb.name.clone()
+                        ));
 
                         let mut cb_method_call = "(".to_string();
                         for (index, cb_arg) in cb_method.args.iter().enumerate() {
@@ -272,114 +381,112 @@ impl<'a> TraitGen<'a> {
                                 ast_type: cb_arg.ty.clone(),
                                 origin_ty: cb_arg.origin_ty.clone(),
                             }
-                                .to_str();
+                            .to_str();
                             match cb_arg.ty.clone() {
                                 AstType::Void => {}
                                 AstType::Byte => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = Int8(",
-                                            cb_arg.name.clone(),
-                                            ")"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = Int8(",
+                                        cb_arg.name.clone(),
+                                        ")"
+                                    ));
                                 }
                                 AstType::Int => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = Int32(",
-                                            cb_arg.name.clone(),
-                                            ")"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = Int32(",
+                                        cb_arg.name.clone(),
+                                        ")"
+                                    ));
                                 }
                                 AstType::Long => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = Int64(",
-                                            cb_arg.name.clone(),
-                                            ")"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = Int64(",
+                                        cb_arg.name.clone(),
+                                        ")"
+                                    ));
                                 }
                                 AstType::Float => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = Float(",
-                                            cb_arg.name.clone(),
-                                            ")"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = Float(",
+                                        cb_arg.name.clone(),
+                                        ")"
+                                    ));
                                 }
                                 AstType::Double => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = Double(",
-                                            cb_arg.name.clone(),
-                                            ")"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = Double(",
+                                        cb_arg.name.clone(),
+                                        ")"
+                                    ));
                                 }
                                 AstType::Boolean => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " : Bool = ",
-                                            cb_arg.name.clone(),
-                                            " > 0 ? true : false"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " : Bool = ",
+                                        cb_arg.name.clone(),
+                                        " > 0 ? true : false"
+                                    ));
                                 }
                                 AstType::String => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = String(cString: ",
-                                            cb_arg.name.clone(),
-                                            "!)"
-                                        ));
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = String(cString: ",
+                                        cb_arg.name.clone(),
+                                        "!)"
+                                    ));
                                 }
                                 AstType::Callback => {
                                     panic!("Don't support callback argument in callback");
                                 }
                                 AstType::Vec(_) | AstType::Struct => {
                                     method_body.push(toks!(
-                                            "let ",
-                                            format!("c_tmp_{}", &cb_arg.name),
-                                            " = String(cString:",
-                                            cb_arg.name.clone(),
-                                            "!)\n",
-                                            "var ",
-                                            format!("c_option_{}", &cb_arg.name),
-                                            " : ",
-                                            cb_arg_str.clone(),
-                                            "?\n",
-                                            "autoreleasepool {\n",
-                                            "let ",
-                                            format!("c_tmp_json_{}", &cb_arg.name),
-                                            " = ",
-                                            format!("c_tmp_{}", &cb_arg.name),
-                                            ".data(using: .utf8)!\n",
-                                            "let decoder = JSONDecoder()\n",
-                                            format!("c_option_{}", &cb_arg.name),
-                                            " = try! decoder.decode(",
-                                            cb_arg_str.clone(),
-                                            ".self, from: ",
-                                            format!("c_tmp_json_{}", &cb_arg.name),
-                                            ")\n",
-                                            "}\n",
-                                            "let ",
-                                            format!("c_{}", &cb_arg.name),
-                                            " = ",
-                                            format!("c_option_{}", &cb_arg.name),
-                                            "!"
-                                        ));
+                                        "let ",
+                                        format!("c_tmp_{}", &cb_arg.name),
+                                        " = String(cString:",
+                                        cb_arg.name.clone(),
+                                        "!)\n",
+                                        "var ",
+                                        format!("c_option_{}", &cb_arg.name),
+                                        " : ",
+                                        cb_arg_str.clone(),
+                                        "?\n",
+                                        "autoreleasepool {\n",
+                                        "let ",
+                                        format!("c_tmp_json_{}", &cb_arg.name),
+                                        " = ",
+                                        format!("c_tmp_{}", &cb_arg.name),
+                                        ".data(using: .utf8)!\n",
+                                        "let decoder = JSONDecoder()\n",
+                                        format!("c_option_{}", &cb_arg.name),
+                                        " = try! decoder.decode(",
+                                        cb_arg_str.clone(),
+                                        ".self, from: ",
+                                        format!("c_tmp_json_{}", &cb_arg.name),
+                                        ")\n",
+                                        "}\n",
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = ",
+                                        format!("c_option_{}", &cb_arg.name),
+                                        "!"
+                                    ));
                                 }
                             }
 
-                            cb_method_call = format!(
-                                "{}{}: c_{}",
-                                &cb_method_call, &cb_arg.name, &cb_arg.name
-                            );
+                            cb_method_call =
+                                format!("{}{}: c_{}", &cb_method_call, &cb_arg.name, &cb_arg.name);
                             if index != cb_method.args.len() - 1 {
                                 cb_method_call = format!("{}, ", &cb_method_call);
                             }
@@ -389,20 +496,20 @@ impl<'a> TraitGen<'a> {
                         match cb_method.return_type.clone() {
                             AstType::Void => {
                                 method_body.push(toks!(
-                                        format!("{}_callback", &arg.name),
-                                        ".",
-                                        cb_method.name.clone(),
-                                        cb_method_call
-                                    ));
+                                    format!("{}_callback", &arg.name),
+                                    ".",
+                                    cb_method.name.clone(),
+                                    cb_method_call
+                                ));
                             }
                             _ => {
                                 method_body.push(toks!(
-                                        "let result = ",
-                                        format!("{}_callback", &arg.name),
-                                        ".",
-                                        cb_method.name.clone(),
-                                        cb_method_call
-                                    ));
+                                    "let result = ",
+                                    format!("{}_callback", &arg.name),
+                                    ".",
+                                    cb_method.name.clone(),
+                                    cb_method_call
+                                ));
                             }
                         }
 
@@ -449,84 +556,33 @@ impl<'a> TraitGen<'a> {
 
                     let free_fn_name = format!("{}_callback_free", &arg.name);
                     method_body.push(toks!(
-                                "let ", free_fn_name.clone(), " : @convention(c)(Int64) -> () = {\n",
-                                "(index) in\n",
-                                "globalCallbacks.removeValue(forKey: index)\n",
-                                "}\n",
-                                format!("let s_{} = {}_{}_Model({}free_callback: {}, index: {}_index)\n",
-                                    &arg.name, &self.desc.mod_name, &cb.name, cb_args_model, &free_fn_name, &arg.name)
-                            ));
+                        "let ",
+                        free_fn_name.clone(),
+                        " : @convention(c)(Int64) -> () = {\n",
+                        "(index) in\n",
+                        "globalCallbacks.removeValue(forKey: index)\n",
+                        "}\n",
+                        format!(
+                            "let s_{} = {}_{}_Model({}free_callback: {}, index: {}_index)\n",
+                            &arg.name,
+                            &self.desc.mod_name,
+                            &cb.name,
+                            cb_args_model,
+                            &free_fn_name,
+                            &arg.name
+                        )
+                    ));
                 }
-                AstType::Boolean => method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        ": Int32 = ",
-                        arg.name.clone(),
-                        " ? 1 : 0"
-                    )),
-                AstType::Vec(_) => {
-                    let encoder_name = format!("{}_encoder", &arg.name);
-                    method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                    method_body.push(toks!(
-                            "let ",
-                            format!("data_{}", &arg.name),
-                            " = try! ", encoder_name.clone(), ".encode(",
-                            arg.name.clone(),
-                            ")"
-                        ));
-                    method_body.push(toks!(
-                            "let ",
-                            format!("s_{}", &arg.name),
-                            " = String(data: ",
-                            format!("data_{}", &arg.name),
-                            ", encoding: .utf8)!"
-                        ))
-                }
-                AstType::Byte => method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = Int8(",
-                        arg.name.clone(),
-                        ")"
-                    )),
-                AstType::Int => method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = Int32(",
-                        arg.name.clone(),
-                        ")"
-                    )),
-                AstType::Long => method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = Int64(",
-                        arg.name.clone(),
-                        ")"
-                    )),
-                AstType::Float => method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = Float32(",
-                        arg.name.clone(),
-                        ")"
-                    )),
-                AstType::Double => method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = Float64(",
-                        arg.name.clone(),
-                        ")"
-                    )),
-                AstType::String => {
-                    method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
-                }
-                AstType::Struct => {}
             }
         }
         Ok(())
     }
 
-    fn fill_call_native_method(&self, method_body: &mut Tokens<Swift>, method: &MethodDesc) -> Result<()> {
+    fn fill_call_native_method(
+        &self,
+        method_body: &mut Tokens<Swift>,
+        method: &MethodDesc,
+    ) -> Result<()> {
         let method_name = format!("{}_{}", &self.desc.mod_name, &method.name);
         match method.return_type.clone() {
             AstType::Void => {
@@ -549,7 +605,11 @@ impl<'a> TraitGen<'a> {
         Ok(())
     }
 
-    fn fill_return_type_convert(&self, method_body: &mut Tokens<Swift>, method: &MethodDesc) -> Result<()> {
+    fn fill_return_type_convert(
+        &self,
+        method_body: &mut Tokens<Swift>,
+        method: &MethodDesc,
+    ) -> Result<()> {
         let crate_name = self.desc.crate_name.replace("-", "_");
         match method.return_type.clone() {
             AstType::Void => {}
@@ -578,38 +638,38 @@ impl<'a> TraitGen<'a> {
             AstType::Vec(base) => {
                 let return_ty = SwiftType::new(method.return_type, method.origin_return_ty.clone());
                 method_body.push(toks!(
-                        "let ret_str = String(cString:result!)\n",
-                        format!("{}_free_str(result!)\n", &crate_name),
-                        "var s_tmp_result:",
-                        Swift::from(return_ty.clone()),
-                        "?\n",
-                        "autoreleasepool {\n",
-                        "let ret_str_json = ret_str.data(using: .utf8)!\n",
-                        "let decoder = JSONDecoder()\n",
-                        "s_tmp_result = try! decoder.decode(",
-                        Swift::from(return_ty.clone()),
-                        ".self, from: ret_str_json)\n",
-                        "}\n",
-                        "let s_result = s_tmp_result!"
-                    ));
+                    "let ret_str = String(cString:result!)\n",
+                    format!("{}_free_str(result!)\n", &crate_name),
+                    "var s_tmp_result:",
+                    Swift::from(return_ty.clone()),
+                    "?\n",
+                    "autoreleasepool {\n",
+                    "let ret_str_json = ret_str.data(using: .utf8)!\n",
+                    "let decoder = JSONDecoder()\n",
+                    "s_tmp_result = try! decoder.decode(",
+                    Swift::from(return_ty.clone()),
+                    ".self, from: ret_str_json)\n",
+                    "}\n",
+                    "let s_result = s_tmp_result!"
+                ));
             }
             AstType::Callback => {}
             AstType::Struct => {
                 method_body.push(toks!(
-                        "let ret_str = String(cString:result!)\n",
-                        format!("{}_free_str(result!)\n", &crate_name),
-                        "var s_tmp_result: ",
-                        method.origin_return_ty.to_owned(),
-                        "?\n",
-                        "autoreleasepool {\n",
-                        "let ret_str_json = ret_str.data(using: .utf8)!\n",
-                        "let decoder = JSONDecoder()\n",
-                        "s_tmp_result = try! decoder.decode(",
-                        method.origin_return_ty.to_owned(),
-                        ".self, from: ret_str_json)\n",
-                        "}\n",
-                        "let s_result = s_tmp_result!\n"
-                    ));
+                    "let ret_str = String(cString:result!)\n",
+                    format!("{}_free_str(result!)\n", &crate_name),
+                    "var s_tmp_result: ",
+                    method.origin_return_ty.to_owned(),
+                    "?\n",
+                    "autoreleasepool {\n",
+                    "let ret_str_json = ret_str.data(using: .utf8)!\n",
+                    "let decoder = JSONDecoder()\n",
+                    "s_tmp_result = try! decoder.decode(",
+                    method.origin_return_ty.to_owned(),
+                    ".self, from: ret_str_json)\n",
+                    "}\n",
+                    "let s_result = s_tmp_result!\n"
+                ));
             }
         }
 

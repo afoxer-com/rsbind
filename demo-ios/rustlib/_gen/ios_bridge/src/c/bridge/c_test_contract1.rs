@@ -1,3 +1,4 @@
+use c::bridge::common::*;
 use contract::test_contract1::*;
 use imp::test_contract1_imp::*;
 use std::ffi::CStr;
@@ -107,10 +108,9 @@ pub extern "C" fn test_contract1_test_arg_vec_str_7(arg: *const c_char) -> i32 {
     ret_value as i32
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_arg_vec_u8_true(arg: *const c_char) -> i32 {
-    let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+pub extern "C" fn test_contract1_test_arg_vec_u8_true(arg: CInt8Array) -> i32 {
+    let r_arg =
+        unsafe { std::slice::from_raw_parts(arg.ptr as (*const u8), arg.len as usize).to_vec() };
     let ret_value = TestContract1Imp::test_arg_vec_u8_true(r_arg);
     if ret_value {
         1
@@ -119,10 +119,9 @@ pub extern "C" fn test_contract1_test_arg_vec_u8_true(arg: *const c_char) -> i32
     }
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_arg_vec_i8_6(arg: *const c_char) -> i32 {
-    let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+pub extern "C" fn test_contract1_test_arg_vec_i8_6(arg: CInt8Array) -> i32 {
+    let r_arg =
+        unsafe { std::slice::from_raw_parts(arg.ptr as (*const i8), arg.len as usize).to_vec() };
     let ret_value = TestContract1Imp::test_arg_vec_i8_6(r_arg);
     ret_value as i32
 }
@@ -229,10 +228,10 @@ pub extern "C" fn test_contract1_test_return_vec_bool_true() -> *mut c_char {
     CString::new(json_ret.unwrap()).unwrap().into_raw()
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_two_vec_u8(input: *const c_char) -> *mut c_char {
-    let c_str_input: &CStr = unsafe { CStr::from_ptr(input) };
-    let c_str_input: &str = c_str_input.to_str().unwrap();
-    let r_input = serde_json::from_str(&c_str_input.to_owned()).unwrap();
+pub extern "C" fn test_contract1_test_two_vec_u8(input: CInt8Array) -> *mut c_char {
+    let r_input = unsafe {
+        std::slice::from_raw_parts(input.ptr as (*const u8), input.len as usize).to_vec()
+    };
     let ret_value = TestContract1Imp::test_two_vec_u8(r_input);
     let json_ret = serde_json::to_string(&ret_value);
     CString::new(json_ret.unwrap()).unwrap().into_raw()

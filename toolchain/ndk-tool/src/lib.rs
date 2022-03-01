@@ -7,8 +7,8 @@ use std::process::Command;
 use ndk_build::cargo::cargo_ndk;
 use ndk_build::target::Target;
 
-use error::*;
 use error::ErrorKind::*;
+use error::*;
 
 pub mod error;
 
@@ -114,8 +114,8 @@ pub fn build(config: &BuildConfig) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
     use ndk_build::target::Target;
+    use std::path::Path;
 
     use crate::{build, BuildConfig};
 
@@ -124,17 +124,18 @@ mod tests {
         println!("current dir = {:?}", std::env::current_dir());
         let config = BuildConfig {
             lib_name: "testcode".to_string(),
-            arch_list: vec![Target::Arm64V8a.rust_triple().to_owned(),
-                            Target::ArmV7a.rust_triple().to_owned(),
-                            Target::X86.rust_triple().to_owned(),
-                            Target::X86_64.rust_triple().to_owned(),
+            arch_list: vec![
+                Target::Arm64V8a.rust_triple().to_owned(),
+                Target::ArmV7a.rust_triple().to_owned(),
+                Target::X86.rust_triple().to_owned(),
+                Target::X86_64.rust_triple().to_owned(),
             ],
             is_release: true,
             target_dir: "target".to_string(),
             project_dir: Path::new(".").to_path_buf(),
             sdk_version: 21,
             rustc_param: "--features rsbind".to_owned(),
-            features_def: vec![]
+            features_def: vec![],
         };
         build(&config).unwrap()
     }

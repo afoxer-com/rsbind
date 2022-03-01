@@ -21,8 +21,8 @@ mod tests {
             }
         ";
 
-        let (trait_desc, struct_desc)
-            = parse_from_str("demo_crate", "demo_mod", contract_str).unwrap();
+        let (trait_desc, struct_desc) =
+            parse_from_str("demo_crate", "demo_mod", contract_str).unwrap();
         assert_eq!(trait_desc.len(), 2);
         assert_eq!(struct_desc.len(), 1);
         assert_eq!(trait_desc[0].name, "FfiContract");
@@ -33,14 +33,20 @@ mod tests {
         assert_eq!(trait_desc[0].methods[0].name, "return_vec");
         assert_eq!(trait_desc[0].methods[0].args.len(), 0);
         assert_eq!(trait_desc[0].methods[0].origin_return_ty, "Vec<u8>");
-        assert_eq!(trait_desc[0].methods[0].return_type, AstType::Vec(AstBaseType::Byte));
+        assert_eq!(
+            trait_desc[0].methods[0].return_type,
+            AstType::Vec(AstBaseType::Byte)
+        );
 
         assert_eq!(trait_desc[0].methods[1].name, "arg_vec");
         assert_eq!(trait_desc[0].methods[1].args[0].name, "command");
         assert_eq!(trait_desc[0].methods[1].args[0].ty, AstType::Int);
         assert_eq!(trait_desc[0].methods[1].args[0].origin_ty, "i32");
         assert_eq!(trait_desc[0].methods[1].args[1].name, "data");
-        assert_eq!(trait_desc[0].methods[1].args[1].ty, AstType::Vec(AstBaseType::Byte));
+        assert_eq!(
+            trait_desc[0].methods[1].args[1].ty,
+            AstType::Vec(AstBaseType::Byte)
+        );
         assert_eq!(trait_desc[0].methods[1].args[1].origin_ty, "Vec<u8>");
         assert_eq!(trait_desc[0].methods[1].origin_return_ty, "i32");
         assert_eq!(trait_desc[0].methods[1].return_type, AstType::Int);
@@ -66,8 +72,10 @@ mod tests {
         assert_eq!(trait_desc[1].methods[0].args[0].ty, AstType::Int);
         assert_eq!(trait_desc[1].methods[0].args[0].origin_ty, "i32");
         assert_eq!(trait_desc[1].methods[0].args[1].name, "data");
-        assert_eq!(trait_desc[1].methods[0].args[1].ty, AstType::Vec(AstBaseType::Byte));
+        assert_eq!(
+            trait_desc[1].methods[0].args[1].ty,
+            AstType::Vec(AstBaseType::Byte)
+        );
         assert_eq!(trait_desc[1].methods[0].args[1].origin_ty, "Vec<u8>");
-
     }
 }

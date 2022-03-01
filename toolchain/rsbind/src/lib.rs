@@ -20,6 +20,7 @@ extern crate ndk_tool;
 
 mod android;
 mod ast;
+mod base;
 mod bridge;
 mod bridges;
 mod cargo;
@@ -28,15 +29,14 @@ mod errors;
 mod ios;
 mod test;
 mod unzip;
-mod base;
 
 use android::config::Android;
 use android::process::AndroidProcess;
 use ast::AstResult;
+use base::process::*;
 use errors::*;
 use ios::config::Ios;
 use ios::process::IosProcess;
-use base::process::*;
 use std::fs;
 use std::path::PathBuf;
 

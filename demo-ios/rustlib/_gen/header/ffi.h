@@ -3,6 +3,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+typedef struct CInt8Array {
+  const int8_t *ptr;
+  int32_t len;
+} CInt8Array;
+
 typedef struct test_contract1_DemoCallback_Model {
   int8_t (*test_u8_1)(int64_t, int8_t, int8_t);
   int8_t (*test_i8_2)(int64_t, int8_t, int8_t);
@@ -48,9 +53,9 @@ char *test_contract1_test_str(const char *arg);
 
 int32_t test_contract1_test_arg_vec_str_7(const char *arg);
 
-int32_t test_contract1_test_arg_vec_u8_true(const char *arg);
+int32_t test_contract1_test_arg_vec_u8_true(struct CInt8Array arg);
 
-int32_t test_contract1_test_arg_vec_i8_6(const char *arg);
+int32_t test_contract1_test_arg_vec_i8_6(struct CInt8Array arg);
 
 int32_t test_contract1_test_arg_vec_i16_9(const char *arg);
 
@@ -80,7 +85,7 @@ char *test_contract1_test_return_vec_u32(void);
 
 char *test_contract1_test_return_vec_bool_true(void);
 
-char *test_contract1_test_two_vec_u8(const char *input);
+char *test_contract1_test_two_vec_u8(struct CInt8Array input);
 
 char *test_contract1_test_return_vec_struct(void);
 

@@ -48,6 +48,7 @@ impl FileGenStrategy for CFileGenStrategy {
             use std::ffi::CStr;
             use std::os::raw::c_char;
             use std::ffi::CString;
+            use c::bridge::common::*;
         })
     }
 
@@ -143,11 +144,17 @@ impl FileGenStrategy for CFileGenStrategy {
                     let callback_ident = Ident::new(callback_str, Span::call_site());
                     quote!(#callback_ident)
                 }
-                _ => self.ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap(),
+                _ => self
+                    .ty_to_tokens(&arg.ty, &arg.origin_ty, TypeDirection::Argument)
+                    .unwrap(),
             })
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = self.ty_to_tokens(&method.return_type, TypeDirection::Return)?;
+        let ret_ty_tokens = self.ty_to_tokens(
+            &method.return_type,
+            &method.origin_return_ty,
+            TypeDirection::Return,
+        )?;
         println!(
             "xxxxxx result ={:?} -> {:?}",
             &method.return_type, ret_ty_tokens
@@ -212,13 +219,27 @@ impl FileGenStrategy for CFileGenStrategy {
                     let #rust_arg_name: String = #c_slice_ident.to_owned();
                 }
             }
-            AstType::Vec(_base) => {
-                let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                let c_slice_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                quote! {
-                    let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
-                    let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
-                    let #rust_arg_name = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
+            AstType::Vec(base) => {
+                if let AstBaseType::Byte = base {
+                    if arg.origin_ty.clone().contains("i8") {
+                        quote! {
+                            let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i8), #arg_name_ident.len as usize).to_vec() };
+                        }
+                    } else {
+                        quote! {
+                            let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u8), #arg_name_ident.len as usize).to_vec() };
+                        }
+                    }
+                } else {
+                    let c_str_ident =
+                        Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                    let c_slice_ident =
+                        Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                    quote! {
+                        let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
+                        let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
+                        let #rust_arg_name = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
+                    }
                 }
             }
             AstType::Callback => {
@@ -277,7 +298,7 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             }
             _ => {
-                let ty_ident = self.ty_to_tokens(&ty, TypeDirection::Return)?;
+                let ty_ident = self.ty_to_tokens(&ty, &origin_ty, TypeDirection::Return)?;
                 quote! {
                     #ret_name_ident as #ty_ident
                 }
@@ -285,9 +306,14 @@ impl FileGenStrategy for CFileGenStrategy {
         })
     }
 
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
+    fn ty_to_tokens(
+        &self,
+        ast_type: &AstType,
+        origin_ty: &str,
+        direction: TypeDirection,
+    ) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
-        match *ast_type {
+        match ast_type.clone() {
             AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
             AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
@@ -307,13 +333,24 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             },
             AstType::Struct => {
-                let struct_tokens = self.ty_to_tokens(&AstType::String, direction)?;
+                let struct_tokens = self.ty_to_tokens(&AstType::String, "String", direction)?;
                 tokens = quote!(#struct_tokens)
             }
-            AstType::Vec(_) => {
-                let vec_tokens = self.ty_to_tokens(&AstType::String, direction)?;
-                tokens = quote!(#vec_tokens)
-            }
+            AstType::Vec(base) => match base {
+                AstBaseType::Byte => {
+                    if let TypeDirection::Argument = direction {
+                        tokens.append(Ident::new("CInt8Array", Span::call_site()));
+                    } else {
+                        let vec_tokens =
+                            self.ty_to_tokens(&AstType::String, "String", direction)?;
+                        tokens = quote!(#vec_tokens);
+                    }
+                }
+                _ => {
+                    let vec_tokens = self.ty_to_tokens(&AstType::String, "String", direction)?;
+                    tokens = quote!(#vec_tokens);
+                }
+            },
             _ => (),
         };
 

@@ -17,8 +17,8 @@ typedef struct test_contract1_DemoCallback_Model {
   int32_t (*test_u32_6)(int64_t, int32_t, int32_t);
   int32_t (*test_bool_false)(int64_t, int32_t, int32_t);
   int32_t (*test_arg_vec_str_18)(int64_t, const char*);
-  int32_t (*test_arg_vec_u8_7)(int64_t, const char*);
-  int32_t (*test_arg_vec_i8_8)(int64_t, const char*);
+  int32_t (*test_arg_vec_u8_7)(int64_t, struct CInt8Array);
+  int32_t (*test_arg_vec_i8_8)(int64_t, struct CInt8Array);
   int32_t (*test_arg_vec_i16_9)(int64_t, const char*);
   int32_t (*test_arg_vec_u16_10)(int64_t, const char*);
   int32_t (*test_arg_vec_i32_11)(int64_t, const char*);

@@ -1,3 +1,4 @@
+use std::fmt::format;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -450,7 +451,51 @@ impl<'a> TraitGen<'a> {
                                 AstType::Callback => {
                                     panic!("Don't support callback argument in callback");
                                 }
-                                AstType::Vec(_) | AstType::Struct => {
+                                AstType::Vec(base) => match base {
+                                    AstBaseType::Byte => method_body.push(toks!(
+                                        "let ",
+                                        format!("c_{}", &cb_arg.name),
+                                        " = Array<Int8>(UnsafeBufferPointer(start: ",
+                                        cb_arg.name.clone(),
+                                        ".ptr, count: Int(",
+                                        cb_arg.name.clone(),
+                                        ".len)))"
+                                    )),
+                                    _ => {
+                                        method_body.push(toks!(
+                                            "let ",
+                                            format!("c_tmp_{}", &cb_arg.name),
+                                            " = String(cString:",
+                                            cb_arg.name.clone(),
+                                            "!)\n",
+                                            "var ",
+                                            format!("c_option_{}", &cb_arg.name),
+                                            " : ",
+                                            cb_arg_str.clone(),
+                                            "?\n",
+                                            "autoreleasepool {\n",
+                                            "let ",
+                                            format!("c_tmp_json_{}", &cb_arg.name),
+                                            " = ",
+                                            format!("c_tmp_{}", &cb_arg.name),
+                                            ".data(using: .utf8)!\n",
+                                            "let decoder = JSONDecoder()\n",
+                                            format!("c_option_{}", &cb_arg.name),
+                                            " = try! decoder.decode(",
+                                            cb_arg_str.clone(),
+                                            ".self, from: ",
+                                            format!("c_tmp_json_{}", &cb_arg.name),
+                                            ")\n",
+                                            "}\n",
+                                            "let ",
+                                            format!("c_{}", &cb_arg.name),
+                                            " = ",
+                                            format!("c_option_{}", &cb_arg.name),
+                                            "!"
+                                        ));
+                                    }
+                                },
+                                AstType::Struct => {
                                     method_body.push(toks!(
                                         "let ",
                                         format!("c_tmp_{}", &cb_arg.name),
@@ -707,9 +752,14 @@ fn map_cb_type(ty: &AstType) -> String {
         AstType::String => {
             return "UnsafePointer<Int8>?".to_string();
         }
-        AstType::Vec(_) => {
-            return "UnsafePointer<Int8>?".to_string();
-        }
+        AstType::Vec(base) => match base {
+            AstBaseType::Byte => {
+                return "CInt8Array".to_string();
+            }
+            _ => {
+                return "UnsafePointer<Int8>?".to_string();
+            }
+        },
         AstType::Callback => {
             panic!("Don't support callback in callback argument.");
         }

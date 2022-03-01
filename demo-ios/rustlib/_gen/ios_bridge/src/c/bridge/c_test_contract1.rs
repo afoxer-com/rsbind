@@ -259,8 +259,8 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
-        pub test_arg_vec_u8_7: extern "C" fn(i64, *const c_char) -> i32,
-        pub test_arg_vec_i8_8: extern "C" fn(i64, *const c_char) -> i32,
+        pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
+        pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i16_9: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u16_10: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_i32_11: extern "C" fn(i64, *const c_char) -> i32,
@@ -341,20 +341,26 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
             s_result
         }
         fn test_arg_vec_u8_7(&self, arg: Vec<u8>) -> i32 {
-            let c_tmp_arg = serde_json::to_string(&arg);
-            let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
+            let c_arg = unsafe {
+                CInt8Array {
+                    ptr: arg.as_ptr() as (*const i8),
+                    len: arg.len() as i32,
+                }
+            };
             let fn_test_arg_vec_u8_7 = self.test_arg_vec_u8_7;
             let result = fn_test_arg_vec_u8_7(self.index, c_arg);
-            unsafe { CString::from_raw(c_arg) };
             let s_result = result as i32;
             s_result
         }
         fn test_arg_vec_i8_8(&self, arg: Vec<i8>) -> i32 {
-            let c_tmp_arg = serde_json::to_string(&arg);
-            let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
+            let c_arg = unsafe {
+                CInt8Array {
+                    ptr: arg.as_ptr() as (*const i8),
+                    len: arg.len() as i32,
+                }
+            };
             let fn_test_arg_vec_i8_8 = self.test_arg_vec_i8_8;
             let result = fn_test_arg_vec_i8_8(self.index, c_arg);
-            unsafe { CString::from_raw(c_arg) };
             let s_result = result as i32;
             s_result
         }
@@ -501,8 +507,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
-        pub test_arg_vec_u8_7: extern "C" fn(i64, *const c_char) -> i32,
-        pub test_arg_vec_i8_8: extern "C" fn(i64, *const c_char) -> i32,
+        pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
+        pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i16_9: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u16_10: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_i32_11: extern "C" fn(i64, *const c_char) -> i32,
@@ -583,20 +589,26 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             s_result
         }
         fn test_arg_vec_u8_7(&self, arg: Vec<u8>) -> i32 {
-            let c_tmp_arg = serde_json::to_string(&arg);
-            let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
+            let c_arg = unsafe {
+                CInt8Array {
+                    ptr: arg.as_ptr() as (*const i8),
+                    len: arg.len() as i32,
+                }
+            };
             let fn_test_arg_vec_u8_7 = self.test_arg_vec_u8_7;
             let result = fn_test_arg_vec_u8_7(self.index, c_arg);
-            unsafe { CString::from_raw(c_arg) };
             let s_result = result as i32;
             s_result
         }
         fn test_arg_vec_i8_8(&self, arg: Vec<i8>) -> i32 {
-            let c_tmp_arg = serde_json::to_string(&arg);
-            let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
+            let c_arg = unsafe {
+                CInt8Array {
+                    ptr: arg.as_ptr() as (*const i8),
+                    len: arg.len() as i32,
+                }
+            };
             let fn_test_arg_vec_i8_8 = self.test_arg_vec_i8_8;
             let result = fn_test_arg_vec_i8_8(self.index, c_arg);
-            unsafe { CString::from_raw(c_arg) };
             let s_result = result as i32;
             s_result
         }
@@ -735,8 +747,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
-        pub test_arg_vec_u8_7: extern "C" fn(i64, *const c_char) -> i32,
-        pub test_arg_vec_i8_8: extern "C" fn(i64, *const c_char) -> i32,
+        pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
+        pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i16_9: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u16_10: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_i32_11: extern "C" fn(i64, *const c_char) -> i32,
@@ -817,20 +829,26 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             s_result
         }
         fn test_arg_vec_u8_7(&self, arg: Vec<u8>) -> i32 {
-            let c_tmp_arg = serde_json::to_string(&arg);
-            let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
+            let c_arg = unsafe {
+                CInt8Array {
+                    ptr: arg.as_ptr() as (*const i8),
+                    len: arg.len() as i32,
+                }
+            };
             let fn_test_arg_vec_u8_7 = self.test_arg_vec_u8_7;
             let result = fn_test_arg_vec_u8_7(self.index, c_arg);
-            unsafe { CString::from_raw(c_arg) };
             let s_result = result as i32;
             s_result
         }
         fn test_arg_vec_i8_8(&self, arg: Vec<i8>) -> i32 {
-            let c_tmp_arg = serde_json::to_string(&arg);
-            let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
+            let c_arg = unsafe {
+                CInt8Array {
+                    ptr: arg.as_ptr() as (*const i8),
+                    len: arg.len() as i32,
+                }
+            };
             let fn_test_arg_vec_i8_8 = self.test_arg_vec_i8_8;
             let result = fn_test_arg_vec_i8_8(self.index, c_arg);
-            unsafe { CString::from_raw(c_arg) };
             let s_result = result as i32;
             s_result
         }
@@ -983,8 +1001,8 @@ pub struct test_contract1_DemoCallback_Model {
     pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
     pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
     pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
-    pub test_arg_vec_u8_7: extern "C" fn(i64, *const c_char) -> i32,
-    pub test_arg_vec_i8_8: extern "C" fn(i64, *const c_char) -> i32,
+    pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
+    pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
     pub test_arg_vec_i16_9: extern "C" fn(i64, *const c_char) -> i32,
     pub test_arg_vec_u16_10: extern "C" fn(i64, *const c_char) -> i32,
     pub test_arg_vec_i32_11: extern "C" fn(i64, *const c_char) -> i32,

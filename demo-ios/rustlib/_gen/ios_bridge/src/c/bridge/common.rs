@@ -28,3 +28,13 @@ pub extern "C" fn demo_free_str(ptr: *mut c_char) {
         }
     };
 }
+#[repr(C)]
+pub struct CInt8Array {
+    pub ptr: *const i8,
+    pub len: i32,
+}
+#[repr(C)]
+pub struct CUInt8Array {
+    pub ptr: *const u8,
+    pub len: i32,
+}

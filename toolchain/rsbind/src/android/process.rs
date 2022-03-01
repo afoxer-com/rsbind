@@ -12,12 +12,12 @@ use syn::__private::str;
 
 use android::artifact::JavaCodeGen;
 use ast::AstResult;
+use base::process::BuildProcess;
 use bridge::prj::Unpack;
 use bridges::BridgeGen::JavaGen;
 use errors::ErrorKind::*;
 use errors::*;
 use ndk_tool::{build, BuildConfig};
-use base::process::BuildProcess;
 use unzip;
 
 use super::config::Android;
@@ -143,7 +143,6 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         };
 
         build(&config)?;
-
 
         Ok(())
     }

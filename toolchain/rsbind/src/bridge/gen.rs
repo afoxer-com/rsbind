@@ -133,6 +133,18 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
                     }
                 };
             }
+
+            #[repr(C)]
+            pub struct CInt8Array {
+                pub ptr: * const i8,
+                pub len: i32
+            }
+
+            #[repr(C)]
+            pub struct CUInt8Array {
+                pub ptr: * const u8,
+                pub len: i32
+            }
         };
 
         let file_path = bridge_dir.join("common.rs");

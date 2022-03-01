@@ -59,7 +59,12 @@ pub(crate) trait FileGenStrategy {
         ret_name: &str,
         origin_ty: &str,
     ) -> Result<TokenStream>;
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream>;
+    fn ty_to_tokens(
+        &self,
+        ast_type: &AstType,
+        origin_ty: &str,
+        direction: TypeDirection,
+    ) -> Result<TokenStream>;
 }
 
 pub(crate) trait CallbackGenStrategy {
@@ -115,7 +120,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         let mut f = File::create(&out_file_path).unwrap();
         f.write_all(&merge_tokens.to_string().into_bytes()).unwrap();
 
-        println!("[bridge][{}]  ✅  begin generate bridge file.", file_name);
+        println!("[bridge][{}]  ✅  end generate bridge file.", file_name);
         Ok(())
     }
 
@@ -198,23 +203,35 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         callbacks: &Vec<&TraitDesc>,
         structs: &Vec<StructDesc>,
     ) -> Result<TokenStream> {
-        println!("[bridge][{}]  🔆  begin generate bridge on trait.", &trait_desc.name);
+        println!(
+            "[bridge][{}]  🔆  begin generate bridge on trait.",
+            &trait_desc.name
+        );
         let mut merge: TokenStream = TokenStream::new();
 
         for method in trait_desc.methods.iter() {
-            println!("[bridge][{}.{}]  🔆  begin generate bridge method.", &trait_desc.name, &method.name);
+            println!(
+                "[bridge][{}.{}]  🔆  begin generate bridge method.",
+                &trait_desc.name, &method.name
+            );
             let one_method = self
                 .quote_one_method(trait_desc, imp, method, callbacks, structs)
                 .unwrap();
 
-            println!("[bridge][{}.{}]  ✅  end generate bridge method.", &trait_desc.name, &method.name);
+            println!(
+                "[bridge][{}.{}]  ✅  end generate bridge method.",
+                &trait_desc.name, &method.name
+            );
 
             merge = quote! {
                 #merge
                 #one_method
             };
         }
-        println!("[bridge][{}]  ✅  end generate bridge on trait.", &trait_desc.name);
+        println!(
+            "[bridge][{}]  ✅  end generate bridge on trait.",
+            &trait_desc.name
+        );
         Ok(merge)
     }
 
@@ -280,7 +297,10 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         callbacks: &Vec<&TraitDesc>,
         structs: &Vec<StructDesc>,
     ) -> Result<TokenStream> {
-        println!("[bridge][{}.{}]  🔆 ️begin quote method.", &trait_desc.name, &method.name);
+        println!(
+            "[bridge][{}.{}]  🔆 ️begin quote method.",
+            &trait_desc.name, &method.name
+        );
         let sig_define = self
             .strategy
             .quote_method_sig(trait_desc, imp, method, callbacks, structs)
@@ -315,12 +335,18 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             }
         };
 
-        println!("[bridge][{}.{}] ✅ end quote method.", &trait_desc.name, &method.name);
+        println!(
+            "[bridge][{}.{}] ✅ end quote method.",
+            &trait_desc.name, &method.name
+        );
         Ok(result)
     }
 
     fn quote_imp_call(&self, impl_name: &str, method: &MethodDesc) -> Result<TokenStream> {
-        println!("[bridge][{}.{}]  🔆 ️begin quote imp call.", impl_name, &method.name);
+        println!(
+            "[bridge][{}.{}]  🔆 ️begin quote imp call.",
+            impl_name, &method.name
+        );
 
         let ret_name_str = "ret_value";
         let imp_fun_name = Ident::new(&method.name, Span::call_site());
@@ -368,7 +394,10 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             },
         };
 
-        println!("[bridge][{}.{}]  ✅ end quote imp call.", impl_name, &method.name);
+        println!(
+            "[bridge][{}.{}]  ✅ end quote imp call.",
+            impl_name, &method.name
+        );
 
         Ok(imp_call)
     }

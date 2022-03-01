@@ -98,10 +98,14 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                             }
                             AstBaseType::Byte => {
                                 if cb_arg.origin_ty.clone().contains("i8") {
-                                    let tmp_arg_name =
-                                        Ident::new(&format!("tmp_{}", &cb_arg.name), Span::call_site());
-                                    let tmp_converted_arg_name =
-                                        Ident::new(&format!("tmp_converted_{}", &cb_arg.name), Span::call_site());
+                                    let tmp_arg_name = Ident::new(
+                                        &format!("tmp_{}", &cb_arg.name),
+                                        Span::call_site(),
+                                    );
+                                    let tmp_converted_arg_name = Ident::new(
+                                        &format!("tmp_converted_{}", &cb_arg.name),
+                                        Span::call_site(),
+                                    );
                                     vec![1u8].as_slice();
                                     quote! {
                                         let #tmp_arg_name = #cb_origin_arg_name.as_slice();
@@ -134,7 +138,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                     _ => {
                         let arg_ty_ident = self
-                            .ty_to_tokens(&cb_arg.ty, TypeDirection::Argument)
+                            .ty_to_tokens(&cb_arg.ty, &cb_arg.origin_ty, TypeDirection::Argument)
                             .unwrap();
                         quote! {
                             let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
@@ -177,7 +181,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                                 JValue::Object(#cb_arg_name),
                             }
                         }
-                    },
+                    }
 
                     _ => quote! {
                         JValue::Object(#cb_arg_name),
@@ -404,7 +408,12 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 }
 
 impl JavaCallbackStrategy {
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
+    fn ty_to_tokens(
+        &self,
+        ast_type: &AstType,
+        origin_ty: &str,
+        direction: TypeDirection,
+    ) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match *ast_type {
             AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),

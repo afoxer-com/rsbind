@@ -165,7 +165,7 @@ impl Android {
                 let mut all_features = features.clone();
                 all_features.extend(vec!["rsbind".to_owned()]);
                 all_features
-            },
+            }
             None => vec!["rsbind".to_owned()],
         }
     }

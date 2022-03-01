@@ -1,3 +1,1 @@
-pub(crate) trait TraitCodeGen {
-
-}
+pub(crate) trait TraitCodeGen {}

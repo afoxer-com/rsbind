@@ -257,7 +257,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         let lib_artifact = self.artifact_prj_path.join("rustlib").join("Libraries");
         if !lib_artifact.exists() {
-            fs::create_dir_all(&lib_artifact);
+            fs::create_dir_all(&lib_artifact)?;
         }
         fs_extra::copy_items(&vec![lib_file], &lib_artifact, &options)
             .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
@@ -298,7 +298,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             ast: &self.ast_result,
             module_name: self.host_crate_name.to_owned(),
         }
-        .gen_swift_code();
+        .gen_swift_code()?;
         // artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
 
         // get the output dir string

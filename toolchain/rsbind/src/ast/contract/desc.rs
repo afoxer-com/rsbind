@@ -4,14 +4,12 @@ use super::super::types::*;
 pub(crate) struct ArgDesc {
     pub name: String,
     pub ty: AstType,
-    pub origin_ty: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]
 pub(crate) struct MethodDesc {
     pub name: String,
     pub return_type: AstType,
-    pub origin_return_ty: String,
     pub args: Vec<ArgDesc>,
 }
 

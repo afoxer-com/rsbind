@@ -1,13 +1,14 @@
-use errors::ErrorKind::*;
-use errors::*;
 use std::fs;
 use std::fs::File;
 use std::io::Cursor;
+use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 
-use std::io::Read;
 use zip::ZipArchive;
+
+use errors::*;
+use errors::ErrorKind::*;
 
 pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
     let reader = Cursor::new(buf);

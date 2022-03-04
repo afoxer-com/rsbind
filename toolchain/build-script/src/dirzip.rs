@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::{copy, Read, Seek, Write};
 use std::path::Path;
 use std::str;
+
 use walkdir::{DirEntry, WalkDir};
 use zip::write::FileOptions;
 
@@ -13,7 +14,7 @@ pub fn compress_dir(src_dir: &Path, target: &Path) {
         &mut dir.into_iter().filter_map(|e| e.ok()),
         src_dir.to_str().unwrap(),
         zipfile,
-    );
+    ).unwrap();
 }
 fn compress_file(src_dir: &Path, target: &Path) {
     let zipfile = std::fs::File::create(target).unwrap();
@@ -23,7 +24,7 @@ fn compress_file(src_dir: &Path, target: &Path) {
     let prefix = src_dir
         .parent()
         .map_or_else(|| "/", |p| p.to_str().unwrap());
-    zip_dir(&mut dir.into_iter().filter_map(|e| e.ok()), prefix, zipfile);
+    zip_dir(&mut dir.into_iter().filter_map(|e| e.ok()), prefix, zipfile).unwrap();
 }
 
 fn zip_dir<T>(
@@ -64,14 +65,14 @@ where
     Result::Ok(())
 }
 
-pub fn extract(test: &Path, mut target: &Path) {
+pub fn extract(test: &Path, target: &Path) {
     let zipfile = std::fs::File::open(&test).unwrap();
     let mut zip = zip::ZipArchive::new(zipfile).unwrap();
 
     if !target.exists() {
         fs::create_dir_all(target).map_err(|e| {
             println!("{}", e);
-        });
+        }).unwrap();
     }
     for i in 0..zip.len() {
         let mut file = zip.by_index(i).unwrap();
@@ -88,7 +89,7 @@ pub fn extract(test: &Path, mut target: &Path) {
             } else {
                 fs::File::open(file_path).unwrap()
             };
-            std::io::copy(&mut file, &mut target_file);
+            std::io::copy(&mut file, &mut target_file).unwrap();
             // target_file.write_all(file.read_bytes().into());
         }
     }

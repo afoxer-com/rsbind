@@ -1,13 +1,16 @@
-use super::callback::*;
+use std::path::PathBuf;
+
+use proc_macro2::{Ident, Span, TokenStream};
+use quote::TokenStreamExt;
+
 use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use ast::imp::desc::*;
 use ast::types::*;
 use bridge::file::*;
-use errors::ErrorKind::*;
 use errors::*;
-use proc_macro2::{Ident, Span, TokenStream};
-use quote::TokenStreamExt;
-use std::path::PathBuf;
+use errors::ErrorKind::*;
+
+use super::callback::*;
 
 ///
 /// create a new generator for java bridge files.
@@ -117,7 +120,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let tys = struct_desc
             .fields
             .iter()
-            .map(|field| Ident::new(&field.origin_ty, Span::call_site()))
+            .map(|field| Ident::new(&field.ty.origin(), Span::call_site()))
             .collect::<Vec<Ident>>();
         Ok(quote! {
             #[derive(Serialize, Deserialize)]
@@ -166,14 +169,13 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             .args
             .iter()
             .map(|arg| {
-                self.ty_to_tokens(&arg.ty, &arg.origin_ty, TypeDirection::Argument)
+                self.ty_to_tokens(&arg.ty, TypeDirection::Argument)
                     .unwrap()
             })
             .collect::<Vec<TokenStream>>();
 
         let ret_ty_tokens = self.ty_to_tokens(
             &method.return_type,
-            &method.origin_return_ty,
             TypeDirection::Return,
         )?;
 
@@ -220,7 +222,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     ) -> Result<TokenStream> {
         println!(
             "[bridge]  🔆  begin quote jni bridge method argument convert => {}:{}",
-            &arg.name, &arg.origin_ty
+            &arg.name,
+            &arg.ty.origin()
         );
         let rust_arg_name = Ident::new(
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
@@ -230,9 +233,13 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let _class_name =
             format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
 
-        let result = match arg.ty {
-            AstType::Byte | AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
-                let origin_type_ident = Ident::new(&arg.origin_ty, Span::call_site());
+        let result = match arg.clone().ty {
+            AstType::Byte(origin)
+            | AstType::Int(origin)
+            | AstType::Long(origin)
+            | AstType::Float(origin)
+            | AstType::Double(origin) => {
+                let origin_type_ident = Ident::new(&origin, Span::call_site());
                 quote! {
                     let #rust_arg_name = #arg_name_ident as #origin_type_ident;
                 }
@@ -248,8 +255,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 }
             }
             AstType::Vec(base) => match base {
-                AstBaseType::Byte => {
-                    if arg.origin_ty.contains("i8") {
+                AstBaseType::Byte(origin) => {
+                    if origin.contains("i8") {
                         let tmp_arg_name =
                             Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
                         let tmp_arg_ptr =
@@ -283,7 +290,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     }
                 }
             },
-            AstType::Callback => self
+            AstType::Callback(_) => self
                 .java_callback_strategy
                 .arg_convert(arg, trait_desc, callbacks),
             _ => {
@@ -294,7 +301,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         };
         println!(
             "[bridge] ✅ end quote jni bridge method argument convert => {}:{}",
-            &arg.name, &arg.origin_ty
+            &arg.name,
+            &arg.ty.origin()
         );
         Ok(result)
     }
@@ -302,16 +310,15 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn quote_return_convert(
         &self,
         return_ty: &AstType,
-        ret_name: &str,
-        origin_ty: &str,
+        ret_name: &str
     ) -> Result<TokenStream> {
         println!(
             "[bridge]  🔆  begin quote jni bridge method return convert => {}",
-            origin_ty
+            return_ty.origin()
         );
         let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
-        let result = match *return_ty {
+        let result = match return_ty.clone() {
             AstType::Void => quote!(),
             AstType::Boolean => quote! {
                 if #ret_name_ident {1} else {0}
@@ -320,8 +327,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner()
             },
             AstType::Vec(ref base_ty) => match base_ty {
-                AstBaseType::Struct => {
-                    let struct_name = origin_ty.to_owned().replace("Vec<", "").replace(">", "");
+                AstBaseType::Struct(struct_name) => {
                     let struct_ident =
                         Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
                     quote! {
@@ -330,8 +336,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                         env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
                     }
                 }
-                AstBaseType::Byte => {
-                    if origin_ty.contains("i8") {
+                AstBaseType::Byte(origin) => {
+                    if origin.contains("i8") {
                         quote! {
                             let ret_value_ptr = ret_value.as_mut_ptr();
                             let ret_value_len = ret_value.len();
@@ -355,9 +361,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     }
                 }
             },
-            AstType::Struct => {
-                let struct_copy_name =
-                    Ident::new(&format!("Struct_{}", origin_ty), Span::call_site());
+            AstType::Struct(name) => {
+                let struct_copy_name = Ident::new(&format!("Struct_{}", name), Span::call_site());
                 quote! {
                     let json_ret = serde_json::to_string(&#struct_copy_name::from(ret_value));
                     env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
@@ -365,7 +370,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             }
             _ => {
                 let ty_ident = self
-                    .ty_to_tokens(&return_ty, origin_ty, TypeDirection::Return)
+                    .ty_to_tokens(&return_ty, TypeDirection::Return)
                     .unwrap();
                 quote! {
                     #ret_name_ident as #ty_ident
@@ -374,7 +379,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         };
         println!(
             "[bridge]  ✅  end quote jni bridge method return convert => {}",
-            origin_ty
+            return_ty.origin()
         );
 
         Ok(result)
@@ -383,16 +388,15 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn ty_to_tokens(
         &self,
         ast_type: &AstType,
-        origin_ty: &str,
         direction: TypeDirection,
     ) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
-        match *ast_type {
-            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double => tokens.append(Ident::new("f64", Span::call_site())),
+        match ast_type.clone() {
+            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
+            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
+            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
+            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
             AstType::Boolean => tokens.append(Ident::new("u8", Span::call_site())),
             AstType::String => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
@@ -400,19 +404,23 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             },
             AstType::Vec(base) => match direction {
                 TypeDirection::Argument => match base {
-                    AstBaseType::Byte => tokens.append(Ident::new("jbyteArray", Span::call_site())),
+                    AstBaseType::Byte(_) => {
+                        tokens.append(Ident::new("jbyteArray", Span::call_site()))
+                    }
                     _ => tokens.append(Ident::new("JString", Span::call_site())),
                 },
                 TypeDirection::Return => match base {
-                    AstBaseType::Byte => tokens.append(Ident::new("jbyteArray", Span::call_site())),
+                    AstBaseType::Byte(_) => {
+                        tokens.append(Ident::new("jbyteArray", Span::call_site()))
+                    }
                     _ => tokens.append(Ident::new("jstring", Span::call_site())),
                 },
             },
-            AstType::Struct => match direction {
+            AstType::Struct(_) => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
-            AstType::Callback => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Callback(_) => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Void => (),
         };
 

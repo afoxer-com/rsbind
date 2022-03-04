@@ -1,11 +1,13 @@
-use ast::contract::desc::{StructDesc, TraitDesc};
-use ast::imp::desc::ImpDesc;
-use ast::AstResult;
-use errors::*;
-use proc_macro2::{Ident, Span};
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+
+use proc_macro2::{Ident, Span};
+
+use ast::AstResult;
+use ast::contract::desc::{StructDesc, TraitDesc};
+use ast::imp::desc::ImpDesc;
+use errors::*;
 
 ///
 /// Different strategy on generating a bridge mod.

@@ -1,9 +1,10 @@
+use proc_macro2::{Ident, Literal, Span, TokenStream};
+use quote::TokenStreamExt;
+
 use ast::contract::desc::*;
 use ast::types::*;
 use bridge::file::*;
 use errors::*;
-use proc_macro2::{Ident, Literal, Span, TokenStream};
-use quote::TokenStreamExt;
 
 pub struct JavaCallbackStrategy {
     pub(crate) java_namespace: String,
@@ -18,7 +19,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
     ) -> TokenStream {
         println!(
             "[bridge] 🔆  begin quote callback argument in method convert => {}.{}",
-            &arg.name, &arg.origin_ty
+            &arg.name,
+            &arg.ty.origin()
         );
         let rust_arg_name = Ident::new(
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
@@ -32,7 +34,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
         // find the callback type for this argument.
         let mut callback_desc = None;
         for desc in callbacks {
-            if desc.name == arg.origin_ty {
+            if desc.name == arg.ty.origin() {
                 callback_desc = Some(desc);
             }
         }
@@ -61,7 +63,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 let cb_origin_arg_name = Ident::new(&cb_arg.name, Span::call_site());
                 method_java_sig = format!("{}{}", &method_java_sig, cb_arg.ty.to_java_sig());
 
-                let args_convert_each = match cb_arg.ty {
+                let args_convert_each = match cb_arg.ty.clone() {
                     AstType::Boolean => {
                         quote! {
                             let #cb_arg_name = if #cb_origin_arg_name {1} else {0};
@@ -76,12 +78,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         let cb_tmp_arg_name =
                             Ident::new(&format!("j_tmp_{}", cb_arg.name), Span::call_site());
                         match base_ty {
-                            AstBaseType::Struct => {
-                                let struct_name = cb_arg
-                                    .origin_ty
-                                    .to_owned()
-                                    .replace("Vec<", "")
-                                    .replace(">", "");
+                            AstBaseType::Struct(struct_name) => {
                                 let struct_ident = Ident::new(
                                     &format!("Struct_{}", &struct_name),
                                     Span::call_site(),
@@ -96,8 +93,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                                     let #cb_arg_name = env.new_string(#cb_tmp_arg_name.unwrap()).unwrap().into();
                                 }
                             }
-                            AstBaseType::Byte => {
-                                if cb_arg.origin_ty.clone().contains("i8") {
+                            AstBaseType::Byte(origin) => {
+                                if origin.contains("i8") {
                                     let tmp_arg_name = Ident::new(
                                         &format!("tmp_{}", &cb_arg.name),
                                         Span::call_site(),
@@ -126,9 +123,9 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                             }
                         }
                     }
-                    AstType::Struct => {
+                    AstType::Struct(struct_name) => {
                         let struct_copy_name =
-                            Ident::new(&format!("Struct_{}", &cb_arg.origin_ty), Span::call_site());
+                            Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
                         let cb_tmp_arg_name =
                             Ident::new(&format!("r_tmp_{}", cb_arg.name), Span::call_site());
                         quote! {
@@ -138,7 +135,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                     _ => {
                         let arg_ty_ident = self
-                            .ty_to_tokens(&cb_arg.ty, &cb_arg.origin_ty, TypeDirection::Argument)
+                            .ty_to_tokens(&cb_arg.ty, TypeDirection::Argument)
                             .unwrap();
                         quote! {
                             let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
@@ -147,15 +144,15 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 };
 
                 let cb_arg_array_each = match cb_arg.ty {
-                    AstType::Byte => quote! {
+                    AstType::Byte(_) => quote! {
                         JValue::Byte(#cb_arg_name),
                     },
 
-                    AstType::Boolean | AstType::Int => quote! {
+                    AstType::Boolean | AstType::Int(_) => quote! {
                         JValue::Int(#cb_arg_name),
                     },
 
-                    AstType::Long => quote! {
+                    AstType::Long(_) => quote! {
                         JValue::Long(#cb_arg_name),
                     },
 
@@ -163,16 +160,16 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         JValue::Object(#cb_arg_name),
                     },
 
-                    AstType::Float => quote! {
+                    AstType::Float(_) => quote! {
                         JValue::Float(#cb_arg_name),
                     },
 
-                    AstType::Double => quote! {
+                    AstType::Double(_) => quote! {
                         JValue::Double(#cb_arg_name),
                     },
 
-                    AstType::Vec(base) => {
-                        if base == AstBaseType::Byte {
+                    AstType::Vec(ref base) => {
+                        if let AstBaseType::Byte(_) = base {
                             quote! {
                                 JValue::Object(JObject::from(#cb_arg_name)),
                             }
@@ -211,15 +208,14 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             let arg_types = &method
                 .args
                 .iter()
-                .map(|arg| match arg.ty {
-                    AstType::Vec(_base_ty) => {
-                        let vec_inner_name =
-                            arg.origin_ty.clone().replace("Vec<", "").replace(">", "");
-                        let vec_innder_ident = Ident::new(&vec_inner_name, Span::call_site());
+                .map(|arg| match arg.ty.clone() {
+                    AstType::Vec(vec_inner_name) => {
+                        let vec_innder_ident =
+                            Ident::new(&vec_inner_name.origin(), Span::call_site());
                         quote!(Vec<#vec_innder_ident>)
                     }
                     _ => {
-                        let ident = Ident::new(&arg.origin_ty, Span::call_site());
+                        let ident = Ident::new(&arg.ty.origin(), Span::call_site());
                         quote!(#ident)
                     }
                 })
@@ -232,7 +228,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             let ret_ty_tokens = match method.return_type {
                 AstType::Void => quote!(()),
                 _ => {
-                    let ident = Ident::new(&method.origin_return_ty, Span::call_site());
+                    let ident = Ident::new(&method.return_type.origin(), Span::call_site());
                     quote!(#ident)
                 }
             };
@@ -241,7 +237,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 &callback_desc.name, &method.name
             );
 
-            let return_convert = match method.return_type {
+            let return_convert = match method.return_type.clone() {
                 AstType::Void => quote!(),
                 AstType::Boolean => quote! {
                     let mut r_result = None;
@@ -253,9 +249,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     let s_result = if r_result.unwrap() > 0 {true} else {false};
                 },
 
-                AstType::Byte => {
-                    let origin_return_ty_ident =
-                        Ident::new(&method.origin_return_ty, Span::call_site());
+                AstType::Byte(origin) => {
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
@@ -267,9 +262,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                 }
 
-                AstType::Int => {
-                    let origin_return_ty_ident =
-                        Ident::new(&method.origin_return_ty, Span::call_site());
+                AstType::Int(origin) => {
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
@@ -280,9 +274,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         let s_result = r_result.unwrap() as #origin_return_ty_ident;
                     }
                 }
-                AstType::Long => {
-                    let origin_return_ty_ident =
-                        Ident::new(&method.origin_return_ty, Span::call_site());
+                AstType::Long(origin) => {
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
@@ -293,9 +286,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         let s_result = r_result.unwrap() as #origin_return_ty_ident;
                     }
                 }
-                AstType::Float => {
-                    let origin_return_ty_ident =
-                        Ident::new(&method.origin_return_ty, Span::call_site());
+                AstType::Float(origin) => {
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
@@ -306,9 +298,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         let s_result = r_result.unwrap() as #origin_return_ty_ident;
                     }
                 }
-                AstType::Double => {
-                    let _origin_return_ty_ident =
-                        Ident::new(&method.origin_return_ty, Span::call_site());
+                AstType::Double(origin) => {
+                    let _origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
@@ -319,8 +310,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                 }
                 AstType::String => {
-                    let origin_return_ty_ident =
-                        Ident::new(&method.origin_return_ty, Span::call_site());
+                    let origin_return_ty_ident = Ident::new("String", Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
@@ -401,7 +391,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
         println!(
             "[bridge] ✅  end quote callback argument in method convert => {}.{}",
-            &arg.name, &arg.origin_ty
+            &arg.name,
+            &arg.ty.origin()
         );
         result
     }
@@ -411,16 +402,15 @@ impl JavaCallbackStrategy {
     fn ty_to_tokens(
         &self,
         ast_type: &AstType,
-        origin_ty: &str,
         direction: TypeDirection,
     ) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
-        match *ast_type {
-            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double => tokens.append(Ident::new("f64", Span::call_site())),
+        match ast_type.clone() {
+            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
+            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
+            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
+            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
             AstType::Boolean => tokens.append(Ident::new("u8", Span::call_site())),
             AstType::String => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
@@ -430,11 +420,11 @@ impl JavaCallbackStrategy {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
-            AstType::Struct => match direction {
+            AstType::Struct(_) => match direction {
                 TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
                 TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
             },
-            AstType::Callback => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Callback(_) => tokens.append(Ident::new("i64", Span::call_site())),
             _ => (),
         };
 

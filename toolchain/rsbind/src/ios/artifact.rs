@@ -1,24 +1,17 @@
-use std::fmt::format;
 use std::fs;
 use std::path::PathBuf;
-use std::process::Command;
 
-use rsgen::swift::Swift::Map;
-use rsgen::swift::{self, *};
 use rsgen::{Custom, Formatter, IntoTokens, Tokens};
-use syn::token::Token;
+use rsgen::swift::{self, *};
 
+use ast::AstResult;
 use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use ast::types::{AstBaseType, AstType};
-use ast::AstResult;
-use errors::ErrorKind::*;
 use errors::*;
 
 pub(crate) struct SwiftCodeGen<'a> {
-    pub origin_prj: &'a PathBuf,
     pub swift_gen_dir: &'a PathBuf,
-    pub ast: &'a AstResult,
-    pub module_name: String,
+    pub ast: &'a AstResult
 }
 
 impl<'a> SwiftCodeGen<'a> {
@@ -88,7 +81,7 @@ impl<'a> StructGen<'a> {
         struct_.implements.push(local("Codable"));
 
         for field in self.desc.fields.iter() {
-            let field_ty = SwiftType::new(field.ty, field.origin_ty.clone());
+            let field_ty = SwiftType::new(field.ty.clone());
             let mut swift_field = Field::new(Swift::from(field_ty), field.name.clone());
             swift_field.modifiers = vec![Modifier::Public];
             struct_.fields.push(swift_field);
@@ -111,11 +104,10 @@ impl<'a> CallbackGen<'a> {
             let mut m = Method::new(method.name.clone());
             m.modifiers = vec![];
             m.returns = Some(Swift::from(SwiftType::new(
-                method.return_type,
-                method.origin_return_ty.clone(),
+                method.return_type.clone()
             )));
             for arg in method.args.iter() {
-                let arg_ty = Swift::from(SwiftType::new(arg.ty, arg.origin_ty.clone()));
+                let arg_ty = Swift::from(SwiftType::new(arg.ty.clone()));
                 let argument = swift::Argument::new(arg_ty, arg.name.as_ref());
                 m.arguments.push(argument)
             }
@@ -137,7 +129,7 @@ impl<'a> TraitGen<'a> {
         class.modifiers = vec![Modifier::Public];
 
         let mut tokens = toks!();
-        self.fill_global_block(&mut tokens);
+        self.fill_global_block(&mut tokens)?;
 
         // let mut sel_callbacks = vec![];
         for method in self.desc.methods.iter() {
@@ -150,7 +142,7 @@ impl<'a> TraitGen<'a> {
             let mut byte_count = 0;
             for arg in method.args.iter() {
                 if let AstType::Vec(base) = arg.ty.clone() {
-                    if let AstBaseType::Byte = base.clone() {
+                    if let AstBaseType::Byte(_) = base.clone() {
                         byte_count = byte_count + 1;
                         method_body.push(toks!(
                             arg.name.clone(),
@@ -171,7 +163,7 @@ impl<'a> TraitGen<'a> {
             // Return type convert
             self.fill_return_type_convert(&mut method_body, &method)?;
 
-            for i in 0..byte_count {
+            for _i in 0..byte_count {
                 method_body.push("}");
             }
 
@@ -196,14 +188,14 @@ impl<'a> TraitGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = Method::new(method.name.clone());
         m.modifiers = vec![Modifier::Public, Modifier::Static];
-        let return_ty = SwiftType::new(method.return_type, method.origin_return_ty.clone());
+        let return_ty = SwiftType::new(method.return_type.clone());
         m.returns(Swift::from(return_ty.clone()));
 
         for arg in method.args.clone().iter() {
             match arg.ty {
                 AstType::Void => (),
                 _ => {
-                    let swift = SwiftType::new(arg.ty.clone(), arg.origin_ty.clone());
+                    let swift = SwiftType::new(arg.ty.clone());
                     let argument = swift::Argument::new(swift, arg.name.clone());
                     m.arguments.push(argument);
                 }
@@ -213,16 +205,12 @@ impl<'a> TraitGen<'a> {
         Ok(m)
     }
 
-    fn fill_arg_convert(
-        &self,
-        method_body: &mut Tokens<Swift>,
-        method: &MethodDesc,
-    ) -> Result<()> {
+    fn fill_arg_convert(&self, method_body: &mut Tokens<Swift>, method: &MethodDesc) -> Result<()> {
         for arg in method.args.clone().iter() {
             // Argument convert
             println!("quote arg convert for {}", arg.name.clone());
             let s_arg_name = format!("s_{}", &arg.name);
-            match arg.ty {
+            match arg.ty.clone() {
                 AstType::Void => {}
                 AstType::Boolean => method_body.push(toks!(
                     "let ",
@@ -232,7 +220,7 @@ impl<'a> TraitGen<'a> {
                     " ? 1 : 0"
                 )),
                 AstType::Vec(base) => {
-                    if let AstBaseType::Byte = base {
+                    if let AstBaseType::Byte(_) = base {
                         let arg_buffer_name = format!("{}_buffer", &arg.name);
                         method_body.push(toks!(
                             "let ",
@@ -243,17 +231,6 @@ impl<'a> TraitGen<'a> {
                             arg_buffer_name.clone(),
                             ".count))"
                         ))
-                    // } else if arg.origin_ty.clone().contains("u8") {
-                    //     let arg_buffer_name = format!("{}_buffer", &arg.name);
-                    //     method_body.push(toks!(
-                    //         "let ",
-                    //         s_arg_name.clone(),
-                    //         " = CUInt8Array(ptr: ",
-                    //         arg_buffer_name.clone(),
-                    //         ".baseAddress, len: Int32(",
-                    //         arg_buffer_name.clone(),
-                    //         ".count))"
-                    //     ))
                     } else {
                         let encoder_name = format!("{}_encoder", &arg.name);
                         method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
@@ -275,35 +252,35 @@ impl<'a> TraitGen<'a> {
                         ))
                     }
                 }
-                AstType::Byte => method_body.push(toks!(
+                AstType::Byte(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
                     " = Int8(",
                     arg.name.clone(),
                     ")"
                 )),
-                AstType::Int => method_body.push(toks!(
+                AstType::Int(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
                     " = Int32(",
                     arg.name.clone(),
                     ")"
                 )),
-                AstType::Long => method_body.push(toks!(
+                AstType::Long(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
                     " = Int64(",
                     arg.name.clone(),
                     ")"
                 )),
-                AstType::Float => method_body.push(toks!(
+                AstType::Float(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
                     " = Float32(",
                     arg.name.clone(),
                     ")"
                 )),
-                AstType::Double => method_body.push(toks!(
+                AstType::Double(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
                     " = Float64(",
@@ -313,8 +290,8 @@ impl<'a> TraitGen<'a> {
                 AstType::String => {
                     method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
                 }
-                AstType::Struct => {}
-                AstType::Callback => {
+                AstType::Struct(_) => {}
+                AstType::Callback(_) => {
                     // Store the callback to global callback map.
                     self.fill_callback_index(arg, method_body)?;
 
@@ -385,23 +362,21 @@ impl<'a> TraitGen<'a> {
         let callbacks = self
             .callbacks
             .iter()
-            .filter(|callback| callback.name == arg.origin_ty)
+            .filter(|callback| callback.name == arg.ty.origin())
             .collect::<Vec<&TraitDesc>>();
         if callbacks.len() <= 0 {
-            panic!("No Callback {} found!", arg.origin_ty.clone());
+            panic!("No Callback {} found!", arg.ty.origin());
         }
 
         if callbacks.len() > 1 {
-            panic!("More than one Callback {} found!", arg.origin_ty.clone());
+            panic!("More than one Callback {} found!", arg.ty.origin());
         }
 
-        let cb;
         let callback = callbacks.get(0);
         if let Some(&callback) = callback {
-            cb = callback;
             Some(callback)
         } else {
-            println!("Can't find Callback {}", arg.origin_ty.clone());
+            println!("Can't find Callback {}", arg.ty.origin());
             None
         }
     }
@@ -443,13 +418,12 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
         let cb_arg_str = SwiftType {
-            ast_type: cb_arg.ty.clone(),
-            origin_ty: cb_arg.origin_ty.clone(),
+            ast_type: cb_arg.ty.clone()
         }
         .to_str();
         match cb_arg.ty.clone() {
             AstType::Void => {}
-            AstType::Byte => {
+            AstType::Byte(_) => {
                 method_body.push(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
@@ -458,7 +432,7 @@ impl<'a> TraitGen<'a> {
                     ")"
                 ));
             }
-            AstType::Int => {
+            AstType::Int(_) => {
                 method_body.push(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
@@ -467,7 +441,7 @@ impl<'a> TraitGen<'a> {
                     ")"
                 ));
             }
-            AstType::Long => {
+            AstType::Long(_) => {
                 method_body.push(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
@@ -476,7 +450,7 @@ impl<'a> TraitGen<'a> {
                     ")"
                 ));
             }
-            AstType::Float => {
+            AstType::Float(_) => {
                 method_body.push(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
@@ -485,7 +459,7 @@ impl<'a> TraitGen<'a> {
                     ")"
                 ));
             }
-            AstType::Double => {
+            AstType::Double(_) => {
                 method_body.push(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
@@ -512,11 +486,11 @@ impl<'a> TraitGen<'a> {
                     "!)"
                 ));
             }
-            AstType::Callback => {
+            AstType::Callback(_) => {
                 panic!("Don't support callback argument in callback");
             }
             AstType::Vec(base) => match base {
-                AstBaseType::Byte => method_body.push(toks!(
+                AstBaseType::Byte(_) => method_body.push(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Array<Int8>(UnsafeBufferPointer(start: ",
@@ -559,7 +533,7 @@ impl<'a> TraitGen<'a> {
                     ));
                 }
             },
-            AstType::Struct => {
+            AstType::Struct(_) => {
                 method_body.push(toks!(
                     "let ",
                     format!("c_tmp_{}", &cb_arg.name),
@@ -642,19 +616,19 @@ impl<'a> TraitGen<'a> {
     ) -> Result<()> {
         match cb_method.return_type.clone() {
             AstType::Void => {}
-            AstType::Byte => {
+            AstType::Byte(_) => {
                 method_body.push(toks!("return Int8(result)"));
             }
-            AstType::Int => {
+            AstType::Int(_) => {
                 method_body.push(toks!("return Int32(result)"));
             }
-            AstType::Long => {
+            AstType::Long(_) => {
                 method_body.push(toks!("return Int64(result)"));
             }
-            AstType::Float => {
+            AstType::Float(_) => {
                 method_body.push(toks!("return Float(result)"));
             }
-            AstType::Double => {
+            AstType::Double(_) => {
                 method_body.push(toks!("return Double(result)"));
             }
             AstType::Boolean => {
@@ -666,10 +640,10 @@ impl<'a> TraitGen<'a> {
             AstType::Vec(_) => {
                 panic!("Don't support Vec in callback return.")
             }
-            AstType::Callback => {
+            AstType::Callback(_) => {
                 panic!("Don't support Callback in callback return.")
             }
-            AstType::Struct => {
+            AstType::Struct(_) => {
                 panic!("Don't support Struct in callback return.")
             }
         }
@@ -728,19 +702,19 @@ impl<'a> TraitGen<'a> {
         let crate_name = self.desc.crate_name.replace("-", "_");
         match method.return_type.clone() {
             AstType::Void => {}
-            AstType::Byte => {
+            AstType::Byte(_) => {
                 method_body.push(toks!("let s_result = Int8(result)"));
             }
-            AstType::Int => {
+            AstType::Int(_) => {
                 method_body.push(toks!("let s_result = Int32(result)"));
             }
-            AstType::Long => {
+            AstType::Long(_) => {
                 method_body.push(toks!("let s_result = Int64(result)"));
             }
-            AstType::Float => {
+            AstType::Float(_) => {
                 method_body.push(toks!("let s_result = Float(result)"));
             }
-            AstType::Double => {
+            AstType::Double(_) => {
                 method_body.push(toks!("let s_result = Double(result)"));
             }
             AstType::Boolean => {
@@ -750,8 +724,9 @@ impl<'a> TraitGen<'a> {
                 method_body.push(toks!("let s_result = String(cString:result!)"));
                 method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
             }
-            AstType::Vec(base) => {
-                let return_ty = SwiftType::new(method.return_type, method.origin_return_ty.clone());
+            AstType::Vec(_) => {
+                let return_ty =
+                    SwiftType::new(method.return_type.clone());
                 method_body.push(toks!(
                     "let ret_str = String(cString:result!)\n",
                     format!("{}_free_str(result!)\n", &crate_name),
@@ -768,19 +743,19 @@ impl<'a> TraitGen<'a> {
                     "let s_result = s_tmp_result!"
                 ));
             }
-            AstType::Callback => {}
-            AstType::Struct => {
+            AstType::Callback(_) => {}
+            AstType::Struct(struct_name) => {
                 method_body.push(toks!(
                     "let ret_str = String(cString:result!)\n",
                     format!("{}_free_str(result!)\n", &crate_name),
                     "var s_tmp_result: ",
-                    method.origin_return_ty.to_owned(),
+                    struct_name.clone(),
                     "?\n",
                     "autoreleasepool {\n",
                     "let ret_str_json = ret_str.data(using: .utf8)!\n",
                     "let decoder = JSONDecoder()\n",
                     "s_tmp_result = try! decoder.decode(",
-                    method.origin_return_ty.to_owned(),
+                    struct_name.clone(),
                     ".self, from: ret_str_json)\n",
                     "}\n",
                     "let s_result = s_tmp_result!\n"
@@ -801,19 +776,19 @@ fn map_cb_type(ty: &AstType) -> String {
         AstType::Void => {
             return "()".to_string();
         }
-        AstType::Byte => {
+        AstType::Byte(_) => {
             return "Int8".to_string();
         }
-        AstType::Int => {
+        AstType::Int(_) => {
             return "Int32".to_string();
         }
-        AstType::Long => {
+        AstType::Long(_) => {
             return "Int64".to_string();
         }
-        AstType::Float => {
+        AstType::Float(_) => {
             return "Float".to_string();
         }
-        AstType::Double => {
+        AstType::Double(_) => {
             return "Double".to_string();
         }
         AstType::Boolean => {
@@ -823,17 +798,17 @@ fn map_cb_type(ty: &AstType) -> String {
             return "UnsafePointer<Int8>?".to_string();
         }
         AstType::Vec(base) => match base {
-            AstBaseType::Byte => {
+            AstBaseType::Byte(_) => {
                 return "CInt8Array".to_string();
             }
             _ => {
                 return "UnsafePointer<Int8>?".to_string();
             }
         },
-        AstType::Callback => {
+        AstType::Callback(_) => {
             panic!("Don't support callback in callback argument.");
         }
-        AstType::Struct => {
+        AstType::Struct(_) => {
             return "UnsafePointer<Int8>?".to_string();
         }
     }
@@ -841,15 +816,13 @@ fn map_cb_type(ty: &AstType) -> String {
 
 #[derive(Clone)]
 struct SwiftType {
-    pub ast_type: AstType,
-    pub origin_ty: String,
+    pub ast_type: AstType
 }
 
 impl SwiftType {
-    pub(crate) fn new(ast_type: AstType, origin_ty: String) -> SwiftType {
+    pub(crate) fn new(ast_type: AstType) -> SwiftType {
         SwiftType {
-            ast_type,
-            origin_ty,
+            ast_type
         }
     }
 
@@ -861,51 +834,22 @@ impl SwiftType {
     pub(crate) fn to_str(&self) -> String {
         return match self.ast_type.clone() {
             AstType::Void => "Void".to_string(),
-            AstType::Byte => "Int8".to_string(),
-            AstType::Int => "Int32".to_string(),
-            AstType::Long => "Int64".to_string(),
-            AstType::Float => "Float".to_string(),
-            AstType::Double => "Double".to_string(),
+            AstType::Byte(_) => "Int8".to_string(),
+            AstType::Int(_) => "Int32".to_string(),
+            AstType::Long(_) => "Int64".to_string(),
+            AstType::Float(_) => "Float".to_string(),
+            AstType::Double(_) => "Double".to_string(),
             AstType::Boolean => "Bool".to_string(),
             AstType::String => "String".to_string(),
-            AstType::Vec(base) => {
-                let sub_origin_ty = self.origin_ty.replace("Vec<", "").replace(">", "");
+            AstType::Vec(ref base) => {
                 let base_ty = SwiftType {
-                    ast_type: AstType::from(base),
-                    origin_ty: sub_origin_ty,
+                    ast_type: AstType::from(base.clone()),
                 };
                 format!("[{}]", base_ty.to_str())
             }
-            AstType::Callback => self.origin_ty.to_string(),
-            AstType::Struct => self.origin_ty.to_string(),
+            AstType::Callback(origin) => origin.clone(),
+            AstType::Struct(origin) => origin.clone(),
         };
-    }
-
-    pub(crate) fn to_transfer(&self) -> Swift<'static> {
-        match self.ast_type {
-            AstType::Boolean => swift::INTEGER,
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte => Swift::from(self.clone()),
-                _ => swift::local("String"),
-            },
-            AstType::Struct => swift::local("String"),
-            AstType::Callback => swift::LONG,
-            _ => Swift::from(self.clone()),
-        }
-    }
-
-    /// If JavaType is an Vec(base), we will return base, else we will return itself.
-    pub(crate) fn get_base_ty(&self) -> Swift<'static> {
-        match self.ast_type {
-            AstType::Vec(base) => match base {
-                AstBaseType::Struct => {
-                    let sub_origin_ty = self.origin_ty.replace("Vec<", "").replace(">", "");
-                    swift::local(sub_origin_ty)
-                }
-                _ => Swift::from(SwiftType::new(AstType::from(base), self.origin_ty.clone())),
-            },
-            _ => Swift::from(self.clone()),
-        }
     }
 
     fn to_swift_array(&self, swift: Swift<'static>) -> Swift<'static> {
@@ -919,24 +863,23 @@ impl From<SwiftType> for Swift<'static> {
     fn from(item: SwiftType) -> Self {
         match item.ast_type {
             AstType::Void => swift::VOID,
-            AstType::Byte => swift::BYTE,
-            AstType::Int => swift::INTEGER,
-            AstType::Long => swift::LONG,
-            AstType::Float => swift::FLOAT,
-            AstType::Double => swift::DOUBLE,
+            AstType::Byte(_) => swift::BYTE,
+            AstType::Int(_) => swift::INTEGER,
+            AstType::Long(_) => swift::LONG,
+            AstType::Float(_) => swift::FLOAT,
+            AstType::Double(_) => swift::DOUBLE,
             AstType::Boolean => swift::BOOLEAN,
             AstType::String => swift::local("String"),
             AstType::Vec(base) => match base {
-                AstBaseType::Struct => {
-                    let sub_origin_ty = item.origin_ty.replace("Vec<", "").replace(">", "");
-                    SwiftType::new(AstType::from(base), sub_origin_ty.clone()).to_array()
+                AstBaseType::Struct(_) => {
+                    SwiftType::new(AstType::from(base.clone())).to_array()
                 }
-                AstBaseType::Byte => {
-                    SwiftType::new(AstType::from(base), item.origin_ty.clone()).to_array()
+                AstBaseType::Byte(_) => {
+                    SwiftType::new(AstType::from(base.clone())).to_array()
                 }
-                _ => SwiftType::new(AstType::from(base), item.origin_ty.clone()).to_array(),
+                _ => SwiftType::new(AstType::from(base.clone())).to_array(),
             },
-            AstType::Callback | AstType::Struct => swift::local(item.origin_ty.clone()),
+            AstType::Callback(origin) | AstType::Struct(origin) => swift::local(origin.clone()),
         }
     }
 }
@@ -946,7 +889,7 @@ fn to_swift_file(tokens: Tokens<Swift>) -> Result<String> {
     {
         let mut formatter = Formatter::new(&mut buf);
         let mut extra = ();
-        swift::Swift::write_file(tokens, &mut formatter, &mut extra, 0);
+        swift::Swift::write_file(tokens, &mut formatter, &mut extra, 0)?;
     }
     Ok(buf)
 }

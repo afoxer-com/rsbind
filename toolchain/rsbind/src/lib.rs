@@ -1,22 +1,33 @@
 #![recursion_limit = "128"]
-extern crate syn;
-#[macro_use]
-extern crate quote;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
 extern crate cbindgen;
-extern crate fs_extra;
-extern crate proc_macro2;
-extern crate serde;
-extern crate toml;
-extern crate zip;
 #[macro_use]
 extern crate error_chain;
-#[macro_use]
-extern crate rsgen;
+extern crate fs_extra;
 extern crate ndk_build;
 extern crate ndk_tool;
+extern crate proc_macro2;
+#[macro_use]
+extern crate quote;
+#[macro_use]
+extern crate rsgen;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate syn;
+extern crate toml;
+extern crate zip;
+
+use std::fs;
+use std::path::PathBuf;
+
+use android::config::Android;
+use android::process::AndroidProcess;
+use ast::AstResult;
+use base::process::*;
+use errors::*;
+use ios::config::Ios;
+use ios::process::IosProcess;
 
 mod android;
 mod ast;
@@ -30,16 +41,6 @@ mod ios;
 mod test;
 mod unzip;
 
-use android::config::Android;
-use android::process::AndroidProcess;
-use ast::AstResult;
-use base::process::*;
-use errors::*;
-use ios::config::Ios;
-use ios::process::IosProcess;
-use std::fs;
-use std::path::PathBuf;
-
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
 const AST_DIR: &str = "ast";
@@ -47,7 +48,6 @@ const IOS_PROJ: &str = "ios_artifact";
 const IOS_BRIDGE_PROJ: &str = "ios_bridge";
 const ANDROID_BRIDGE_PROJ: &str = "android_bridge";
 const ANDROID_PROJ: &str = "android_artifact";
-const BIN_DIR: &str = "bin";
 
 pub struct Bind {
     prj_path: PathBuf,
@@ -57,7 +57,6 @@ pub struct Bind {
     android_dest_path: PathBuf,
     header_path: PathBuf,
     ast_path: PathBuf,
-    bin_path: PathBuf,
     target: Target,
     action: Action,
 }
@@ -95,9 +94,6 @@ impl Bind {
         // ./_gen/ast
         let ast_path = root.join(GEN_DIR_NAME).join(AST_DIR);
 
-        // ./_gen/bin/
-        let bin_path = root.join(GEN_DIR_NAME).join(BIN_DIR);
-
         // ./_gen/header/
         let header_path = root.join(GEN_DIR_NAME).join(HEADER_NAME);
 
@@ -120,7 +116,6 @@ impl Bind {
             android_dest_path: android_artifact_path,
             header_path,
             ast_path,
-            bin_path,
             target,
             action,
         }
@@ -204,8 +199,6 @@ impl Bind {
             &self.ios_artifact_path,
             &self.ios_bridge_path,
             &self.header_path,
-            &self.ast_path,
-            &self.bin_path,
             crate_name,
             &ast_result,
             ios,
@@ -253,12 +246,9 @@ impl Bind {
             &self.prj_path,
             &self.android_dest_path,
             &self.android_bridge_path,
-            &self.ast_path,
-            &self.bin_path,
             crate_name,
             ast_result,
-            android,
-            ast_result,
+            android
         );
 
         match self.action {

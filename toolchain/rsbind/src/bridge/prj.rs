@@ -1,7 +1,8 @@
-use errors::ErrorKind::*;
-use errors::*;
 use std::fs;
 use std::path::PathBuf;
+
+use errors::*;
+use errors::ErrorKind::*;
 use unzip;
 
 const MAGIC_NUM: &'static str = "*521%";

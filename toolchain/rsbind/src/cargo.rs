@@ -1,9 +1,11 @@
-use errors::ErrorKind::*;
-use errors::*;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+
 use toml;
+
+use errors::*;
+use errors::ErrorKind::*;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Manifest {

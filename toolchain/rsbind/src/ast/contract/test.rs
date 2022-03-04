@@ -32,50 +32,62 @@ mod tests {
 
         assert_eq!(trait_desc[0].methods[0].name, "return_vec");
         assert_eq!(trait_desc[0].methods[0].args.len(), 0);
-        assert_eq!(trait_desc[0].methods[0].origin_return_ty, "Vec<u8>");
+        assert_eq!(trait_desc[0].methods[0].return_type.origin(), "Vec<u8>");
         assert_eq!(
             trait_desc[0].methods[0].return_type,
-            AstType::Vec(AstBaseType::Byte)
+            AstType::Vec(AstBaseType::Byte("u8".to_string()))
         );
 
         assert_eq!(trait_desc[0].methods[1].name, "arg_vec");
         assert_eq!(trait_desc[0].methods[1].args[0].name, "command");
-        assert_eq!(trait_desc[0].methods[1].args[0].ty, AstType::Int);
-        assert_eq!(trait_desc[0].methods[1].args[0].origin_ty, "i32");
+        assert_eq!(
+            trait_desc[0].methods[1].args[0].ty,
+            AstType::Int("i32".to_string())
+        );
         assert_eq!(trait_desc[0].methods[1].args[1].name, "data");
         assert_eq!(
             trait_desc[0].methods[1].args[1].ty,
-            AstType::Vec(AstBaseType::Byte)
+            AstType::Vec(AstBaseType::Byte("u8".to_string()))
         );
-        assert_eq!(trait_desc[0].methods[1].args[1].origin_ty, "Vec<u8>");
-        assert_eq!(trait_desc[0].methods[1].origin_return_ty, "i32");
-        assert_eq!(trait_desc[0].methods[1].return_type, AstType::Int);
+        assert_eq!(
+            trait_desc[0].methods[1].return_type,
+            AstType::Int("i32".to_string())
+        );
 
         assert_eq!(trait_desc[0].methods[2].name, "arg_callback");
         assert_eq!(trait_desc[0].methods[2].args[0].name, "command");
-        assert_eq!(trait_desc[0].methods[2].args[0].ty, AstType::Int);
-        assert_eq!(trait_desc[0].methods[2].args[0].origin_ty, "i32");
+        assert_eq!(
+            trait_desc[0].methods[2].args[0].ty,
+            AstType::Int("i32".to_string())
+        );
         assert_eq!(trait_desc[0].methods[2].args[1].name, "callback");
-        assert_eq!(trait_desc[0].methods[2].args[1].ty, AstType::Callback);
-        assert_eq!(trait_desc[0].methods[2].args[1].origin_ty, "FfiCallback");
-        assert_eq!(trait_desc[0].methods[2].origin_return_ty, "i32");
-        assert_eq!(trait_desc[0].methods[2].return_type, AstType::Int);
+        assert_eq!(
+            trait_desc[0].methods[2].args[1].ty,
+            AstType::Callback("FfiCallback".to_string())
+        );
+        assert_eq!(
+            trait_desc[0].methods[2].return_type,
+            AstType::Int("i32".to_string())
+        );
 
         assert_eq!(trait_desc[1].name, "FfiCallback");
         assert_eq!(trait_desc[1].mod_name, "demo_mod");
         assert_eq!(trait_desc[1].crate_name, "demo_crate");
         assert_eq!(trait_desc[1].is_callback, true);
         assert_eq!(trait_desc[1].methods[0].name, "callback_vec");
-        assert_eq!(trait_desc[1].methods[0].return_type, AstType::Int);
-        assert_eq!(trait_desc[1].methods[0].origin_return_ty, "i32");
+        assert_eq!(
+            trait_desc[1].methods[0].return_type,
+            AstType::Int("i32".to_string())
+        );
         assert_eq!(trait_desc[1].methods[0].args[0].name, "command");
-        assert_eq!(trait_desc[1].methods[0].args[0].ty, AstType::Int);
-        assert_eq!(trait_desc[1].methods[0].args[0].origin_ty, "i32");
+        assert_eq!(
+            trait_desc[1].methods[0].args[0].ty,
+            AstType::Int("i32".to_string())
+        );
         assert_eq!(trait_desc[1].methods[0].args[1].name, "data");
         assert_eq!(
             trait_desc[1].methods[0].args[1].ty,
-            AstType::Vec(AstBaseType::Byte)
+            AstType::Vec(AstBaseType::Byte("u8".to_string()))
         );
-        assert_eq!(trait_desc[1].methods[0].args[1].origin_ty, "Vec<u8>");
     }
 }

@@ -6,8 +6,6 @@ use std::process::Command;
 
 use fs_extra;
 use fs_extra::dir::CopyOptions;
-use ndk_build::cargo::cargo_ndk;
-use ndk_build::target::Target;
 use syn::__private::str;
 
 use android::artifact::JavaCodeGen;
@@ -15,8 +13,8 @@ use ast::AstResult;
 use base::process::BuildProcess;
 use bridge::prj::Unpack;
 use bridges::BridgeGen::JavaGen;
-use errors::ErrorKind::*;
 use errors::*;
+use errors::ErrorKind::*;
 use ndk_tool::{build, BuildConfig};
 use unzip;
 
@@ -28,12 +26,9 @@ pub(crate) struct AndroidProcess<'a> {
     origin_prj_path: &'a PathBuf,
     artifact_prj_path: &'a PathBuf,
     bridge_prj_path: &'a PathBuf,
-    ast_path: &'a PathBuf,
-    bin_path: &'a PathBuf,
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
     config: Option<Android>,
-    ast: &'a AstResult,
 }
 
 impl<'a> AndroidProcess<'a> {
@@ -41,23 +36,17 @@ impl<'a> AndroidProcess<'a> {
         origin_prj_path: &'a PathBuf,
         artifact_prj_path: &'a PathBuf,
         bridge_prj_path: &'a PathBuf,
-        ast_path: &'a PathBuf,
-        bin_path: &'a PathBuf,
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
         config: Option<Android>,
-        ast: &'a AstResult,
     ) -> Self {
         AndroidProcess {
             origin_prj_path,
             artifact_prj_path,
             bridge_prj_path,
-            ast_path,
-            bin_path,
             host_crate_name,
             ast_result,
             config,
-            ast,
         }
     }
 }
@@ -120,7 +109,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
     fn build_bridge_prj(&self) -> Result<()> {
         println!("building android bridge project");
 
-        let ndk = ndk_build::ndk::Ndk::from_env()?;
+        let _ndk = ndk_build::ndk::Ndk::from_env()?;
 
         let mut phone_archs = self.config().phone_archs();
         let mut phone64_archs = self.config().phone64_archs();
@@ -255,7 +244,6 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         fs::create_dir_all(&java_gen_path)?;
 
         JavaCodeGen {
-            origin_prj: self.origin_prj_path,
             java_gen_dir: &java_gen_path,
             ast: &self.ast_result,
             namespace: self.config().namespace(),

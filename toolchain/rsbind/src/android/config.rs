@@ -85,14 +85,6 @@ impl Android {
         }
     }
 
-    pub fn release_str(&self) -> String {
-        if self.is_release() {
-            "--release".to_owned()
-        } else {
-            "".to_owned()
-        }
-    }
-
     pub fn phone_archs(&self) -> Vec<String> {
         let default_phone_archs = PHONE_ARCHS
             .to_vec()

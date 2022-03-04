@@ -1,9 +1,10 @@
+use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
+use quote::TokenStreamExt;
+
 use ast::contract::desc::*;
 use ast::types::*;
 use bridge::file::*;
 use errors::*;
-use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
-use quote::TokenStreamExt;
 
 pub struct CCallbackStrategy {}
 
@@ -22,7 +23,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
         // find the callback type for this argument.
         let mut callback_desc = None;
         for desc in callbacks {
-            if desc.name == arg.origin_ty {
+            if desc.name == arg.ty.origin() {
                 callback_desc = Some(desc);
             }
         }
@@ -44,7 +45,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                 for cb_arg in method.args.iter() {
                     let cb_arg_name = Ident::new(&format!("c_{}", cb_arg.name), Span::call_site());
                     let cb_origin_arg_name = Ident::new(&cb_arg.name, Span::call_site());
-                    let args_convert_each = match cb_arg.ty {
+                    let args_convert_each = match cb_arg.ty.clone() {
                         AstType::Boolean => {
                             quote! {
                                 let #cb_arg_name = if #cb_origin_arg_name {1} else {0};
@@ -60,7 +61,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                             let cb_tmp_arg_name =
                                 Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
                             match base_ty {
-                                AstBaseType::Byte => {
+                                AstBaseType::Byte(_) => {
                                     quote! {
                                         let #cb_arg_name = unsafe {
                                             CInt8Array {
@@ -70,13 +71,8 @@ impl CallbackGenStrategy for CCallbackStrategy {
                                         };
                                     }
                                 }
-                                AstBaseType::Struct => {
+                                AstBaseType::Struct(struct_name) => {
                                     strs_to_release.push(cb_arg_name.clone());
-                                    let struct_name = cb_arg
-                                        .origin_ty
-                                        .to_owned()
-                                        .replace("Vec<", "")
-                                        .replace(">", "");
                                     let struct_ident = Ident::new(
                                         &format!("Struct_{}", &struct_name),
                                         Span::call_site(),
@@ -100,12 +96,10 @@ impl CallbackGenStrategy for CCallbackStrategy {
                                 }
                             }
                         }
-                        AstType::Struct => {
+                        AstType::Struct(origin) => {
                             strs_to_release.push(cb_arg_name.clone());
-                            let struct_copy_name = Ident::new(
-                                &format!("Struct_{}", &cb_arg.origin_ty),
-                                Span::call_site(),
-                            );
+                            let struct_copy_name =
+                                Ident::new(&format!("Struct_{}", &origin), Span::call_site());
                             let cb_tmp_arg_name =
                                 Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
                             quote! {
@@ -153,15 +147,14 @@ impl CallbackGenStrategy for CCallbackStrategy {
                         AstType::Void => false,
                         _ => true,
                     })
-                    .map(|arg| match arg.ty {
-                        AstType::Vec(_base_ty) => {
-                            let vec_inner_name =
-                                arg.origin_ty.clone().replace("Vec<", "").replace(">", "");
-                            let vec_innder_ident = Ident::new(&vec_inner_name, Span::call_site());
+                    .map(|arg| match arg.ty.clone() {
+                        AstType::Vec(vec_inner_name) => {
+                            let vec_innder_ident =
+                                Ident::new(&vec_inner_name.origin(), Span::call_site());
                             quote!(Vec<#vec_innder_ident>)
                         }
                         _ => {
-                            let ident = Ident::new(&arg.origin_ty, Span::call_site());
+                            let ident = Ident::new(&arg.ty.origin(), Span::call_site());
                             quote!(#ident)
                         }
                     })
@@ -170,7 +163,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                 let ret_ty_tokens = match method.return_type {
                     AstType::Void => quote!(()),
                     _ => {
-                        let ident = Ident::new(&method.origin_return_ty, Span::call_site());
+                        let ident = Ident::new(&method.return_type.origin(), Span::call_site());
                         quote!(#ident)
                     }
                 };
@@ -226,7 +219,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
         // xxxx : arg.xxxx
         // assign values from arg to struct
         let converted_callback_name = Ident::new(&format!("r_{}", &arg.name), Span::call_site());
-        let callback_ty = Ident::new(&arg.origin_ty, Span::call_site());
+        let callback_ty = Ident::new(&arg.ty.origin(), Span::call_site());
         let callback_name = Ident::new(&arg.name, Span::call_site());
         let mut method_assign_tokens = TokenStream::new();
         for method_name in method_names.iter() {
@@ -311,24 +304,24 @@ impl CCallbackStrategy {
 
     fn ty_to_tokens(&self, ast_type: &AstType) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
-        match *ast_type {
-            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double => tokens.append(Ident::new("f64", Span::call_site())),
+        match ast_type.clone() {
+            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
+            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
+            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
+            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
             AstType::Boolean => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::String => {
                 tokens.append(Punct::new('*', Spacing::Alone));
                 tokens.append(Ident::new("const", Span::call_site()));
                 tokens.append(Ident::new("c_char", Span::call_site()));
             }
-            AstType::Struct => {
+            AstType::Struct(_) => {
                 let struct_tokens = self.ty_to_tokens(&AstType::String).unwrap();
                 tokens = quote!(#struct_tokens)
             }
             AstType::Vec(base) => match base {
-                AstBaseType::Byte => {
+                AstBaseType::Byte(_) => {
                     tokens.append(Ident::new("CInt8Array", Span::call_site()));
                 }
                 _ => {

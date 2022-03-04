@@ -2,14 +2,15 @@
 //! module for generate C bridge files.
 //! A C bridge file is exposed to callers of a foreign languages.
 //!
+use std::path::PathBuf;
+
 use android::bridge as android_bridge;
+use ast::AstResult;
 use ast::contract::desc::*;
 use ast::imp::desc::*;
-use ast::AstResult;
 use bridge::gen;
 use errors::*;
 use ios::bridge as ios_bridge;
-use std::path::PathBuf;
 
 pub(crate) enum BridgeGen<'a> {
     // create_name, ast, bridge_dir

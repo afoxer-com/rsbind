@@ -1,16 +1,19 @@
-pub(crate) mod contract;
-pub(crate) mod imp;
-pub(crate) mod types;
-
-use self::contract::desc::*;
-use self::imp::desc::*;
-use errors::ErrorKind::*;
-use errors::*;
-use serde_json;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
+
+use serde_json;
+
+use errors::*;
+use errors::ErrorKind::*;
+
+use self::contract::desc::*;
+use self::imp::desc::*;
+
+pub(crate) mod contract;
+pub(crate) mod imp;
+pub(crate) mod types;
 
 const CONTRACT_DIR: &str = "src/contract";
 const IMP_DIR: &str = "src/imp";

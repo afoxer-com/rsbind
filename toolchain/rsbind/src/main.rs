@@ -1,9 +1,10 @@
 extern crate rsbind_core as gen;
 
-use gen::Action;
-use gen::Target;
 use std::env;
 use std::process;
+
+use gen::Action;
+use gen::Target;
 
 fn main() {
     let mut args = env::args();

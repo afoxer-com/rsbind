@@ -1,17 +1,18 @@
 //!
 //! Parse files that standing for contract of ffi.
 //!
-use super::super::types::*;
-use super::desc::*;
-use syn;
-
-use errors::ErrorKind::*;
-use errors::*;
 use std::fs::File;
 use std::io::Read;
 use std::path::PathBuf;
-use syn::token::Trait;
+
+use syn;
 use syn::TypeParamBound;
+
+use errors::*;
+use errors::ErrorKind::*;
+
+use super::desc::*;
+use super::super::types::*;
 
 ///
 /// parse a syn file to TraitDesc which depicting the structure of the trait.
@@ -78,19 +79,18 @@ pub(crate) fn parse_from_str(
                         _ => "".to_owned(),
                     };
 
-                    let (field_ty, field_origin_ty) = match field.ty {
+                    let field_ty = match field.ty {
                         syn::Type::Path(ref type_path) => {
                             let segments = &(type_path.path.segments);
                             let ident = &(segments[segments.len() - 1].ident);
                             let origin = ident.to_string();
-                            (AstType::from(ident.to_string()), origin)
+                            AstType::new(&origin, &origin)
                         }
-                        _ => (AstType::Void, "".to_owned()),
+                        _ => AstType::Void,
                     };
                     let field_desc = ArgDesc {
                         name: field_name,
                         ty: field_ty,
-                        origin_ty: field_origin_ty,
                     };
                     field_descs.push(field_desc);
                 }
@@ -130,7 +130,7 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
 
                 println!("found method => {}", method_inner.sig.ident);
 
-                let (return_type, origin_return_ty) = parse_return_type(&method_inner.sig.output)?;
+                let return_type = parse_return_type(&method_inner.sig.output)?;
 
                 // arguments
                 for input in method_inner.sig.inputs.iter() {
@@ -149,7 +149,6 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
                 let method_desc = MethodDesc {
                     name: method_name,
                     return_type,
-                    origin_return_ty,
                     args,
                 };
                 method_descs.push(method_desc);
@@ -169,7 +168,7 @@ fn parse_methods(items: &Vec<syn::TraitItem>) -> Result<(Vec<MethodDesc>, bool)>
 ///
 /// parse return type
 ///
-fn parse_return_type(output: &syn::ReturnType) -> Result<(AstType, String)> {
+fn parse_return_type(output: &syn::ReturnType) -> Result<AstType> {
     // return type
     match output {
         syn::ReturnType::Type(_, ref boxed) => {
@@ -206,32 +205,30 @@ fn parse_return_type(output: &syn::ReturnType) -> Result<(AstType, String)> {
                     return if ident.to_owned().to_string() == "Vec" {
                         match generic_ident {
                             Some(generic_ident) => {
-                                let ast = AstType::Vec(AstBaseType::from(
-                                    generic_ident.to_owned().to_string(),
+                                let ast = AstType::Vec(AstBaseType::new(
+                                    &generic_ident.to_owned().to_string(),
+                                    &generic_ident.to_owned().to_string(),
                                 ));
-                                Ok((
-                                    ast,
-                                    format!("Vec<{}>", generic_ident.to_owned().to_string()),
-                                ))
+                                Ok(ast)
                             }
                             None => {
                                 let origin = ident.to_string();
-                                Ok((AstType::from(ident.to_string()), origin))
+                                Ok(AstType::new(&origin, &origin))
                             }
                         }
                     } else if ident.to_owned().to_owned() == "Box" {
                         let origin = generic_ident.unwrap().to_owned().to_string();
-                        Ok((AstType::from("Box".to_owned()), origin.to_owned()))
+                        Ok(AstType::new("Box", &origin))
                     } else {
                         let origin = ident.to_string();
-                        Ok((AstType::from(ident.to_string()), origin))
+                        Ok(AstType::new(&origin, &origin))
                     };
                 }
 
                 _ => (),
             }
         }
-        syn::ReturnType::Default => return Ok((AstType::Void, "".to_owned())),
+        syn::ReturnType::Default => return Ok(AstType::Void),
     }
 
     Err(ParseError("can't parse return type".to_string()).into())
@@ -243,7 +240,6 @@ fn parse_return_type(output: &syn::ReturnType) -> Result<(AstType, String)> {
 fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
     let mut arg_name: Option<String> = Some("".to_owned());
     let mut arg_type: Option<AstType> = Some(AstType::Void);
-    let mut origin_arg_ty: Option<String> = Some("".to_owned());
     match input {
         syn::FnArg::Typed(ref arg) => {
             match *(arg.pat) {
@@ -272,11 +268,10 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                                             let segments = &(type_path.path.segments);
                                             let ident =
                                                 (&segments[segments.len() - 1].ident).to_string();
-                                            arg_type = Some(AstType::from("Box"));
-                                            origin_arg_ty = Some(ident.clone());
+                                            arg_type = Some(AstType::new("Box", &ident));
                                         }
                                         syn::Type::TraitObject(ref trait_obj) => {
-                                            if let Some(dyn_token) = trait_obj.dyn_token {
+                                            if let Some(_) = trait_obj.dyn_token {
                                                 let bounds = &trait_obj.bounds;
                                                 for bound in bounds.iter() {
                                                     match bound.clone() {
@@ -287,8 +282,8 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                                                                 [segments.len() - 1]
                                                                 .ident)
                                                                 .to_string();
-                                                            arg_type = Some(AstType::from("Box"));
-                                                            origin_arg_ty = Some(ident.clone());
+                                                            arg_type =
+                                                                Some(AstType::new("Box", &ident));
                                                         }
                                                         _ => {}
                                                     }
@@ -315,10 +310,10 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                                             let segments = &(type_path.path.segments);
                                             let ident =
                                                 (&segments[segments.len() - 1].ident).to_string();
-                                            arg_type = Some(AstType::Vec(AstBaseType::from(
-                                                ident.clone(),
+                                            arg_type = Some(AstType::Vec(AstBaseType::new(
+                                                &ident.clone().to_string(),
+                                                &ident.clone().to_string(),
                                             )));
-                                            origin_arg_ty = Some(format!("Vec<{}>", ident.clone()));
                                         }
                                         _ => {}
                                     },
@@ -329,8 +324,7 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                         }
                     } else {
                         // normal arguments
-                        arg_type = Some(AstType::from(ident.clone()));
-                        origin_arg_ty = Some(ident.clone());
+                        arg_type = Some(AstType::new(&ident.clone(), &ident.clone()));
                         println!("found args type => {:?}", ident);
                     }
                 }
@@ -341,11 +335,10 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
         _ => (),
     }
 
-    match (arg_name, arg_type, origin_arg_ty) {
-        (Some(arg_name), Some(arg_type), Some(origin_ty)) => Ok(ArgDesc {
+    match (arg_name, arg_type) {
+        (Some(arg_name), Some(arg_type)) => Ok(ArgDesc {
             name: arg_name,
             ty: arg_type,
-            origin_ty,
         }),
         _ => Err(ParseError("parse argments error!".to_string()).into()),
     }

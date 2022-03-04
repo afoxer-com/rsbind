@@ -1,13 +1,16 @@
-use super::callback::*;
+use std::path::PathBuf;
+
+use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
+use quote::TokenStreamExt;
+
 use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;
 use bridge::file::*;
-use errors::ErrorKind::*;
 use errors::*;
-use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
-use quote::TokenStreamExt;
-use std::path::PathBuf;
+use errors::ErrorKind::*;
+
+use super::callback::*;
 
 ///
 /// create a new c bridges generator.
@@ -80,7 +83,7 @@ impl FileGenStrategy for CFileGenStrategy {
         let tys = struct_desc
             .fields
             .iter()
-            .map(|field| Ident::new(&field.origin_ty, Span::call_site()))
+            .map(|field| Ident::new(&field.ty.origin(), Span::call_site()))
             .collect::<Vec<Ident>>();
         Ok(quote! {
             #[repr(C)]
@@ -127,11 +130,11 @@ impl FileGenStrategy for CFileGenStrategy {
                 AstType::Void => false,
                 _ => true,
             })
-            .map(|arg| match arg.ty {
-                AstType::Callback => {
+            .map(|arg| match arg.ty.clone() {
+                AstType::Callback(origin) => {
                     let mut callback_trait = None;
                     for callback in callbacks.iter() {
-                        if callback.name == arg.origin_ty {
+                        if callback.name == origin.clone() {
                             callback_trait = Some(callback);
                             break;
                         }
@@ -145,14 +148,13 @@ impl FileGenStrategy for CFileGenStrategy {
                     quote!(#callback_ident)
                 }
                 _ => self
-                    .ty_to_tokens(&arg.ty, &arg.origin_ty, TypeDirection::Argument)
+                    .ty_to_tokens(&arg.ty, TypeDirection::Argument)
                     .unwrap(),
             })
             .collect::<Vec<TokenStream>>();
 
         let ret_ty_tokens = self.ty_to_tokens(
             &method.return_type,
-            &method.origin_return_ty,
             TypeDirection::Return,
         )?;
         println!(
@@ -198,9 +200,13 @@ impl FileGenStrategy for CFileGenStrategy {
         );
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
 
-        Ok(match arg.ty {
-            AstType::Byte | AstType::Int | AstType::Long | AstType::Float | AstType::Double => {
-                let origin_type_ident = Ident::new(&arg.origin_ty, Span::call_site());
+        Ok(match arg.clone().ty {
+            AstType::Byte(origin)
+            | AstType::Int(origin)
+            | AstType::Long(origin)
+            | AstType::Float(origin)
+            | AstType::Double(origin) => {
+                let origin_type_ident = Ident::new(&origin, Span::call_site());
                 quote! {
                     let #rust_arg_name = #arg_name_ident as #origin_type_ident;
                 }
@@ -220,8 +226,8 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             }
             AstType::Vec(base) => {
-                if let AstBaseType::Byte = base {
-                    if arg.origin_ty.clone().contains("i8") {
+                if let AstBaseType::Byte(origin) = base {
+                    if origin.clone().contains("i8") {
                         quote! {
                             let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i8), #arg_name_ident.len as usize).to_vec() };
                         }
@@ -242,8 +248,8 @@ impl FileGenStrategy for CFileGenStrategy {
                     }
                 }
             }
-            AstType::Callback => {
-                println!("callback in argument found, {}", arg.origin_ty);
+            AstType::Callback(origin) => {
+                println!("callback in argument found, {}", &origin);
                 self.callback_strategy
                     .arg_convert(arg, trait_desc, callbacks)
             }
@@ -259,11 +265,10 @@ impl FileGenStrategy for CFileGenStrategy {
         &self,
         ty: &AstType,
         ret_name: &str,
-        origin_ty: &str,
     ) -> Result<TokenStream> {
         let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
-        Ok(match *ty {
+        Ok(match ty.clone() {
             AstType::Void => quote!(),
             AstType::Boolean => quote! {
                 if #ret_name_ident {1} else {0}
@@ -272,8 +277,7 @@ impl FileGenStrategy for CFileGenStrategy {
                 CString::new(#ret_name_ident).unwrap().into_raw()
             },
             AstType::Vec(ref base_ty) => match base_ty {
-                AstBaseType::Struct => {
-                    let struct_name = origin_ty.to_owned().replace("Vec<", "").replace(">", "");
+                AstBaseType::Struct(struct_name) => {
                     let struct_ident =
                         Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
                     quote! {
@@ -289,16 +293,16 @@ impl FileGenStrategy for CFileGenStrategy {
                     }
                 }
             },
-            AstType::Struct => {
+            AstType::Struct(origin) => {
                 let struct_copy_name =
-                    Ident::new(&format!("Struct_{}", origin_ty), Span::call_site());
+                    Ident::new(&format!("Struct_{}", &origin), Span::call_site());
                 quote! {
                     let json_ret = serde_json::to_string(&#struct_copy_name::from(ret_value));
                     CString::new(json_ret.unwrap()).unwrap().into_raw()
                 }
             }
             _ => {
-                let ty_ident = self.ty_to_tokens(&ty, &origin_ty, TypeDirection::Return)?;
+                let ty_ident = self.ty_to_tokens(&ty, TypeDirection::Return)?;
                 quote! {
                     #ret_name_ident as #ty_ident
                 }
@@ -309,16 +313,15 @@ impl FileGenStrategy for CFileGenStrategy {
     fn ty_to_tokens(
         &self,
         ast_type: &AstType,
-        origin_ty: &str,
         direction: TypeDirection,
     ) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match ast_type.clone() {
-            AstType::Byte => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Int => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double => tokens.append(Ident::new("f64", Span::call_site())),
+            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
+            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
+            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
+            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
+            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
             AstType::Boolean => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::String => match direction {
                 TypeDirection::Return => {
@@ -332,22 +335,22 @@ impl FileGenStrategy for CFileGenStrategy {
                     tokens.append(Ident::new("c_char", Span::call_site()));
                 }
             },
-            AstType::Struct => {
-                let struct_tokens = self.ty_to_tokens(&AstType::String, "String", direction)?;
+            AstType::Struct(_) => {
+                let struct_tokens = self.ty_to_tokens(&AstType::String, direction)?;
                 tokens = quote!(#struct_tokens)
             }
             AstType::Vec(base) => match base {
-                AstBaseType::Byte => {
+                AstBaseType::Byte(_) => {
                     if let TypeDirection::Argument = direction {
                         tokens.append(Ident::new("CInt8Array", Span::call_site()));
                     } else {
                         let vec_tokens =
-                            self.ty_to_tokens(&AstType::String, "String", direction)?;
+                            self.ty_to_tokens(&AstType::String, direction)?;
                         tokens = quote!(#vec_tokens);
                     }
                 }
                 _ => {
-                    let vec_tokens = self.ty_to_tokens(&AstType::String, "String", direction)?;
+                    let vec_tokens = self.ty_to_tokens(&AstType::String, direction)?;
                     tokens = quote!(#vec_tokens);
                 }
             },

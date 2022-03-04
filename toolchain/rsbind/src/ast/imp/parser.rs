@@ -1,13 +1,16 @@
 //!
 //! This module is used for parsing implementations of a ffi trait.
 //!
-use super::desc::*;
-use errors::ErrorKind::*;
-use errors::*;
 use std::fs;
 use std::io::Read;
 use std::path::PathBuf;
+
 use syn;
+
+use errors::*;
+use errors::ErrorKind::*;
+
+use super::desc::*;
 
 ///
 /// Parse all the files in a directory.

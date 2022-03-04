@@ -1,13 +1,9 @@
-use std::error::Error;
-use std::io;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use ndk_build::cargo::cargo_ndk;
 use ndk_build::target::Target;
 
-use error::ErrorKind::*;
 use error::*;
 
 pub mod error;
@@ -94,7 +90,7 @@ pub fn build(config: &BuildConfig) -> Result<()> {
         };
         let strip = ndk.toolchain_bin("strip", target)?;
         let mut strip_comm = Command::new(strip);
-        let strip_output = strip_comm
+        let _strip_output = strip_comm
             .arg("-s")
             .arg(format!(
                 "{}/{}/{}/{}",
@@ -114,8 +110,9 @@ pub fn build(config: &BuildConfig) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use ndk_build::target::Target;
     use std::path::Path;
+
+    use ndk_build::target::Target;
 
     use crate::{build, BuildConfig};
 

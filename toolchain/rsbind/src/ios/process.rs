@@ -1,21 +1,23 @@
-use super::artifact;
-use super::config::Ios;
-use ast::AstResult;
-use base::process::BuildProcess;
-use bridge::prj::Unpack;
-use bridges::BridgeGen::CGen;
-use cbindgen;
-use cbindgen::{Config, Language};
-use errors::ErrorKind::*;
-use errors::*;
-use fs_extra;
-use fs_extra::dir::CopyOptions;
-use ios::artifact::SwiftCodeGen;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::Command;
+
+use cbindgen;
+use cbindgen::{Config, Language};
+use fs_extra;
+use fs_extra::dir::CopyOptions;
+
+use ast::AstResult;
+use base::process::BuildProcess;
+use bridge::prj::Unpack;
+use bridges::BridgeGen::CGen;
+use errors::*;
+use errors::ErrorKind::*;
+use ios::artifact::SwiftCodeGen;
 use unzip;
+
+use super::config::Ios;
 
 const IOS_ARCH: &str = "universal";
 
@@ -24,8 +26,6 @@ pub(crate) struct IosProcess<'a> {
     artifact_prj_path: &'a PathBuf,
     bridge_prj_path: &'a PathBuf,
     header_path: &'a PathBuf,
-    ast_path: &'a PathBuf,
-    bin_path: &'a PathBuf,
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
     config: Option<Ios>,
@@ -37,8 +37,6 @@ impl<'a> IosProcess<'a> {
         dest_prj_path: &'a PathBuf,
         bridge_prj_path: &'a PathBuf,
         header_path: &'a PathBuf,
-        ast_path: &'a PathBuf,
-        bin_path: &'a PathBuf,
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
         config: Option<Ios>,
@@ -48,8 +46,6 @@ impl<'a> IosProcess<'a> {
             artifact_prj_path: dest_prj_path,
             bridge_prj_path,
             header_path,
-            ast_path,
-            bin_path,
             host_crate_name,
             ast_result,
             config,
@@ -293,17 +289,15 @@ impl<'a> BuildProcess for IosProcess<'a> {
         fs::create_dir_all(&swift_gen_path)?;
 
         SwiftCodeGen {
-            origin_prj: &self.origin_prj_path,
             swift_gen_dir: &swift_gen_path,
             ast: &self.ast_result,
-            module_name: self.host_crate_name.to_owned(),
         }
         .gen_swift_code()?;
         // artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
 
         // get the output dir string
         println!("get output dir string");
-        let mut output_dir = self.artifact_prj_path.join("rustlib").join("Classes");
+        let output_dir = self.artifact_prj_path.join("rustlib").join("Classes");
         if output_dir.exists() {
             fs::remove_dir_all(&output_dir).unwrap();
         }

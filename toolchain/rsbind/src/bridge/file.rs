@@ -1,17 +1,18 @@
-use ast::contract::desc::*;
-use ast::imp::desc::*;
-use ast::types::*;
-use errors::ErrorKind::*;
-use errors::*;
-use proc_macro2::{Ident, Span, TokenStream};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
+use proc_macro2::{Ident, Span, TokenStream};
+
+use ast::contract::desc::*;
+use ast::imp::desc::*;
+use ast::types::*;
+use errors::*;
+use errors::ErrorKind::*;
+
 pub(crate) const TMP_ARG_PREFIX: &str = "r";
 
 struct GenResult {
-    pub name: String,
     pub result: Result<TokenStream>,
 }
 
@@ -57,12 +58,10 @@ pub(crate) trait FileGenStrategy {
         &self,
         return_ty: &AstType,
         ret_name: &str,
-        origin_ty: &str,
     ) -> Result<TokenStream>;
     fn ty_to_tokens(
         &self,
         ast_type: &AstType,
-        origin_ty: &str,
         direction: TypeDirection,
     ) -> Result<TokenStream>;
 }
@@ -148,7 +147,6 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         for struct_desc in self.struct_descs.iter() {
             let tokens = self.strategy.quote_for_structures(&struct_desc);
             results.push(GenResult {
-                name: struct_desc.name.to_owned(),
                 result: tokens,
             });
         }
@@ -177,12 +175,10 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     desc.name
                 );
                 results.push(GenResult {
-                    name: desc.name.clone(),
                     result: self.strategy.quote_callback_structures(&desc),
                 });
             } else {
                 results.push(GenResult {
-                    name: desc.name.clone(),
                     result: self.generate_for_one_trait(
                         desc,
                         &imps[0],
@@ -322,8 +318,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
 
         let return_handle = self.strategy.quote_return_convert(
             &method.return_type,
-            "ret_value",
-            &method.origin_return_ty,
+            "ret_value"
         )?;
 
         // combine all the parts
@@ -369,13 +364,13 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         };
 
         let imp_ident = Ident::new(impl_name, Span::call_site());
-        let imp_call = match method.return_type {
+        let imp_call = match method.return_type.clone() {
             AstType::Void => quote! {
                 #imp_ident::#imp_fun_name(#rust_args_repeat);
             },
             AstType::Vec(base) => {
                 let is_vec_i8 = match base {
-                    AstBaseType::Byte => method.origin_return_ty.contains("i8"),
+                    AstBaseType::Byte(origin) => origin.contains("i8"),
                     _ => false,
                 };
 

@@ -7,8 +7,9 @@ use ast::contract::desc::*;
 use ast::imp::desc::*;
 use ast::types::*;
 use bridge::file::*;
-use errors::*;
 use errors::ErrorKind::*;
+use errors::*;
+use ios::mapping::RustMapping;
 
 use super::callback::*;
 
@@ -147,20 +148,11 @@ impl FileGenStrategy for CFileGenStrategy {
                     let callback_ident = Ident::new(callback_str, Span::call_site());
                     quote!(#callback_ident)
                 }
-                _ => self
-                    .ty_to_tokens(&arg.ty, TypeDirection::Argument)
-                    .unwrap(),
+                _ => RustMapping::map_sig_arg_type(&arg.ty),
             })
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = self.ty_to_tokens(
-            &method.return_type,
-            TypeDirection::Return,
-        )?;
-        println!(
-            "xxxxxx result ={:?} -> {:?}",
-            &method.return_type, ret_ty_tokens
-        );
+        let ret_ty_tokens = RustMapping::map_sig_return_type(&method.return_type);
         let sig_define = if arg_names.len() <= 0 {
             match method.return_type {
                 AstType::Void => quote! {
@@ -261,11 +253,7 @@ impl FileGenStrategy for CFileGenStrategy {
         })
     }
 
-    fn quote_return_convert(
-        &self,
-        ty: &AstType,
-        ret_name: &str,
-    ) -> Result<TokenStream> {
+    fn quote_return_convert(&self, ty: &AstType, ret_name: &str) -> Result<TokenStream> {
         let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
         Ok(match ty.clone() {
@@ -302,7 +290,7 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             }
             _ => {
-                let ty_ident = self.ty_to_tokens(&ty, TypeDirection::Return)?;
+                let ty_ident = RustMapping::map_sig_return_type(&ty);
                 quote! {
                     #ret_name_ident as #ty_ident
                 }
@@ -310,53 +298,8 @@ impl FileGenStrategy for CFileGenStrategy {
         })
     }
 
-    fn ty_to_tokens(
-        &self,
-        ast_type: &AstType,
-        direction: TypeDirection,
-    ) -> Result<TokenStream> {
-        let mut tokens = TokenStream::new();
-        match ast_type.clone() {
-            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
-            AstType::Boolean => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::String => match direction {
-                TypeDirection::Return => {
-                    tokens.append(Punct::new('*', Spacing::Alone));
-                    tokens.append(Ident::new("mut", Span::call_site()));
-                    tokens.append(Ident::new("c_char", Span::call_site()));
-                }
-                TypeDirection::Argument => {
-                    tokens.append(Punct::new('*', Spacing::Alone));
-                    tokens.append(Ident::new("const", Span::call_site()));
-                    tokens.append(Ident::new("c_char", Span::call_site()));
-                }
-            },
-            AstType::Struct(_) => {
-                let struct_tokens = self.ty_to_tokens(&AstType::String, direction)?;
-                tokens = quote!(#struct_tokens)
-            }
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte(_) => {
-                    if let TypeDirection::Argument = direction {
-                        tokens.append(Ident::new("CInt8Array", Span::call_site()));
-                    } else {
-                        let vec_tokens =
-                            self.ty_to_tokens(&AstType::String, direction)?;
-                        tokens = quote!(#vec_tokens);
-                    }
-                }
-                _ => {
-                    let vec_tokens = self.ty_to_tokens(&AstType::String, direction)?;
-                    tokens = quote!(#vec_tokens);
-                }
-            },
-            _ => (),
-        };
-
-        Ok(tokens)
+    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
+        // We don't use it.
+        Ok(quote!())
     }
 }

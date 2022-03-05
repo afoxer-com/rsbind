@@ -92,6 +92,20 @@ pub extern "C" fn test_contract1_test_bool_false(arg_true: i32, arg2_false: i32)
     }
 }
 #[no_mangle]
+pub extern "C" fn test_contract1_test_f32_30(arg: f32, arg2: f32) -> f32 {
+    let r_arg = arg as f32;
+    let r_arg2 = arg2 as f32;
+    let ret_value = TestContract1Imp::test_f32_30(r_arg, r_arg2);
+    ret_value as f32
+}
+#[no_mangle]
+pub extern "C" fn test_contract1_test_f64_31(arg: f64, arg2: f64) -> f64 {
+    let r_arg = arg as f64;
+    let r_arg2 = arg2 as f64;
+    let ret_value = TestContract1Imp::test_f64_31(r_arg, r_arg2);
+    ret_value as f64
+}
+#[no_mangle]
 pub extern "C" fn test_contract1_test_str(arg: *const c_char) -> *mut c_char {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
     let c_str_arg: &str = c_str_arg.to_str().unwrap();
@@ -258,6 +272,8 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         pub test_i32_5: extern "C" fn(i64, i32, i32) -> i32,
         pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
+        pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
+        pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -329,6 +345,22 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
             let fn_test_bool_false = self.test_bool_false;
             let result = fn_test_bool_false(self.index, c_arg_true, c_arg_false);
             let s_result = if result > 0 { true } else { false };
+            s_result
+        }
+        fn test_f32_30(&self, arg: f32, arg2: f32) -> f32 {
+            let c_arg = arg as f32;
+            let c_arg2 = arg2 as f32;
+            let fn_test_f32_30 = self.test_f32_30;
+            let result = fn_test_f32_30(self.index, c_arg, c_arg2);
+            let s_result = result as f32;
+            s_result
+        }
+        fn test_f64_31(&self, arg: f64, arg2: f64) -> f64 {
+            let c_arg = arg as f64;
+            let c_arg2 = arg2 as f64;
+            let fn_test_f64_31 = self.test_f64_31;
+            let result = fn_test_f64_31(self.index, c_arg, c_arg2);
+            let s_result = result as f64;
             s_result
         }
         fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32 {
@@ -474,6 +506,8 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         test_i32_5: arg.test_i32_5,
         test_u32_6: arg.test_u32_6,
         test_bool_false: arg.test_bool_false,
+        test_f32_30: arg.test_f32_30,
+        test_f64_31: arg.test_f64_31,
         test_arg_vec_str_18: arg.test_arg_vec_str_18,
         test_arg_vec_u8_7: arg.test_arg_vec_u8_7,
         test_arg_vec_i8_8: arg.test_arg_vec_i8_8,
@@ -506,6 +540,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_i32_5: extern "C" fn(i64, i32, i32) -> i32,
         pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
+        pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
+        pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -577,6 +613,22 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             let fn_test_bool_false = self.test_bool_false;
             let result = fn_test_bool_false(self.index, c_arg_true, c_arg_false);
             let s_result = if result > 0 { true } else { false };
+            s_result
+        }
+        fn test_f32_30(&self, arg: f32, arg2: f32) -> f32 {
+            let c_arg = arg as f32;
+            let c_arg2 = arg2 as f32;
+            let fn_test_f32_30 = self.test_f32_30;
+            let result = fn_test_f32_30(self.index, c_arg, c_arg2);
+            let s_result = result as f32;
+            s_result
+        }
+        fn test_f64_31(&self, arg: f64, arg2: f64) -> f64 {
+            let c_arg = arg as f64;
+            let c_arg2 = arg2 as f64;
+            let fn_test_f64_31 = self.test_f64_31;
+            let result = fn_test_f64_31(self.index, c_arg, c_arg2);
+            let s_result = result as f64;
             s_result
         }
         fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32 {
@@ -722,6 +774,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         test_i32_5: arg.test_i32_5,
         test_u32_6: arg.test_u32_6,
         test_bool_false: arg.test_bool_false,
+        test_f32_30: arg.test_f32_30,
+        test_f64_31: arg.test_f64_31,
         test_arg_vec_str_18: arg.test_arg_vec_str_18,
         test_arg_vec_u8_7: arg.test_arg_vec_u8_7,
         test_arg_vec_i8_8: arg.test_arg_vec_i8_8,
@@ -746,6 +800,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_i32_5: extern "C" fn(i64, i32, i32) -> i32,
         pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
+        pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
+        pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -817,6 +873,22 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             let fn_test_bool_false = self.test_bool_false;
             let result = fn_test_bool_false(self.index, c_arg_true, c_arg_false);
             let s_result = if result > 0 { true } else { false };
+            s_result
+        }
+        fn test_f32_30(&self, arg: f32, arg2: f32) -> f32 {
+            let c_arg = arg as f32;
+            let c_arg2 = arg2 as f32;
+            let fn_test_f32_30 = self.test_f32_30;
+            let result = fn_test_f32_30(self.index, c_arg, c_arg2);
+            let s_result = result as f32;
+            s_result
+        }
+        fn test_f64_31(&self, arg: f64, arg2: f64) -> f64 {
+            let c_arg = arg as f64;
+            let c_arg2 = arg2 as f64;
+            let fn_test_f64_31 = self.test_f64_31;
+            let result = fn_test_f64_31(self.index, c_arg, c_arg2);
+            let s_result = result as f64;
             s_result
         }
         fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32 {
@@ -962,6 +1034,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         test_i32_5: arg1.test_i32_5,
         test_u32_6: arg1.test_u32_6,
         test_bool_false: arg1.test_bool_false,
+        test_f32_30: arg1.test_f32_30,
+        test_f64_31: arg1.test_f64_31,
         test_arg_vec_str_18: arg1.test_arg_vec_str_18,
         test_arg_vec_u8_7: arg1.test_arg_vec_u8_7,
         test_arg_vec_i8_8: arg1.test_arg_vec_i8_8,
@@ -1000,6 +1074,8 @@ pub struct test_contract1_DemoCallback_Model {
     pub test_i32_5: extern "C" fn(i64, i32, i32) -> i32,
     pub test_u32_6: extern "C" fn(i64, i32, i32) -> i32,
     pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
+    pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
+    pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
     pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
     pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
     pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,

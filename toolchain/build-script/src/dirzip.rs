@@ -1,6 +1,6 @@
 use std::fs;
 use std::fs::File;
-use std::io::{copy, Read, Seek, Write};
+use std::io::{Read, Seek, Write};
 use std::path::Path;
 use std::str;
 
@@ -16,6 +16,8 @@ pub fn compress_dir(src_dir: &Path, target: &Path) {
         zipfile,
     ).unwrap();
 }
+
+#[warn(dead_code)]
 fn compress_file(src_dir: &Path, target: &Path) {
     let zipfile = std::fs::File::create(target).unwrap();
     let dir = WalkDir::new(src_dir);
@@ -95,6 +97,7 @@ pub fn extract(test: &Path, target: &Path) {
     }
 }
 
+#[warn(dead_code)]
 fn create_dir(path: &Path) -> Result<(), std::io::Error> {
     fs::create_dir_all(path)
 }

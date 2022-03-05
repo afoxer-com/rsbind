@@ -1,17 +1,18 @@
 use std::fs;
 use std::path::PathBuf;
 
-use rsgen::{Custom, Formatter, IntoTokens, Tokens};
 use rsgen::swift::{self, *};
+use rsgen::{Custom, Formatter, IntoTokens, Tokens};
 
-use ast::AstResult;
 use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use ast::types::{AstBaseType, AstType};
+use ast::AstResult;
 use errors::*;
+use ios::mapping::SwiftMapping;
 
 pub(crate) struct SwiftCodeGen<'a> {
     pub swift_gen_dir: &'a PathBuf,
-    pub ast: &'a AstResult
+    pub ast: &'a AstResult,
 }
 
 impl<'a> SwiftCodeGen<'a> {
@@ -103,9 +104,7 @@ impl<'a> CallbackGen<'a> {
         for method in self.desc.methods.iter() {
             let mut m = Method::new(method.name.clone());
             m.modifiers = vec![];
-            m.returns = Some(Swift::from(SwiftType::new(
-                method.return_type.clone()
-            )));
+            m.returns = Some(Swift::from(SwiftType::new(method.return_type.clone())));
             for arg in method.args.iter() {
                 let arg_ty = Swift::from(SwiftType::new(arg.ty.clone()));
                 let argument = swift::Argument::new(arg_ty, arg.name.as_ref());
@@ -188,18 +187,13 @@ impl<'a> TraitGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = Method::new(method.name.clone());
         m.modifiers = vec![Modifier::Public, Modifier::Static];
-        let return_ty = SwiftType::new(method.return_type.clone());
-        m.returns(Swift::from(return_ty.clone()));
+        m.returns(SwiftMapping::map_sig_type(&method.return_type));
 
-        for arg in method.args.clone().iter() {
-            match arg.ty {
-                AstType::Void => (),
-                _ => {
-                    let swift = SwiftType::new(arg.ty.clone());
-                    let argument = swift::Argument::new(swift, arg.name.clone());
-                    m.arguments.push(argument);
-                }
-            }
+        let args = method.args.clone();
+        for arg in args.iter() {
+            let argument =
+                swift::Argument::new(SwiftMapping::map_sig_type(&arg.ty), arg.name.clone());
+            m.arguments.push(argument);
         }
 
         Ok(m)
@@ -219,39 +213,6 @@ impl<'a> TraitGen<'a> {
                     arg.name.clone(),
                     " ? 1 : 0"
                 )),
-                AstType::Vec(base) => {
-                    if let AstBaseType::Byte(_) = base {
-                        let arg_buffer_name = format!("{}_buffer", &arg.name);
-                        method_body.push(toks!(
-                            "let ",
-                            s_arg_name.clone(),
-                            " = CInt8Array(ptr: ",
-                            arg_buffer_name.clone(),
-                            ".baseAddress, len: Int32(",
-                            arg_buffer_name.clone(),
-                            ".count))"
-                        ))
-                    } else {
-                        let encoder_name = format!("{}_encoder", &arg.name);
-                        method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                        method_body.push(toks!(
-                            "let ",
-                            format!("data_{}", &arg.name),
-                            " = try! ",
-                            encoder_name.clone(),
-                            ".encode(",
-                            arg.name.clone(),
-                            ")"
-                        ));
-                        method_body.push(toks!(
-                            "let ",
-                            format!("s_{}", &arg.name),
-                            " = String(data: ",
-                            format!("data_{}", &arg.name),
-                            ", encoding: .utf8)!"
-                        ))
-                    }
-                }
                 AstType::Byte(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
@@ -289,6 +250,39 @@ impl<'a> TraitGen<'a> {
                 )),
                 AstType::String => {
                     method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
+                }
+                AstType::Vec(base) => {
+                    if let AstBaseType::Byte(_) = base {
+                        let arg_buffer_name = format!("{}_buffer", &arg.name);
+                        method_body.push(toks!(
+                            "let ",
+                            s_arg_name.clone(),
+                            " = CInt8Array(ptr: ",
+                            arg_buffer_name.clone(),
+                            ".baseAddress, len: Int32(",
+                            arg_buffer_name.clone(),
+                            ".count))"
+                        ))
+                    } else {
+                        let encoder_name = format!("{}_encoder", &arg.name);
+                        method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
+                        method_body.push(toks!(
+                            "let ",
+                            format!("data_{}", &arg.name),
+                            " = try! ",
+                            encoder_name.clone(),
+                            ".encode(",
+                            arg.name.clone(),
+                            ")"
+                        ));
+                        method_body.push(toks!(
+                            "let ",
+                            format!("s_{}", &arg.name),
+                            " = String(data: ",
+                            format!("data_{}", &arg.name),
+                            ", encoding: .utf8)!"
+                        ))
+                    }
                 }
                 AstType::Struct(_) => {}
                 AstType::Callback(_) => {
@@ -390,14 +384,14 @@ impl<'a> TraitGen<'a> {
         let mut arg_params = "(index".to_owned();
         let mut args_str = "(Int64".to_owned();
         for cb_arg in cb_method.args.iter() {
-            let cb_arg_ty = map_cb_type(&cb_arg.ty);
+            let cb_arg_ty = SwiftMapping::map_cb_closure_sig_type(&cb_arg.ty);
             arg_params = format!("{}, {}", &arg_params, &cb_arg.name);
             args_str = format!("{}, {}", &args_str, &cb_arg_ty);
         }
         arg_params = format!("{})", &arg_params);
         args_str = format!("{})", &args_str);
 
-        let cb_return_ty = map_cb_type(&cb_method.return_type);
+        let cb_return_ty = SwiftMapping::map_cb_closure_sig_type(&cb_method.return_type);
         let closure = format!("{} -> {}", &args_str, &cb_return_ty);
         arg_params = format!("{} -> {}", &arg_params, &cb_return_ty);
 
@@ -418,9 +412,9 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
         let cb_arg_str = SwiftType {
-            ast_type: cb_arg.ty.clone()
+            ast_type: cb_arg.ty.clone(),
         }
-        .to_str();
+            .to_str();
         match cb_arg.ty.clone() {
             AstType::Void => {}
             AstType::Byte(_) => {
@@ -638,13 +632,13 @@ impl<'a> TraitGen<'a> {
                 method_body.push(toks!("return result"));
             }
             AstType::Vec(_) => {
-                panic!("Don't support Vec in callback return.")
+                panic!("Don't support Vec in callback return.");
             }
             AstType::Callback(_) => {
-                panic!("Don't support Callback in callback return.")
+                panic!("Don't support Callback in callback return.");
             }
             AstType::Struct(_) => {
-                panic!("Don't support Struct in callback return.")
+                panic!("Don't support Struct in callback return.");
             }
         }
         Ok(())
@@ -725,8 +719,7 @@ impl<'a> TraitGen<'a> {
                 method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
             }
             AstType::Vec(_) => {
-                let return_ty =
-                    SwiftType::new(method.return_type.clone());
+                let return_ty = SwiftType::new(method.return_type.clone());
                 method_body.push(toks!(
                     "let ret_str = String(cString:result!)\n",
                     format!("{}_free_str(result!)\n", &crate_name),
@@ -771,59 +764,14 @@ impl<'a> TraitGen<'a> {
     }
 }
 
-fn map_cb_type(ty: &AstType) -> String {
-    match ty {
-        AstType::Void => {
-            return "()".to_string();
-        }
-        AstType::Byte(_) => {
-            return "Int8".to_string();
-        }
-        AstType::Int(_) => {
-            return "Int32".to_string();
-        }
-        AstType::Long(_) => {
-            return "Int64".to_string();
-        }
-        AstType::Float(_) => {
-            return "Float".to_string();
-        }
-        AstType::Double(_) => {
-            return "Double".to_string();
-        }
-        AstType::Boolean => {
-            return "Int32".to_string();
-        }
-        AstType::String => {
-            return "UnsafePointer<Int8>?".to_string();
-        }
-        AstType::Vec(base) => match base {
-            AstBaseType::Byte(_) => {
-                return "CInt8Array".to_string();
-            }
-            _ => {
-                return "UnsafePointer<Int8>?".to_string();
-            }
-        },
-        AstType::Callback(_) => {
-            panic!("Don't support callback in callback argument.");
-        }
-        AstType::Struct(_) => {
-            return "UnsafePointer<Int8>?".to_string();
-        }
-    }
-}
-
 #[derive(Clone)]
 struct SwiftType {
-    pub ast_type: AstType
+    pub ast_type: AstType,
 }
 
 impl SwiftType {
     pub(crate) fn new(ast_type: AstType) -> SwiftType {
-        SwiftType {
-            ast_type
-        }
+        SwiftType { ast_type }
     }
 
     pub(crate) fn to_array(&self) -> Swift<'static> {
@@ -871,12 +819,8 @@ impl From<SwiftType> for Swift<'static> {
             AstType::Boolean => swift::BOOLEAN,
             AstType::String => swift::local("String"),
             AstType::Vec(base) => match base {
-                AstBaseType::Struct(_) => {
-                    SwiftType::new(AstType::from(base.clone())).to_array()
-                }
-                AstBaseType::Byte(_) => {
-                    SwiftType::new(AstType::from(base.clone())).to_array()
-                }
+                AstBaseType::Struct(_) => SwiftType::new(AstType::from(base.clone())).to_array(),
+                AstBaseType::Byte(_) => SwiftType::new(AstType::from(base.clone())).to_array(),
                 _ => SwiftType::new(AstType::from(base.clone())).to_array(),
             },
             AstType::Callback(origin) | AstType::Struct(origin) => swift::local(origin.clone()),

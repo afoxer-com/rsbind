@@ -341,7 +341,9 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 #methods_result
 
                 fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
-                    let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
+                    let ptr_jvm = JVM.read().unwrap();
+                    let jvm = (*ptr_jvm).as_ref().unwrap();
+                    let env = jvm.attach_current_thread_permanently().unwrap();
 
                     #args_convert
 
@@ -376,7 +378,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
             impl Drop for #struct_ident {
                 fn drop(&mut self) {
-                    let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
+                    let ptr_jvm = JVM.read().unwrap();
+                    let jvm = (*ptr_jvm).as_ref().unwrap();
+                    let env = jvm.attach_current_thread_permanently().unwrap();
+
                     let _method_result = env.call_static_method(
                         #class_name,
                         "free_callback",

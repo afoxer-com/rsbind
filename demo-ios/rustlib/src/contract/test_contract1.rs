@@ -9,6 +9,8 @@ pub trait DemoTrait {
     fn test_i32_5(arg: i32, arg2: i32) -> i32;
     fn test_u32_6(arg: u32, arg2: u32) -> u32;
     fn test_bool_false(arg_true: bool, arg2_false: bool) -> bool;
+    fn test_f32_30(arg: f32, arg2: f32) -> f32;
+    fn test_f64_31(arg: f64, arg2: f64) -> f64;
 
     // String
     fn test_str(arg: String) -> String;
@@ -55,6 +57,8 @@ pub trait DemoCallback: Sync {
     fn test_i32_5(&self, arg: i32, arg2: i32) -> i32;
     fn test_u32_6(&self, arg: u32, arg2: u32) -> u32;
     fn test_bool_false(&self, arg_true: bool, arg_false: bool) -> bool;
+    fn test_f32_30(&self, arg: f32, arg2: f32) -> f32;
+    fn test_f64_31(&self, arg: f64, arg2: f64) -> f64;
 
     // String
     // fn test_str(&self, arg: String) -> String;

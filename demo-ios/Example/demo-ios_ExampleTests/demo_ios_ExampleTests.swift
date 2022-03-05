@@ -29,6 +29,8 @@ class demo_ios_ExampleTests: XCTestCase {
         XCTAssertEqual(DemoTrait.test_u16_4(arg: 100, arg2: 101), 4)
         XCTAssertEqual(DemoTrait.test_i32_5(arg: 100, arg2: 101), 5)
         XCTAssertEqual(DemoTrait.test_u32_6(arg: 100, arg2: 101), 6)
+        XCTAssertEqual(DemoTrait.test_f32_30(arg: 100.0, arg2: 101.0), 30)
+        XCTAssertEqual(DemoTrait.test_f64_31(arg: 100.0, arg2: 101.0), 31)
         XCTAssertEqual(DemoTrait.test_bool_false(arg_true: true, arg2_false: false), false)
         XCTAssertEqual(DemoTrait.test_str(arg: "Hello world"), "Hello world")
         XCTAssertEqual(DemoTrait.test_arg_vec_str_7(arg: ["Hello world"]), 7)
@@ -84,6 +86,18 @@ class demo_ios_ExampleTests: XCTestCase {
 
     private func createCallback(demoTest: demo_ios_ExampleTests) -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
+            func test_f32_30(arg: Float, arg2: Float) -> Float {
+                XCTAssertEqual(arg, 100.0)
+                XCTAssertEqual(arg2, 101.0)
+                return 30.0
+            }
+            
+            func test_f64_31(arg: Double, arg2: Double) -> Double {
+                XCTAssertEqual(arg, 100.0)
+                XCTAssertEqual(arg2, 101.0)
+                return 31.0
+            }
+            
             private var demoTest: demo_ios_ExampleTests
             
             init(demoTest: demo_ios_ExampleTests) {

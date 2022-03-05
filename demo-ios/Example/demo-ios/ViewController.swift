@@ -10,6 +10,14 @@ import UIKit
 import rustlib
 
 class ViewController: UIViewController, DemoCallback {
+    func test_f32_30(arg: Float, arg2: Float) -> Float {
+        30.0
+    }
+    
+    func test_f64_31(arg: Double, arg2: Double) -> Double {
+        31.0
+    }
+    
     func test_u8_1(arg: Int8, arg2: Int8) -> Int8 {
         1
     }

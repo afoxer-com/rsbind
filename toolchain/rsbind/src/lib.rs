@@ -17,6 +17,7 @@ extern crate serde_json;
 extern crate syn;
 extern crate toml;
 extern crate zip;
+extern crate core;
 
 use std::fs;
 use std::path::PathBuf;

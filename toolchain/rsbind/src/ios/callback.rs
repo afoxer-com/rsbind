@@ -5,6 +5,7 @@ use ast::contract::desc::*;
 use ast::types::*;
 use bridge::file::*;
 use errors::*;
+use ios::mapping::RustMapping;
 
 pub struct CCallbackStrategy {}
 
@@ -108,7 +109,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                             }
                         }
                         _ => {
-                            let arg_ty_ident = self.ty_to_tokens(&cb_arg.ty).unwrap();
+                            let arg_ty_ident = RustMapping::map_sig_arg_type(&cb_arg.ty);
                             quote! {
                                 let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
                             }
@@ -269,11 +270,7 @@ impl CCallbackStrategy {
         let mut callback_methods = TokenStream::new();
         for method in trait_desc.methods.iter() {
             let callback_method_ident = Ident::new(&method.name, Span::call_site());
-            let ret_ty_tokens = match method.return_type {
-                AstType::Void => quote!(()),
-                _ => self.ty_to_tokens(&method.return_type).unwrap(),
-            };
-
+            let ret_ty_tokens = RustMapping::map_sig_arg_type(&method.return_type);
             let arg_types = method
                 .args
                 .iter()
@@ -281,7 +278,7 @@ impl CCallbackStrategy {
                     AstType::Void => false,
                     _ => true,
                 })
-                .map(|arg| self.ty_to_tokens(&arg.ty).unwrap())
+                .map(|arg| RustMapping::map_sig_arg_type(&arg.ty))
                 .collect::<Vec<TokenStream>>();
 
             callback_methods = quote! {
@@ -300,38 +297,5 @@ impl CCallbackStrategy {
         };
 
         return Ok(callback_struct);
-    }
-
-    fn ty_to_tokens(&self, ast_type: &AstType) -> Result<TokenStream> {
-        let mut tokens = TokenStream::new();
-        match ast_type.clone() {
-            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
-            AstType::Boolean => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::String => {
-                tokens.append(Punct::new('*', Spacing::Alone));
-                tokens.append(Ident::new("const", Span::call_site()));
-                tokens.append(Ident::new("c_char", Span::call_site()));
-            }
-            AstType::Struct(_) => {
-                let struct_tokens = self.ty_to_tokens(&AstType::String).unwrap();
-                tokens = quote!(#struct_tokens)
-            }
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte(_) => {
-                    tokens.append(Ident::new("CInt8Array", Span::call_site()));
-                }
-                _ => {
-                    let vec_tokens = self.ty_to_tokens(&AstType::String).unwrap();
-                    tokens = quote!(#vec_tokens)
-                }
-            },
-            _ => (),
-        };
-
-        Ok(tokens)
     }
 }

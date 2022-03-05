@@ -299,14 +299,14 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                 }
                 AstType::Double(origin) => {
-                    let _origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
                             JValue::Double(value) => r_result = Some(value),
                             _ => assert!(false)
                         }
-                        let s_result = env.get_string(r_result.unwrap()).expect("Couldn't get java string!").into();
+                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
                     }
                 }
                 AstType::String => {

@@ -165,6 +165,16 @@ impl DemoTrait for TestContract1Imp {
     }
 
     fn test_no_return() {}
+
+    fn test_f32_30(arg: f32, arg2: f32) -> f32 {
+        assert(arg > 99.0 && arg2 > 100.0, "test_float_30");
+        30.0
+    }
+
+    fn test_f64_31(arg: f64, arg2: f64) -> f64 {
+        assert(arg > 99.0 && arg2 > 100.0, "test_float_31");
+        31.0
+    }
 }
 
 fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
@@ -183,6 +193,10 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     error!("We call handle_callback test_bool_false");
     assert_eq(&arg.test_bool_false(true, false), &false, "handle_callback");
     // assert_eq(arg.test_str("Hello world".to_string()), "Hello world".to_string());
+    error!("We call handle_callback test_f32_30");
+    assert(arg.test_f32_30(100.0, 101.0) > 29.0, "test_f32_30");
+    error!("We call handle_callback test_f64_31");
+    assert(arg.test_f64_31(100.0, 101.0) > 30.0, "test_f64_31");
     error!("We call handle_callback test_arg_vec_str_18");
     assert_eq(
         &arg.test_arg_vec_str_18(vec!["Hello world".to_string()]),

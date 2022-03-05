@@ -58,12 +58,12 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             #[cfg(feature = "rsbind")]
             #[no_mangle]
             #[allow(non_snake_case)]
-            pub extern "C" fn JNI_OnLoad(jvm: JavaVM<'static>, _reserved: *mut c_void) -> jint {
+            pub extern "C" fn JNI_OnLoad(jvm: JavaVM, _reserved: *mut c_void) -> jint {
                 set_java_vm(jvm);
                 JNI_VERSION_1_6
             }
 
-            pub fn set_java_vm(jvm: JavaVM<'static>) {
+            pub fn set_java_vm(jvm: JavaVM) {
                 #(::java::bridge::#mod_idents::set_global_vm(jvm);)*
             }
 
@@ -93,10 +93,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
 
         Ok(quote! {
             lazy_static! {
-                static ref JVM : Arc<RwLock<Option<JavaVM<'static>>>> = Arc::new(RwLock::new(None));
+                static ref JVM : Arc<RwLock<Option<JavaVM>>> = Arc::new(RwLock::new(None));
             }
 
-            pub fn set_global_vm(jvm: JavaVM<'static>) {
+            pub fn set_global_vm(jvm: JavaVM) {
                 #(let _ = jvm.get_env().unwrap().find_class(#class_names);)*
                 *(JVM.write().unwrap()) = Some(jvm);
             }

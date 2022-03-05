@@ -299,14 +299,14 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     }
                 }
                 AstType::Double(origin) => {
-                    let _origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
                         let mut r_result = None;
                         match result.unwrap() {
                             JValue::Double(value) => r_result = Some(value),
                             _ => assert!(false)
                         }
-                        let s_result = env.get_string(r_result.unwrap()).expect("Couldn't get java string!").into();
+                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
                     }
                 }
                 AstType::String => {
@@ -341,7 +341,9 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 #methods_result
 
                 fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
-                    let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
+                    let ptr_jvm = JVM.read().unwrap();
+                    let jvm = (*ptr_jvm).as_ref().unwrap();
+                    let env = jvm.attach_current_thread_permanently().unwrap();
 
                     #args_convert
 
@@ -376,7 +378,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
             impl Drop for #struct_ident {
                 fn drop(&mut self) {
-                    let env = (*JVM.read().unwrap()).unwrap().attach_current_thread().unwrap();
+                    let ptr_jvm = JVM.read().unwrap();
+                    let jvm = (*ptr_jvm).as_ref().unwrap();
+                    let env = jvm.attach_current_thread_permanently().unwrap();
+
                     let _method_result = env.call_static_method(
                         #class_name,
                         "free_callback",

@@ -1,5 +1,7 @@
 package com.afoxer.rustlib;
 
+import android.util.Log;
+
 import androidx.test.filters.LargeTest;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -28,6 +30,8 @@ public class RustLibTest {
         Assert.assertEquals(DemoTrait.test_u16_4(100, 101), 4);
         Assert.assertEquals(DemoTrait.test_i32_5(100, 101), 5);
         Assert.assertEquals(DemoTrait.test_u32_6(100, 101), 6);
+        Assert.assertTrue(DemoTrait.test_f32_30(100.0f, 101.0f) > 29.0);
+        Assert.assertTrue(DemoTrait.test_f64_31(100.0, 101.0) > 30.0);
         Assert.assertEquals(DemoTrait.test_bool_false(true, false), false);
         DemoTrait.test_no_return();
     }
@@ -135,6 +139,21 @@ public class RustLibTest {
                 Assert.assertEquals(arg_true, true);
                 Assert.assertEquals(arg_false, false);
                 return false;
+            }
+
+            @Override
+            public float test_f32_30(float arg, float arg2) {
+                Log.e("MainActivity", "arg = " + arg + ", arg2 = " + arg2);
+                Assert.assertTrue("we assert arg > 99.0", arg > 99.0f);
+                Assert.assertTrue("we assert arg2 > 100.0", arg2 > 100.0f);
+                return 30.0f;
+            }
+
+            @Override
+            public double test_f64_31(double arg, double arg2) {
+                Assert.assertTrue(arg > 99.0);
+                Assert.assertTrue(arg2 >100.0);
+                return 31.0;
             }
 
             @Override

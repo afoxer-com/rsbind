@@ -11,7 +11,7 @@ crate-type = ["lib", "cdylib"]
 
 [dependencies]
 $(*521%-host_crate) = { path = "../../"}
-jni = { git = "https://github.com/sidneywang/jni-rs.git", branch = "sdk" }
+jni = "0.19.0"
 serde_json = "1.0"
 serde_derive = "1.0"
 serde = "1.0"

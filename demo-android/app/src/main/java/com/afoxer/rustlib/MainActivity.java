@@ -60,6 +60,18 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public float test_f32_30(float arg, float arg2) {
+                Log.e(TAG, "test_f32_30 -> arg_true: " + arg + " arg_false: " + arg2);
+                return 30.0f;
+            }
+
+            @Override
+            public double test_f64_31(double arg, double arg2) {
+                Log.e(TAG, "test_f64_31 -> arg_true: " + arg + " arg_false: " + arg2);
+                return 31.0;
+            }
+
+            @Override
             public int test_arg_vec_str_18(String[] arg) {
                 Log.e(TAG, "test_arg_vec_str_18 -> arg: " + arg[0]);
                 return 18;

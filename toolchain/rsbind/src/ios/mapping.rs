@@ -1,8 +1,7 @@
-use ast::types::{AstBaseType, AstType};
+use crate::ast::types::{AstBaseType, AstType};
+use proc_macro2::TokenStream;
 use rsgen::swift;
 use rsgen::swift::Swift;
-use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
-use quote::TokenStreamExt;
 
 pub(crate) struct SwiftMapping {}
 
@@ -38,8 +37,9 @@ impl<'a> SwiftMapping {
             AstType::Vec(AstBaseType::Byte(_)) => "CInt8Array",
             AstType::Vec(_) => "UnsafePointer<Int8>?",
             AstType::Callback(origin) => origin,
-            AstType::Struct(_) => "UnsafePointer<Int8>?"
-        }.to_string()
+            AstType::Struct(_) => "UnsafePointer<Int8>?",
+        }
+        .to_string()
     }
 }
 
@@ -55,11 +55,11 @@ impl<'a> RustMapping {
             AstType::Float(_) => quote!(f32),
             AstType::Double(_) => quote!(f64),
             AstType::Boolean => quote!(i32),
-            AstType::String => quote!(* const c_char),
+            AstType::String => quote!(*const c_char),
             AstType::Vec(AstBaseType::Byte(_)) => quote!(CInt8Array),
-            AstType::Vec(_) => quote!(* const c_char),
-            AstType::Callback(_) => quote!(()),  // not expected to call here!
-            AstType::Struct(_) => quote!(* const c_char)
+            AstType::Vec(_) => quote!(*const c_char),
+            AstType::Callback(_) => quote!(()), // not expected to call here!
+            AstType::Struct(_) => quote!(*const c_char),
         }
     }
     pub(crate) fn map_sig_return_type(ty: &'a AstType) -> TokenStream {
@@ -71,11 +71,10 @@ impl<'a> RustMapping {
             AstType::Float(_) => quote!(f32),
             AstType::Double(_) => quote!(f64),
             AstType::Boolean => quote!(i32),
-            AstType::String => quote!(* mut c_char),
-            AstType::Vec(_) => quote!(* mut c_char),
-            AstType::Callback(_) => quote!(()),  // not expected to call here!
-            AstType::Struct(_) => quote!(* mut c_char)
+            AstType::String => quote!(*mut c_char),
+            AstType::Vec(_) => quote!(*mut c_char),
+            AstType::Callback(_) => quote!(()), // not expected to call here!
+            AstType::Struct(_) => quote!(*mut c_char),
         }
     }
 }
-

@@ -8,15 +8,15 @@ use fs_extra;
 use fs_extra::dir::CopyOptions;
 use syn::__private::str;
 
-use android::artifact::JavaCodeGen;
-use ast::AstResult;
-use base::process::BuildProcess;
-use bridge::prj::Unpack;
-use bridges::BridgeGen::JavaGen;
-use errors::*;
-use errors::ErrorKind::*;
-use ndk_tool::{build, BuildConfig};
-use unzip;
+use crate::android::artifact::JavaCodeGen;
+use crate::ast::AstResult;
+use crate::base::process::BuildProcess;
+use crate::bridge::prj::Unpack;
+use crate::bridges::BridgeGen::JavaGen;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
+use crate::ndk_tool::{build, BuildConfig};
+use crate::unzip;
 
 use super::config::Android;
 

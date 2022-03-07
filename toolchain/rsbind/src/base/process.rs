@@ -1,4 +1,4 @@
-use errors::*;
+use crate::errors::*;
 
 pub(crate) trait BuildProcess {
     fn unpack(&self) -> Result<()>;

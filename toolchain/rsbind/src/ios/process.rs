@@ -8,14 +8,14 @@ use cbindgen::{Config, Language};
 use fs_extra;
 use fs_extra::dir::CopyOptions;
 
-use ast::AstResult;
-use base::process::BuildProcess;
-use bridge::prj::Unpack;
-use bridges::BridgeGen::CGen;
-use errors::*;
-use errors::ErrorKind::*;
-use ios::artifact::SwiftCodeGen;
-use unzip;
+use crate::ast::AstResult;
+use crate::base::process::BuildProcess;
+use crate::bridge::prj::Unpack;
+use crate::bridges::BridgeGen::CGen;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
+use crate::ios::artifact::SwiftCodeGen;
+use crate::unzip;
 
 use super::config::Ios;
 

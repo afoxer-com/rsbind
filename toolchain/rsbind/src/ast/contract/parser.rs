@@ -8,11 +8,11 @@ use std::path::PathBuf;
 use syn;
 use syn::TypeParamBound;
 
-use errors::*;
-use errors::ErrorKind::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
-use super::desc::*;
 use super::super::types::*;
+use super::desc::*;
 
 ///
 /// parse a syn file to TraitDesc which depicting the structure of the trait.

@@ -1,15 +1,13 @@
 use std::path::PathBuf;
 
-use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
-use quote::TokenStreamExt;
-
-use ast::contract::desc::*;
-use ast::imp::desc::*;
-use ast::types::*;
-use bridge::file::*;
-use errors::ErrorKind::*;
-use errors::*;
-use ios::mapping::RustMapping;
+use crate::ast::contract::desc::*;
+use crate::ast::imp::desc::*;
+use crate::ast::types::*;
+use crate::bridge::file::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
+use crate::ios::mapping::RustMapping;
+use proc_macro2::{Ident, Span, TokenStream};
 
 use super::callback::*;
 
@@ -298,7 +296,7 @@ impl FileGenStrategy for CFileGenStrategy {
         })
     }
 
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
+    fn ty_to_tokens(&self, _ast_type: &AstType, _direction: TypeDirection) -> Result<TokenStream> {
         // We don't use it.
         Ok(quote!())
     }

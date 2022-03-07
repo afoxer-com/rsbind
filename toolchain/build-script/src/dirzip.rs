@@ -14,7 +14,8 @@ pub fn compress_dir(src_dir: &Path, target: &Path) {
         &mut dir.into_iter().filter_map(|e| e.ok()),
         src_dir.to_str().unwrap(),
         zipfile,
-    ).unwrap();
+    )
+    .unwrap();
 }
 
 #[warn(dead_code)]
@@ -72,9 +73,11 @@ pub fn extract(test: &Path, target: &Path) {
     let mut zip = zip::ZipArchive::new(zipfile).unwrap();
 
     if !target.exists() {
-        fs::create_dir_all(target).map_err(|e| {
-            println!("{}", e);
-        }).unwrap();
+        fs::create_dir_all(target)
+            .map_err(|e| {
+                println!("{}", e);
+            })
+            .unwrap();
     }
     for i in 0..zip.len() {
         let mut file = zip.by_index(i).unwrap();

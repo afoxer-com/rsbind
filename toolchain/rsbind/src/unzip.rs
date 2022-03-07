@@ -7,8 +7,8 @@ use std::path::PathBuf;
 
 use zip::ZipArchive;
 
-use errors::*;
-use errors::ErrorKind::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
     let reader = Cursor::new(buf);

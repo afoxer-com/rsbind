@@ -13,11 +13,11 @@ extern crate rsgen;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+extern crate core;
 extern crate serde_json;
 extern crate syn;
 extern crate toml;
 extern crate zip;
-extern crate core;
 
 use std::fs;
 use std::path::PathBuf;
@@ -249,7 +249,7 @@ impl Bind {
             &self.android_bridge_path,
             crate_name,
             ast_result,
-            android
+            android,
         );
 
         match self.action {

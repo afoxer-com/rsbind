@@ -4,8 +4,8 @@ use std::path::PathBuf;
 
 use toml;
 
-use android::config::Android;
-use ios::config::Ios;
+use crate::android::config::Android;
+use crate::ios::config::Ios;
 
 ///
 /// Configuration struct mapping from Rsbind.toml

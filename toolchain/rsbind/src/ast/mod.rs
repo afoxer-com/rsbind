@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use serde_json;
 
-use errors::*;
-use errors::ErrorKind::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 use self::contract::desc::*;
 use self::imp::desc::*;

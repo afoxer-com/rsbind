@@ -4,11 +4,11 @@ use std::path::PathBuf;
 
 use proc_macro2::{Ident, Span, TokenStream};
 
-use ast::contract::desc::*;
-use ast::imp::desc::*;
-use ast::types::*;
-use errors::*;
-use errors::ErrorKind::*;
+use crate::ast::contract::desc::*;
+use crate::ast::imp::desc::*;
+use crate::ast::types::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 pub(crate) const TMP_ARG_PREFIX: &str = "r";
 
@@ -54,16 +54,8 @@ pub(crate) trait FileGenStrategy {
         args: &ArgDesc,
         callbacks: &Vec<&TraitDesc>,
     ) -> Result<TokenStream>;
-    fn quote_return_convert(
-        &self,
-        return_ty: &AstType,
-        ret_name: &str,
-    ) -> Result<TokenStream>;
-    fn ty_to_tokens(
-        &self,
-        ast_type: &AstType,
-        direction: TypeDirection,
-    ) -> Result<TokenStream>;
+    fn quote_return_convert(&self, return_ty: &AstType, ret_name: &str) -> Result<TokenStream>;
+    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream>;
 }
 
 pub(crate) trait CallbackGenStrategy {
@@ -146,9 +138,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
 
         for struct_desc in self.struct_descs.iter() {
             let tokens = self.strategy.quote_for_structures(&struct_desc);
-            results.push(GenResult {
-                result: tokens,
-            });
+            results.push(GenResult { result: tokens });
         }
 
         for desc in self.trait_descs.iter() {
@@ -316,10 +306,9 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
 
         let call_imp = self.quote_imp_call(&imp.name, method)?;
 
-        let return_handle = self.strategy.quote_return_convert(
-            &method.return_type,
-            "ret_value"
-        )?;
+        let return_handle = self
+            .strategy
+            .quote_return_convert(&method.return_type, "ret_value")?;
 
         // combine all the parts
         let result = quote! {

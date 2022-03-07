@@ -1,9 +1,9 @@
 use std::fs;
 use std::path::PathBuf;
 
-use errors::*;
-use errors::ErrorKind::*;
-use unzip;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
+use crate::unzip;
 
 const MAGIC_NUM: &'static str = "*521%";
 
@@ -20,7 +20,7 @@ pub(crate) struct Unpack<'a> {
 impl<'a> Unpack<'a> {
     pub(crate) fn unpack(&self) -> Result<()> {
         if self.path.exists() {
-            ::fs::remove_dir_all(&self.path)?;
+            std::fs::remove_dir_all(&self.path)?;
         }
         fs::create_dir_all(&self.path)?;
 

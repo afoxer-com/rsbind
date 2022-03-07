@@ -1,11 +1,10 @@
-use proc_macro2::{Ident, Punct, Spacing, Span, TokenStream};
-use quote::TokenStreamExt;
+use proc_macro2::{Ident, Span, TokenStream};
 
-use ast::contract::desc::*;
-use ast::types::*;
-use bridge::file::*;
-use errors::*;
-use ios::mapping::RustMapping;
+use crate::ast::contract::desc::*;
+use crate::ast::types::*;
+use crate::bridge::file::*;
+use crate::errors::*;
+use crate::ios::mapping::RustMapping;
 
 pub struct CCallbackStrategy {}
 

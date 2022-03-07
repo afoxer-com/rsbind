@@ -4,11 +4,11 @@ use std::path::PathBuf;
 use rsgen::swift::{self, *};
 use rsgen::{Custom, Formatter, IntoTokens, Tokens};
 
-use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
-use ast::types::{AstBaseType, AstType};
-use ast::AstResult;
-use errors::*;
-use ios::mapping::SwiftMapping;
+use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
+use crate::ast::types::{AstBaseType, AstType};
+use crate::ast::AstResult;
+use crate::errors::*;
+use crate::ios::mapping::SwiftMapping;
 
 pub(crate) struct SwiftCodeGen<'a> {
     pub swift_gen_dir: &'a PathBuf,
@@ -414,7 +414,7 @@ impl<'a> TraitGen<'a> {
         let cb_arg_str = SwiftType {
             ast_type: cb_arg.ty.clone(),
         }
-            .to_str();
+        .to_str();
         match cb_arg.ty.clone() {
             AstType::Void => {}
             AstType::Byte(_) => {

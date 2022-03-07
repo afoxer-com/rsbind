@@ -4,13 +4,13 @@
 //!
 use std::path::PathBuf;
 
-use android::bridge as android_bridge;
-use ast::AstResult;
-use ast::contract::desc::*;
-use ast::imp::desc::*;
-use bridge::gen;
-use errors::*;
-use ios::bridge as ios_bridge;
+use crate::android::bridge as android_bridge;
+use crate::ast::contract::desc::*;
+use crate::ast::imp::desc::*;
+use crate::ast::AstResult;
+use crate::bridge::gen;
+use crate::errors::*;
+use crate::ios::bridge as ios_bridge;
 
 pub(crate) enum BridgeGen<'a> {
     // create_name, ast, bridge_dir

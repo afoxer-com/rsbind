@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use ast::contract::parser::parse_from_str;
-    use ast::types::{AstBaseType, AstType};
+    use crate::ast::contract::parser::parse_from_str;
+    use crate::ast::types::{AstBaseType, AstType};
 
     #[test]
     fn parse_contract_works() {

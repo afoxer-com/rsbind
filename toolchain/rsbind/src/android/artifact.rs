@@ -2,19 +2,19 @@ use std::fmt::Write;
 use std::fs;
 use std::path::PathBuf;
 
+use rsgen::java::{self, *};
 use rsgen::Custom;
 use rsgen::Formatter;
 use rsgen::IntoTokens;
-use rsgen::java::{self, *};
 use rsgen::Tokens;
 
-use ast::AstResult;
-use ast::contract::desc::MethodDesc;
-use ast::contract::desc::StructDesc;
-use ast::contract::desc::TraitDesc;
-use ast::types::AstBaseType;
-use ast::types::AstType;
-use errors::*;
+use crate::ast::contract::desc::MethodDesc;
+use crate::ast::contract::desc::StructDesc;
+use crate::ast::contract::desc::TraitDesc;
+use crate::ast::types::AstBaseType;
+use crate::ast::types::AstType;
+use crate::ast::AstResult;
+use crate::errors::*;
 
 pub(crate) struct JavaCodeGen<'a> {
     pub java_gen_dir: &'a PathBuf,
@@ -131,15 +131,9 @@ impl<'a> CallbackGen<'a> {
         for method in self.desc.methods.iter() {
             let mut m = Method::new(method.name.clone());
             m.modifiers = vec![];
-            m.returns = Java::from(JavaType::new(
-                method.return_type.clone(),
-                self.pkg.clone()
-            ));
+            m.returns = Java::from(JavaType::new(method.return_type.clone(), self.pkg.clone()));
             for arg in method.args.iter() {
-                let arg_ty = Java::from(JavaType::new(
-                    arg.ty.clone(),
-                    self.pkg.clone()
-                ));
+                let arg_ty = Java::from(JavaType::new(arg.ty.clone(), self.pkg.clone()));
                 let mut argument = java::Argument::new(arg_ty, arg.name.as_ref());
                 argument.modifiers = vec![];
 
@@ -295,10 +289,7 @@ impl<'a> TraitGen<'a> {
         let mut m = java::Method::new(method.name.clone());
         m.modifiers = vec![Modifier::Public, Modifier::Static];
 
-        let return_ty = JavaType::new(
-            method.return_type.clone(),
-            self.pkg.clone()
-        );
+        let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
         m.returns = Java::from(return_ty.clone());
 
         for arg in method.args.clone().into_iter() {
@@ -395,10 +386,7 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Java>,
         method: &MethodDesc,
     ) -> Result<()> {
-        let return_ty = JavaType::new(
-            method.return_type.clone(),
-            self.pkg.clone()
-        );
+        let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
 
         let return_java_ty = return_ty.to_transfer();
         match return_ty.ast_type.clone() {
@@ -432,10 +420,7 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Java>,
         method: &MethodDesc,
     ) -> Result<()> {
-        let return_ty = JavaType::new(
-            method.return_type.clone(),
-            self.pkg.clone()
-        );
+        let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
 
         match return_ty.ast_type.clone() {
             AstType::Void => (),
@@ -482,11 +467,8 @@ impl<'a> TraitGen<'a> {
         m.modifiers = vec![Modifier::Public, Modifier::Static];
 
         if cb_method.return_type != AstType::Void {
-            m.returns = JavaType::new(
-                cb_method.return_type.clone(),
-                self.pkg.clone()
-            )
-            .to_transfer();
+            m.returns =
+                JavaType::new(cb_method.return_type.clone(), self.pkg.clone()).to_transfer();
         }
 
         let mut argument = Argument::new(java::LONG, "index");
@@ -615,10 +597,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             _ => {
-                let java = JavaType::new(
-                    cb_method.return_type.clone(),
-                    self.pkg.clone(),
-                );
+                let java = JavaType::new(cb_method.return_type.clone(), self.pkg.clone());
                 cb_body.push(toks!(
                     Java::from(java),
                     " result = callback.",
@@ -662,10 +641,7 @@ impl<'a> TraitGen<'a> {
             match method.return_type.clone() {
                 AstType::Void => (),
                 _ => {
-                    let java = JavaType::new(
-                        method.return_type.clone(),
-                        self.pkg.clone(),
-                    );
+                    let java = JavaType::new(method.return_type.clone(), self.pkg.clone());
                     m.returns = java.to_transfer();
                 }
             }
@@ -696,10 +672,7 @@ struct JavaType {
 
 impl JavaType {
     pub(crate) fn new(ast_type: AstType, pkg: String) -> JavaType {
-        JavaType {
-            ast_type,
-            pkg,
-        }
+        JavaType { ast_type, pkg }
     }
 
     pub(crate) fn to_array(&self) -> Java<'static> {
@@ -730,10 +703,7 @@ impl JavaType {
         match self.ast_type.clone() {
             AstType::Vec(base) => match base {
                 AstBaseType::Struct(origin) => java::local(origin.clone()),
-                _ => Java::from(JavaType::new(
-                    AstType::from(base),
-                    self.pkg.clone(),
-                )),
+                _ => Java::from(JavaType::new(AstType::from(base), self.pkg.clone())),
             },
             _ => Java::from(self.clone()),
         }
@@ -764,22 +734,15 @@ impl From<JavaType> for Java<'static> {
             AstType::String => java::imported("java.lang", "String"),
             AstType::Vec(ref base) => match base {
                 AstBaseType::Struct(_sub) => {
-                    JavaType::new(AstType::from(base.clone()), item.pkg.clone())
-                        .to_array()
+                    JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_array()
                 }
                 // Byte array is not transferred by json, so we don't use boxed array.
-                AstBaseType::Byte(_) => JavaType::new(
-                    AstType::from(base.clone()),
-                    item.pkg.clone()
-                )
-                .to_array(),
+                AstBaseType::Byte(_) => {
+                    JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_array()
+                }
                 // Why we use boxed array, because we use json to transfer array,
                 // and it is translated to list, and then we need to change it to array(boxed).
-                _ => JavaType::new(
-                    AstType::from(base.clone()),
-                    item.pkg.clone()
-                )
-                .to_boxed_array(),
+                _ => JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_boxed_array(),
             },
             AstType::Void => java::VOID,
             AstType::Callback(origin) | AstType::Struct(origin) => java::local(origin.clone()),

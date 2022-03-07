@@ -1,10 +1,10 @@
 use proc_macro2::{Ident, Literal, Span, TokenStream};
 use quote::TokenStreamExt;
 
-use ast::contract::desc::*;
-use ast::types::*;
-use bridge::file::*;
-use errors::*;
+use crate::ast::contract::desc::*;
+use crate::ast::types::*;
+use crate::bridge::file::*;
+use crate::errors::*;
 
 pub struct JavaCallbackStrategy {
     pub(crate) java_namespace: String,
@@ -404,11 +404,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 }
 
 impl JavaCallbackStrategy {
-    fn ty_to_tokens(
-        &self,
-        ast_type: &AstType,
-        direction: TypeDirection,
-    ) -> Result<TokenStream> {
+    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match ast_type.clone() {
             AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),

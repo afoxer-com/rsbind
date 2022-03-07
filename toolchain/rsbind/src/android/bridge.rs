@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::TokenStreamExt;
 
-use ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
-use ast::imp::desc::*;
-use ast::types::*;
-use bridge::file::*;
-use errors::*;
-use errors::ErrorKind::*;
+use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
+use crate::ast::imp::desc::*;
+use crate::ast::types::*;
+use crate::bridge::file::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 use super::callback::*;
 
@@ -168,16 +168,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let arg_types = method
             .args
             .iter()
-            .map(|arg| {
-                self.ty_to_tokens(&arg.ty, TypeDirection::Argument)
-                    .unwrap()
-            })
+            .map(|arg| self.ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap())
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = self.ty_to_tokens(
-            &method.return_type,
-            TypeDirection::Return,
-        )?;
+        let ret_ty_tokens = self.ty_to_tokens(&method.return_type, TypeDirection::Return)?;
 
         let method_sig = if arg_names.is_empty() {
             match method.return_type {
@@ -307,11 +301,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         Ok(result)
     }
 
-    fn quote_return_convert(
-        &self,
-        return_ty: &AstType,
-        ret_name: &str
-    ) -> Result<TokenStream> {
+    fn quote_return_convert(&self, return_ty: &AstType, ret_name: &str) -> Result<TokenStream> {
         println!(
             "[bridge]  🔆  begin quote jni bridge method return convert => {}",
             return_ty.origin()
@@ -385,11 +375,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         Ok(result)
     }
 
-    fn ty_to_tokens(
-        &self,
-        ast_type: &AstType,
-        direction: TypeDirection,
-    ) -> Result<TokenStream> {
+    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
         let mut tokens = TokenStream::new();
         match ast_type.clone() {
             AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),

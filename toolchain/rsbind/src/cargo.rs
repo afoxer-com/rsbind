@@ -4,8 +4,8 @@ use std::path::Path;
 
 use toml;
 
-use errors::*;
-use errors::ErrorKind::*;
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Manifest {

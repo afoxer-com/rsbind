@@ -20,8 +20,10 @@ toml = "0.5.1"
 error-chain = "0.12.1"
 ndk-build = "0.4.3"
 rstgen = "0.1.0"
-template = { path = "../rsbind-template" }
 ndk-tool = "0.1.0"
+
+[build-dependencies]
+rsbind-build-script = "0.1.0"
 
 [dependencies.syn]
 version = "1.0.84"

@@ -432,12 +432,12 @@ dependencies = [
  "ndk-tool 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2",
  "quote",
+ "rsbind-build-script 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rstgen",
  "serde",
  "serde_derive",
  "serde_json",
  "syn",
- "template",
  "toml",
  "zip",
 ]
@@ -547,13 +547,6 @@ dependencies = [
  "redox_syscall",
  "remove_dir_all",
  "winapi",
-]
-
-[[package]]
-name = "template"
-version = "0.1.0"
-dependencies = [
- "rsbind-build-script 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

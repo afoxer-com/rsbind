@@ -37,32 +37,32 @@ fn main() {
     if !Path::new(&format!("{}/template/template-android.zip", outdir.to_string_lossy())).exists() {
         panic!("/template/template-android.zip doesn't exist.")
     }
-    fs::copy(
-        &format!("{}/template/template-android.zip", outdir.to_string_lossy()),
-        "src/android/res/template_android.zip",
-    )
-    .unwrap();
-
-    if !Path::new(&format!("{}/template/template-ios.zip", outdir.to_string_lossy())).exists() {
-        panic!("template/template-ios.zip doesn't exist.")
-    }
-    fs::copy(&format!("{}/template/template-ios.zip", outdir.to_string_lossy()), "src/ios/res/template_ios.zip").unwrap();
-
-    if !Path::new(&format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy())).exists() {
-        panic!("template/template-bridge-android.zip doesn't exist.")
-    }
-    fs::copy(
-        &format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy()),
-        "src/android/res/template_bridge_android.zip",
-    )
-    .unwrap();
-
-    if !Path::new(&format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy())).exists() {
-        panic!("template/template-bridge-ios.zip doesn't exist.")
-    }
-    fs::copy(
-        &format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy()),
-        "src/ios/res/template_bridge_ios.zip",
-    )
-    .unwrap();
+    // fs::copy(
+    //     &format!("{}/template/template-android.zip", outdir.to_string_lossy()),
+    //     "src/android/res/template_android.zip",
+    // )
+    // .unwrap();
+    //
+    // if !Path::new(&format!("{}/template/template-ios.zip", outdir.to_string_lossy())).exists() {
+    //     panic!("template/template-ios.zip doesn't exist.")
+    // }
+    // fs::copy(&format!("{}/template/template-ios.zip", outdir.to_string_lossy()), "src/ios/res/template_ios.zip").unwrap();
+    //
+    // if !Path::new(&format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy())).exists() {
+    //     panic!("template/template-bridge-android.zip doesn't exist.")
+    // }
+    // fs::copy(
+    //     &format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy()),
+    //     "src/android/res/template_bridge_android.zip",
+    // )
+    // .unwrap();
+    //
+    // if !Path::new(&format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy())).exists() {
+    //     panic!("template/template-bridge-ios.zip doesn't exist.")
+    // }
+    // fs::copy(
+    //     &format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy()),
+    //     "src/ios/res/template_bridge_ios.zip",
+    // )
+    // .unwrap();
 }

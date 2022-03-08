@@ -13,19 +13,19 @@ fn main() {
 
     fs::create_dir_all(".out").unwrap();
     compress_dir(
-        Path::new("./template-android"),
+        Path::new("./template/template-android"),
         Path::new(".out/template-android.zip"),
     );
     compress_dir(
-        Path::new("./template-ios"),
+        Path::new("./template/template-ios"),
         Path::new(".out/template-ios.zip"),
     );
     compress_dir(
-        Path::new("./template-bridge-android"),
+        Path::new("./template/template-bridge-android"),
         Path::new(".out/template-bridge-android.zip"),
     );
     compress_dir(
-        Path::new("./template-bridge-ios"),
+        Path::new("./template/template-bridge-ios"),
         Path::new(".out/template-bridge-ios.zip"),
     );
 

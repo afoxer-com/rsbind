@@ -451,6 +451,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "rsbind-build-script"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb446ab25b0b95b8ae9e9dc703e3fbbeb3df3fec28774215052b0007f4b33f85"
+dependencies = [
+ "walkdir",
+ "zip",
+]
+
+[[package]]
 name = "rstgen"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -543,7 +553,7 @@ dependencies = [
 name = "template"
 version = "0.1.0"
 dependencies = [
- "rsbind-build-script",
+ "rsbind-build-script 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

@@ -3,7 +3,7 @@ use std::path::Path;
 use build_script::dirzip::compress_dir;
 
 fn main() {
-    println!("cargo:rerun-if-changed=.out");
+    println!("cargo:rerun-if-changed=template");
     println!("cargo:rerun-if-changed=template-android");
     println!("cargo:rerun-if-changed=template-ios");
     println!("cargo:rerun-if-changed=template-bridge-android");
@@ -11,52 +11,57 @@ fn main() {
 
     println!("begin zip tempalate...");
 
-    fs::create_dir_all(".out").unwrap();
+    let outdir = match std::env::var_os("OUT_DIR") {
+        None => return,
+        Some(outdir) => outdir,
+    };
+
+    fs::create_dir_all(format!("{}/template", outdir.to_string_lossy())).unwrap();
     compress_dir(
         Path::new("./template/template-android"),
-        Path::new(".out/template-android.zip"),
+        Path::new(&format!("{}/template/template-android.zip", outdir.to_string_lossy())),
     );
     compress_dir(
         Path::new("./template/template-ios"),
-        Path::new(".out/template-ios.zip"),
+        Path::new(&format!("{}/template/template-ios.zip", outdir.to_string_lossy())),
     );
     compress_dir(
         Path::new("./template/template-bridge-android"),
-        Path::new(".out/template-bridge-android.zip"),
+        Path::new(&format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy())),
     );
     compress_dir(
         Path::new("./template/template-bridge-ios"),
-        Path::new(".out/template-bridge-ios.zip"),
+        Path::new(&format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy())),
     );
 
-    if !Path::new(".out/template-android.zip").exists() {
-        panic!(".out/template-android.zip doesn't exist.")
+    if !Path::new(&format!("{}/template/template-android.zip", outdir.to_string_lossy())).exists() {
+        panic!("/template/template-android.zip doesn't exist.")
     }
     fs::copy(
-        ".out/template-android.zip",
+        &format!("{}/template/template-android.zip", outdir.to_string_lossy()),
         "src/android/res/template_android.zip",
     )
     .unwrap();
 
-    if !Path::new(".out/template-ios.zip").exists() {
-        panic!(".out/template-ios.zip doesn't exist.")
+    if !Path::new(&format!("{}/template/template-ios.zip", outdir.to_string_lossy())).exists() {
+        panic!("template/template-ios.zip doesn't exist.")
     }
-    fs::copy(".out/template-ios.zip", "src/ios/res/template_ios.zip").unwrap();
+    fs::copy(&format!("{}/template/template-ios.zip", outdir.to_string_lossy()), "src/ios/res/template_ios.zip").unwrap();
 
-    if !Path::new(".out/template-bridge-android.zip").exists() {
-        panic!(".out/template-bridge-android.zip doesn't exist.")
+    if !Path::new(&format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy())).exists() {
+        panic!("template/template-bridge-android.zip doesn't exist.")
     }
     fs::copy(
-        ".out/template-bridge-android.zip",
+        &format!("{}/template/template-bridge-android.zip", outdir.to_string_lossy()),
         "src/android/res/template_bridge_android.zip",
     )
     .unwrap();
 
-    if !Path::new(".out/template-bridge-ios.zip").exists() {
-        panic!("../.out/template-bridge-ios.zip doesn't exist.")
+    if !Path::new(&format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy())).exists() {
+        panic!("template/template-bridge-ios.zip doesn't exist.")
     }
     fs::copy(
-        ".out/template-bridge-ios.zip",
+        &format!("{}/template/template-bridge-ios.zip", outdir.to_string_lossy()),
         "src/ios/res/template_bridge_ios.zip",
     )
     .unwrap();

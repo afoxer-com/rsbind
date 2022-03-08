@@ -14,9 +14,6 @@ target 'MacDemo' do
     pod 'rustlib', :path => '../rustlib/_gen/mac_artifact'
   end
 
-  target 'MacDemoUITests' do
-  end
-
 end
 
 # use_frameworks!

@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::PathBuf;
 
-use rsgen::swift::{self, *};
-use rsgen::{Custom, Formatter, IntoTokens, Tokens};
+use rstgen::swift::{self, *};
+use rstgen::{Custom, Formatter, IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};

@@ -9,7 +9,7 @@ description = "Template for rsbind"
 license = "Apache-2.0"
 
 [build-dependencies]
-build-script = {path="../build-script"}
+rsbind-build-script = {path="../rsbind-build-script"}
 
 [lib]
 name = "mock_template"

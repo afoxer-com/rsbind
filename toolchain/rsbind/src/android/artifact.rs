@@ -2,11 +2,11 @@ use std::fmt::Write;
 use std::fs;
 use std::path::PathBuf;
 
-use rsgen::java::{self, *};
-use rsgen::Custom;
-use rsgen::Formatter;
-use rsgen::IntoTokens;
-use rsgen::Tokens;
+use rstgen::java::{self, *};
+use rstgen::Custom;
+use rstgen::Formatter;
+use rstgen::IntoTokens;
+use rstgen::Tokens;
 
 use crate::ast::contract::desc::MethodDesc;
 use crate::ast::contract::desc::StructDesc;

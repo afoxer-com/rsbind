@@ -9,7 +9,7 @@ extern crate proc_macro2;
 #[macro_use]
 extern crate quote;
 #[macro_use]
-extern crate rsgen;
+extern crate rstgen;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;

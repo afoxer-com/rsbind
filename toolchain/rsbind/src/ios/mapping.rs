@@ -1,7 +1,7 @@
 use crate::ast::types::{AstBaseType, AstType};
 use proc_macro2::TokenStream;
-use rsgen::swift;
-use rsgen::swift::Swift;
+use rstgen::swift;
+use rstgen::swift::Swift;
 
 pub(crate) struct SwiftMapping {}
 

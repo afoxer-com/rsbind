@@ -1,0 +1,11 @@
+use_frameworks!
+
+platform :osx
+
+target 'demo-ios_Example' do
+  pod 'rustlib', :path => '../rustlib/_gen/mac_artifact'
+end
+
+target 'demo-ios_ExampleTests' do
+  pod 'rustlib', :path => '../rustlib/_gen/mac_artifact'
+end

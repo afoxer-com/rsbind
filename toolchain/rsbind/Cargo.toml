@@ -22,9 +22,6 @@ ndk-build = "0.4.3"
 rstgen = "0.1.0"
 ndk-tool = "0.1.0"
 
-[build-dependencies]
-rsbind-build-script = "0.1.0"
-
 [dependencies.syn]
 version = "1.0.84"
 default_features = false

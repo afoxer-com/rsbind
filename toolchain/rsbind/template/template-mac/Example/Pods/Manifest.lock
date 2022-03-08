@@ -1,0 +1,16 @@
+PODS:
+  - rustlib (0.1.0)
+
+DEPENDENCIES:
+  - rustlib (from `../`)
+
+EXTERNAL SOURCES:
+  rustlib:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  rustlib: 95d47297ae8cbfb52e7e3d7349e430b039823b65
+
+PODFILE CHECKSUM: 8e0fa156455a92582434cc246e6fc386703592de
+
+COCOAPODS: 1.11.2

@@ -13,7 +13,7 @@ fn main() {
         Some(real) => real,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/all ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }
@@ -27,10 +27,11 @@ fn main() {
     let target_enum = match target.as_ref() {
         "android" => Target::Android,
         "ios" => Target::Ios,
+        "mac" => Target::Mac,
         "all" => Target::All,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/all ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }
@@ -40,7 +41,7 @@ fn main() {
         Some(option) => option,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/all ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }
@@ -55,7 +56,7 @@ fn main() {
         "all" => Action::All,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project java/ios/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/all ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }

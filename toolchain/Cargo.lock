@@ -65,6 +65,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
+name = "build-script"
+version = "0.1.0"
+dependencies = [
+ "walkdir",
+ "zip",
+]
+
+[[package]]
 name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -432,31 +440,12 @@ dependencies = [
  "ndk-tool 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2",
  "quote",
- "rsbind-build-script 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rstgen",
  "serde",
  "serde_derive",
  "serde_json",
  "syn",
  "toml",
- "zip",
-]
-
-[[package]]
-name = "rsbind-build-script"
-version = "0.1.0"
-dependencies = [
- "walkdir",
- "zip",
-]
-
-[[package]]
-name = "rsbind-build-script"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb446ab25b0b95b8ae9e9dc703e3fbbeb3df3fec28774215052b0007f4b33f85"
-dependencies = [
- "walkdir",
  "zip",
 ]
 

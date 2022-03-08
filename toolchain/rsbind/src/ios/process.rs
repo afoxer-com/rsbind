@@ -13,7 +13,7 @@ use crate::bridge::prj::Unpack;
 use crate::bridges::BridgeGen::CGen;
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
-use crate::ios::artifact::SwiftCodeGen;
+use crate::swift::artifact::SwiftCodeGen;
 use crate::unzip;
 
 use super::config::Ios;

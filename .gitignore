@@ -2,6 +2,7 @@
 .gradle
 build
 _gen
+.out
 target
 .vscode
 .test

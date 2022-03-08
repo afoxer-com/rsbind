@@ -1,0 +1,779 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		040E4CC462BD9247E7E7DDE5CF26861C /* SynchronizedClosure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89FE4577E2D0C2E9A34E2031B7A8BDAB /* SynchronizedClosure.swift */; settings = {COMPILER_FLAGS = "-DOS_OBJECT_USE_OBJC=0"; }; };
+		0C3E68B60DA858FA3AB31019B396EB4C /* Pods-rustlib_Example-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = B5CFDF6E5595D264CA7FEEA6D76BB141 /* Pods-rustlib_Example-dummy.m */; };
+		103261C24339AE4F5EE3814135A08798 /* Pods-rustlib_Tests-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 3183FF3C867C188F60430951E0ED881F /* Pods-rustlib_Tests-dummy.m */; };
+		113ECEFDE6AB5C771A25E09E052793DC /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */; };
+		1DB56DB25C9846CDCB44A3C8A354C78F /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */; };
+		2757E2DB1D794888672089AD5287B357 /* rustlib-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 8B0B993AF92AA77E452181E81C94A310 /* rustlib-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		600D359C4319985CB38EF22DDC0A59EB /* Pods-rustlib_Example-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = D97A205D79B5449B02F50CBEFAB4339A /* Pods-rustlib_Example-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8AFF46009DFAFBC68E4E69B0EC384D4B /* Pods-rustlib_Tests-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 7B75B03E8416923B4A486480A70AAAA2 /* Pods-rustlib_Tests-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C906142B7B057392888C768ED4C176F1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */; };
+		F0F8BE5422C27CDCF6A73E6728CFDC7E /* rustlib-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 6F92669D992BC7656397BB18C63EA427 /* rustlib-dummy.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		25C07846B767CD41FA933D6073A5F610 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FAAF59FE2761F66386446F68F35CD3B0;
+			remoteInfo = rustlib;
+		};
+		AEFEA9B12BDF6E4CC87E618D9BFE97B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = D6B1080216BB0F1A88BFBC156CF4EEFD;
+			remoteInfo = "Pods-rustlib_Example";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		02DFCB5289B9DD2B106E533D9E2F8A01 /* rustlib.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = rustlib.modulemap; sourceTree = "<group>"; };
+		079385B6A427108A8E6D94A1121C456E /* Pods-rustlib_Example.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-rustlib_Example.modulemap"; sourceTree = "<group>"; };
+		0D9C37FF2AECD616B6A39B5EB2C3E60D /* Pods-rustlib_Example-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-rustlib_Example-acknowledgements.markdown"; sourceTree = "<group>"; };
+		10848B948EB09982D117D4DCF80FAAE7 /* rustlib */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = rustlib; path = rustlib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		205C915ABE58BC5C79A19E026C90B895 /* rustlib-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "rustlib-Info.plist"; sourceTree = "<group>"; };
+		2C4350397D2D56F8F7BFAD35F9EF4088 /* Pods-rustlib_Tests.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-rustlib_Tests.modulemap"; sourceTree = "<group>"; };
+		2CB4821CED2C23BFB84A467F84AB75A0 /* Pods-rustlib_Tests-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-rustlib_Tests-acknowledgements.plist"; sourceTree = "<group>"; };
+		312E1F874CFF900FE7F962926E253246 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
+		3183FF3C867C188F60430951E0ED881F /* Pods-rustlib_Tests-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-rustlib_Tests-dummy.m"; sourceTree = "<group>"; };
+		4FBB5E5E0E3FD1C81E4A1EA8D3F77409 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE; sourceTree = "<group>"; };
+		6F92669D992BC7656397BB18C63EA427 /* rustlib-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "rustlib-dummy.m"; sourceTree = "<group>"; };
+		7B75B03E8416923B4A486480A70AAAA2 /* Pods-rustlib_Tests-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-rustlib_Tests-umbrella.h"; sourceTree = "<group>"; };
+		7FBD158375723A286C3CC85C918EB5B6 /* Pods-rustlib_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-rustlib_Example.release.xcconfig"; sourceTree = "<group>"; };
+		80DB262970BD1B30C8C4E84B77DAAD6C /* Pods-rustlib_Tests-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-rustlib_Tests-Info.plist"; sourceTree = "<group>"; };
+		895C8EB4A9A5AA1A88B766B322D4B1E7 /* Pods-rustlib_Example-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-rustlib_Example-frameworks.sh"; sourceTree = "<group>"; };
+		89FE4577E2D0C2E9A34E2031B7A8BDAB /* SynchronizedClosure.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = SynchronizedClosure.swift; path = rustlib/Classes/SynchronizedClosure.swift; sourceTree = "<group>"; };
+		8AE04F1674E70A383B644E7BE30F6DCD /* rustlib.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = rustlib.release.xcconfig; sourceTree = "<group>"; };
+		8B0B993AF92AA77E452181E81C94A310 /* rustlib-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "rustlib-umbrella.h"; sourceTree = "<group>"; };
+		91100B4736114623B5444326F525EB9D /* Pods-rustlib_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-rustlib_Tests.debug.xcconfig"; sourceTree = "<group>"; };
+		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		9F7492469CEB5150B2872C0245CFC79D /* Pods-rustlib_Tests-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-rustlib_Tests-acknowledgements.markdown"; sourceTree = "<group>"; };
+		A696927E429916E938813EE06AC88EF7 /* rustlib-prefix.pch */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "rustlib-prefix.pch"; sourceTree = "<group>"; };
+		A6C859847F08551585816B30B0A7E8E4 /* Pods-rustlib_Tests */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-rustlib_Tests"; path = Pods_rustlib_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5CFDF6E5595D264CA7FEEA6D76BB141 /* Pods-rustlib_Example-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-rustlib_Example-dummy.m"; sourceTree = "<group>"; };
+		BE9BF6758E9DE554FE4C15E6AC7829F7 /* Pods-rustlib_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-rustlib_Tests.release.xcconfig"; sourceTree = "<group>"; };
+		C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.15.sdk/System/Library/Frameworks/Cocoa.framework; sourceTree = DEVELOPER_DIR; };
+		D3389B178CCBDB13BCF2C2A5C716E5C2 /* Pods-rustlib_Example-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-rustlib_Example-acknowledgements.plist"; sourceTree = "<group>"; };
+		D3B2E92FF4856E68AEC11A95E26508E5 /* Pods-rustlib_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-rustlib_Example.debug.xcconfig"; sourceTree = "<group>"; };
+		D5B56C484FD2982F3A53BA3C7B2E277C /* rustlib.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = rustlib.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		D97A205D79B5449B02F50CBEFAB4339A /* Pods-rustlib_Example-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-rustlib_Example-umbrella.h"; sourceTree = "<group>"; };
+		DC19913B75AEE9FC0476F04ECBA7D69C /* rustlib.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = rustlib.debug.xcconfig; sourceTree = "<group>"; };
+		E3E9DCC307DE62C1458DD7BAAAD459C4 /* Pods-rustlib_Example-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-rustlib_Example-Info.plist"; sourceTree = "<group>"; };
+		E611DCFA5F2222207FD8C43D49198F6D /* Pods-rustlib_Example */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-rustlib_Example"; path = Pods_rustlib_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		1AE9E6E5631BC09A386D6E89D7741EEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				113ECEFDE6AB5C771A25E09E052793DC /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2235DA0D357E39B091778F2D0A912B92 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C906142B7B057392888C768ED4C176F1 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E3848936E9E7637873380C589C161DC8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1DB56DB25C9846CDCB44A3C8A354C78F /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		5FD1C4CBDD1BA6A1EFE00D814A4F62C8 /* Support Files */ = {
+			isa = PBXGroup;
+			children = (
+				02DFCB5289B9DD2B106E533D9E2F8A01 /* rustlib.modulemap */,
+				6F92669D992BC7656397BB18C63EA427 /* rustlib-dummy.m */,
+				205C915ABE58BC5C79A19E026C90B895 /* rustlib-Info.plist */,
+				A696927E429916E938813EE06AC88EF7 /* rustlib-prefix.pch */,
+				8B0B993AF92AA77E452181E81C94A310 /* rustlib-umbrella.h */,
+				DC19913B75AEE9FC0476F04ECBA7D69C /* rustlib.debug.xcconfig */,
+				8AE04F1674E70A383B644E7BE30F6DCD /* rustlib.release.xcconfig */,
+			);
+			name = "Support Files";
+			path = "Example/Pods/Target Support Files/rustlib";
+			sourceTree = "<group>";
+		};
+		67098CF632EC2F92D9B40C7C702A9730 /* Pods-rustlib_Example */ = {
+			isa = PBXGroup;
+			children = (
+				079385B6A427108A8E6D94A1121C456E /* Pods-rustlib_Example.modulemap */,
+				0D9C37FF2AECD616B6A39B5EB2C3E60D /* Pods-rustlib_Example-acknowledgements.markdown */,
+				D3389B178CCBDB13BCF2C2A5C716E5C2 /* Pods-rustlib_Example-acknowledgements.plist */,
+				B5CFDF6E5595D264CA7FEEA6D76BB141 /* Pods-rustlib_Example-dummy.m */,
+				895C8EB4A9A5AA1A88B766B322D4B1E7 /* Pods-rustlib_Example-frameworks.sh */,
+				E3E9DCC307DE62C1458DD7BAAAD459C4 /* Pods-rustlib_Example-Info.plist */,
+				D97A205D79B5449B02F50CBEFAB4339A /* Pods-rustlib_Example-umbrella.h */,
+				D3B2E92FF4856E68AEC11A95E26508E5 /* Pods-rustlib_Example.debug.xcconfig */,
+				7FBD158375723A286C3CC85C918EB5B6 /* Pods-rustlib_Example.release.xcconfig */,
+			);
+			name = "Pods-rustlib_Example";
+			path = "Target Support Files/Pods-rustlib_Example";
+			sourceTree = "<group>";
+		};
+		6CF7044D3293B1CC336E9A4CB246D8AD /* Pod */ = {
+			isa = PBXGroup;
+			children = (
+				4FBB5E5E0E3FD1C81E4A1EA8D3F77409 /* LICENSE */,
+				312E1F874CFF900FE7F962926E253246 /* README.md */,
+				D5B56C484FD2982F3A53BA3C7B2E277C /* rustlib.podspec */,
+			);
+			name = Pod;
+			sourceTree = "<group>";
+		};
+		9C0CAB5FA49D1EBF8AF9FAB2525ED5F8 /* Development Pods */ = {
+			isa = PBXGroup;
+			children = (
+				AC61059BFF64E65348226E3F74162185 /* rustlib */,
+			);
+			name = "Development Pods";
+			sourceTree = "<group>";
+		};
+		A10638AAF2BB28626DA2D61F07F1DCD7 /* Pods-rustlib_Tests */ = {
+			isa = PBXGroup;
+			children = (
+				2C4350397D2D56F8F7BFAD35F9EF4088 /* Pods-rustlib_Tests.modulemap */,
+				9F7492469CEB5150B2872C0245CFC79D /* Pods-rustlib_Tests-acknowledgements.markdown */,
+				2CB4821CED2C23BFB84A467F84AB75A0 /* Pods-rustlib_Tests-acknowledgements.plist */,
+				3183FF3C867C188F60430951E0ED881F /* Pods-rustlib_Tests-dummy.m */,
+				80DB262970BD1B30C8C4E84B77DAAD6C /* Pods-rustlib_Tests-Info.plist */,
+				7B75B03E8416923B4A486480A70AAAA2 /* Pods-rustlib_Tests-umbrella.h */,
+				91100B4736114623B5444326F525EB9D /* Pods-rustlib_Tests.debug.xcconfig */,
+				BE9BF6758E9DE554FE4C15E6AC7829F7 /* Pods-rustlib_Tests.release.xcconfig */,
+			);
+			name = "Pods-rustlib_Tests";
+			path = "Target Support Files/Pods-rustlib_Tests";
+			sourceTree = "<group>";
+		};
+		AC61059BFF64E65348226E3F74162185 /* rustlib */ = {
+			isa = PBXGroup;
+			children = (
+				89FE4577E2D0C2E9A34E2031B7A8BDAB /* SynchronizedClosure.swift */,
+				6CF7044D3293B1CC336E9A4CB246D8AD /* Pod */,
+				5FD1C4CBDD1BA6A1EFE00D814A4F62C8 /* Support Files */,
+			);
+			name = rustlib;
+			path = ../..;
+			sourceTree = "<group>";
+		};
+		B249899927C66946BA9C2B910D4305C6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E611DCFA5F2222207FD8C43D49198F6D /* Pods-rustlib_Example */,
+				A6C859847F08551585816B30B0A7E8E4 /* Pods-rustlib_Tests */,
+				10848B948EB09982D117D4DCF80FAAE7 /* rustlib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CF1408CF629C7361332E53B88F7BD30C = {
+			isa = PBXGroup;
+			children = (
+				9D940727FF8FB9C785EB98E56350EF41 /* Podfile */,
+				9C0CAB5FA49D1EBF8AF9FAB2525ED5F8 /* Development Pods */,
+				E0A1E60606E0BF6E2E10F1F01350DFE8 /* Frameworks */,
+				B249899927C66946BA9C2B910D4305C6 /* Products */,
+				D8E8B706C94C37D39C8A96C1AAC6C4B7 /* Targets Support Files */,
+			);
+			sourceTree = "<group>";
+		};
+		D8E8B706C94C37D39C8A96C1AAC6C4B7 /* Targets Support Files */ = {
+			isa = PBXGroup;
+			children = (
+				67098CF632EC2F92D9B40C7C702A9730 /* Pods-rustlib_Example */,
+				A10638AAF2BB28626DA2D61F07F1DCD7 /* Pods-rustlib_Tests */,
+			);
+			name = "Targets Support Files";
+			sourceTree = "<group>";
+		};
+		E0A1E60606E0BF6E2E10F1F01350DFE8 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E2A8756CA1FF5258A0344D53C5C60EC1 /* OS X */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E2A8756CA1FF5258A0344D53C5C60EC1 /* OS X */ = {
+			isa = PBXGroup;
+			children = (
+				C1430F003D39D9906881A6AC724B7931 /* Cocoa.framework */,
+			);
+			name = "OS X";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		20942E3C385665B011AB7173DA089E5C /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2757E2DB1D794888672089AD5287B357 /* rustlib-umbrella.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A1C6D01A9FC5EF81220796227B0BE5A7 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				600D359C4319985CB38EF22DDC0A59EB /* Pods-rustlib_Example-umbrella.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DCAAF72C7C1E83D0D5CB1ED76F15D33F /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				8AFF46009DFAFBC68E4E69B0EC384D4B /* Pods-rustlib_Tests-umbrella.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		60535BEC39A5B98EAFF3497DB6FB8A56 /* Pods-rustlib_Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E68F1A8B7487E2DE80C56D8F150E5EA1 /* Build configuration list for PBXNativeTarget "Pods-rustlib_Tests" */;
+			buildPhases = (
+				DCAAF72C7C1E83D0D5CB1ED76F15D33F /* Headers */,
+				9F191F514B99E265E3809B5F70315D26 /* Sources */,
+				E3848936E9E7637873380C589C161DC8 /* Frameworks */,
+				2C92F5E71BF6FEC25BBA1687070BE895 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				24BC682FE32E7A14E510E1A61D15D4C1 /* PBXTargetDependency */,
+			);
+			name = "Pods-rustlib_Tests";
+			productName = Pods_rustlib_Tests;
+			productReference = A6C859847F08551585816B30B0A7E8E4 /* Pods-rustlib_Tests */;
+			productType = "com.apple.product-type.framework";
+		};
+		D6B1080216BB0F1A88BFBC156CF4EEFD /* Pods-rustlib_Example */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D16399D4BE897EC4DE0A85CF997E1356 /* Build configuration list for PBXNativeTarget "Pods-rustlib_Example" */;
+			buildPhases = (
+				A1C6D01A9FC5EF81220796227B0BE5A7 /* Headers */,
+				E02C1AD8A9D417513889432795C20004 /* Sources */,
+				2235DA0D357E39B091778F2D0A912B92 /* Frameworks */,
+				1333C34CDBA093A46FB12AF4D58668BC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4EF3CC09E0B362544274A770BFC4D8E9 /* PBXTargetDependency */,
+			);
+			name = "Pods-rustlib_Example";
+			productName = Pods_rustlib_Example;
+			productReference = E611DCFA5F2222207FD8C43D49198F6D /* Pods-rustlib_Example */;
+			productType = "com.apple.product-type.framework";
+		};
+		FAAF59FE2761F66386446F68F35CD3B0 /* rustlib */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CBF73A05A88F69B1FA607DC829D14339 /* Build configuration list for PBXNativeTarget "rustlib" */;
+			buildPhases = (
+				20942E3C385665B011AB7173DA089E5C /* Headers */,
+				3E5698BC61F51CEEB7F822F3348E8092 /* Sources */,
+				1AE9E6E5631BC09A386D6E89D7741EEF /* Frameworks */,
+				8EC62FD27C4345F6A68DDA20D5DBFD32 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = rustlib;
+			productName = rustlib;
+			productReference = 10848B948EB09982D117D4DCF80FAAE7 /* rustlib */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		BFDFE7DC352907FC980B868725387E98 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 1240;
+				LastUpgradeCheck = 1240;
+			};
+			buildConfigurationList = 4821239608C13582E20E6DA73FD5F1F9 /* Build configuration list for PBXProject "Pods" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = CF1408CF629C7361332E53B88F7BD30C;
+			productRefGroup = B249899927C66946BA9C2B910D4305C6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				D6B1080216BB0F1A88BFBC156CF4EEFD /* Pods-rustlib_Example */,
+				60535BEC39A5B98EAFF3497DB6FB8A56 /* Pods-rustlib_Tests */,
+				FAAF59FE2761F66386446F68F35CD3B0 /* rustlib */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		1333C34CDBA093A46FB12AF4D58668BC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C92F5E71BF6FEC25BBA1687070BE895 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8EC62FD27C4345F6A68DDA20D5DBFD32 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3E5698BC61F51CEEB7F822F3348E8092 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F0F8BE5422C27CDCF6A73E6728CFDC7E /* rustlib-dummy.m in Sources */,
+				040E4CC462BD9247E7E7DDE5CF26861C /* SynchronizedClosure.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		9F191F514B99E265E3809B5F70315D26 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				103261C24339AE4F5EE3814135A08798 /* Pods-rustlib_Tests-dummy.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E02C1AD8A9D417513889432795C20004 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0C3E68B60DA858FA3AB31019B396EB4C /* Pods-rustlib_Example-dummy.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		24BC682FE32E7A14E510E1A61D15D4C1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "Pods-rustlib_Example";
+			target = D6B1080216BB0F1A88BFBC156CF4EEFD /* Pods-rustlib_Example */;
+			targetProxy = AEFEA9B12BDF6E4CC87E618D9BFE97B9 /* PBXContainerItemProxy */;
+		};
+		4EF3CC09E0B362544274A770BFC4D8E9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = rustlib;
+			target = FAAF59FE2761F66386446F68F35CD3B0 /* rustlib */;
+			targetProxy = 25C07846B767CD41FA933D6073A5F610 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		1384C6ED85D0013AE376426AA010BF33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"POD_CONFIGURATION_RELEASE=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+				SYMROOT = "${SRCROOT}/../build";
+			};
+			name = Release;
+		};
+		2A87320B27C15D804D660E8DF2E48610 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8AE04F1674E70A383B644E7BE30F6DCD /* rustlib.release.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREFIX_HEADER = "Target Support Files/rustlib/rustlib-prefix.pch";
+				INFOPLIST_FILE = "Target Support Files/rustlib/rustlib-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULEMAP_FILE = "Target Support Files/rustlib/rustlib.modulemap";
+				PRODUCT_MODULE_NAME = rustlib;
+				PRODUCT_NAME = rustlib;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		37C622D835D0C192D7BF0B4EB208BE49 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7FBD158375723A286C3CC85C918EB5B6 /* Pods-rustlib_Example.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "Target Support Files/Pods-rustlib_Example/Pods-rustlib_Example-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULEMAP_FILE = "Target Support Files/Pods-rustlib_Example/Pods-rustlib_Example.modulemap";
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		5F1973A84D08AA3E13585E465CA12FAB /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"POD_CONFIGURATION_DEBUG=1",
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				SYMROOT = "${SRCROOT}/../build";
+			};
+			name = Debug;
+		};
+		67E4A3F75856E8BC3FE80005708D2068 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = DC19913B75AEE9FC0476F04ECBA7D69C /* rustlib.debug.xcconfig */;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GCC_PREFIX_HEADER = "Target Support Files/rustlib/rustlib-prefix.pch";
+				INFOPLIST_FILE = "Target Support Files/rustlib/rustlib-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULEMAP_FILE = "Target Support Files/rustlib/rustlib.modulemap";
+				PRODUCT_MODULE_NAME = rustlib;
+				PRODUCT_NAME = rustlib;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) ";
+				SWIFT_VERSION = 4.0;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		BB36ED64DEA0EC155043B801369840CE /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BE9BF6758E9DE554FE4C15E6AC7829F7 /* Pods-rustlib_Tests.release.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "Target Support Files/Pods-rustlib_Tests/Pods-rustlib_Tests-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULEMAP_FILE = "Target Support Files/Pods-rustlib_Tests/Pods-rustlib_Tests.modulemap";
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Release;
+		};
+		E79EC5F776E6D150EC0F324AF5BF42E1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 91100B4736114623B5444326F525EB9D /* Pods-rustlib_Tests.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "Target Support Files/Pods-rustlib_Tests/Pods-rustlib_Tests-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULEMAP_FILE = "Target Support Files/Pods-rustlib_Tests/Pods-rustlib_Tests.modulemap";
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+		E92BDC3220CB044EEEE6E8D39BBC8B5C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = D3B2E92FF4856E68AEC11A95E26508E5 /* Pods-rustlib_Example.debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
+				"CODE_SIGN_IDENTITY[sdk=watchos*]" = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INFOPLIST_FILE = "Target Support Files/Pods-rustlib_Example/Pods-rustlib_Example-Info.plist";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/Frameworks";
+				MACH_O_TYPE = staticlib;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
+				MODULEMAP_FILE = "Target Support Files/Pods-rustlib_Example/Pods-rustlib_Example.modulemap";
+				OTHER_LDFLAGS = "";
+				OTHER_LIBTOOLFLAGS = "";
+				PODS_ROOT = "$(SRCROOT)";
+				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.${PRODUCT_NAME:rfc1034identifier}";
+				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+				VERSION_INFO_PREFIX = "";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4821239608C13582E20E6DA73FD5F1F9 /* Build configuration list for PBXProject "Pods" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5F1973A84D08AA3E13585E465CA12FAB /* Debug */,
+				1384C6ED85D0013AE376426AA010BF33 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CBF73A05A88F69B1FA607DC829D14339 /* Build configuration list for PBXNativeTarget "rustlib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				67E4A3F75856E8BC3FE80005708D2068 /* Debug */,
+				2A87320B27C15D804D660E8DF2E48610 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		D16399D4BE897EC4DE0A85CF997E1356 /* Build configuration list for PBXNativeTarget "Pods-rustlib_Example" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E92BDC3220CB044EEEE6E8D39BBC8B5C /* Debug */,
+				37C622D835D0C192D7BF0B4EB208BE49 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E68F1A8B7487E2DE80C56D8F150E5EA1 /* Build configuration list for PBXNativeTarget "Pods-rustlib_Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E79EC5F776E6D150EC0F324AF5BF42E1 /* Debug */,
+				BB36ED64DEA0EC155043B801369840CE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = BFDFE7DC352907FC980B868725387E98 /* Project object */;
+}

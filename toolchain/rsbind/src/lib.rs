@@ -29,6 +29,8 @@ use base::process::*;
 use errors::*;
 use ios::config::Ios;
 use ios::process::IosProcess;
+use crate::mac::config::Mac;
+use crate::mac::process::MacProcess;
 
 mod android;
 mod ast;
@@ -41,12 +43,16 @@ mod errors;
 mod ios;
 mod test;
 mod unzip;
+mod swift;
+mod mac;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
 const AST_DIR: &str = "ast";
 const IOS_PROJ: &str = "ios_artifact";
 const IOS_BRIDGE_PROJ: &str = "ios_bridge";
+const MAC_PROJ: &str = "mac_artifact";
+const MAC_BRIDGE_PROJ: &str = "mac_bridge";
 const ANDROID_BRIDGE_PROJ: &str = "android_bridge";
 const ANDROID_PROJ: &str = "android_artifact";
 
@@ -54,6 +60,8 @@ pub struct Bind {
     prj_path: PathBuf,
     ios_artifact_path: PathBuf,
     ios_bridge_path: PathBuf,
+    mac_artifact_path: PathBuf,
+    mac_bridge_path: PathBuf,
     android_bridge_path: PathBuf,
     android_dest_path: PathBuf,
     header_path: PathBuf,
@@ -65,6 +73,7 @@ pub struct Bind {
 pub enum Target {
     Android,
     Ios,
+    Mac,
     All,
 }
 
@@ -104,6 +113,12 @@ impl Bind {
         // ./_gen/ios_bridge
         let ios_bridge_path = root.join(GEN_DIR_NAME).join(IOS_BRIDGE_PROJ);
 
+        // ./_gen/mac_artifact/
+        let mac_artifact_path = root.join(GEN_DIR_NAME).join(MAC_PROJ);
+
+        // ./_gen/mac_bridge
+        let mac_bridge_path = root.join(GEN_DIR_NAME).join(MAC_BRIDGE_PROJ);
+
         // ./_gen/android_bridge
         let android_bridge_path = root.join(GEN_DIR_NAME).join(ANDROID_BRIDGE_PROJ);
 
@@ -113,6 +128,8 @@ impl Bind {
             prj_path: root,
             ios_artifact_path,
             ios_bridge_path,
+            mac_artifact_path,
+            mac_bridge_path,
             android_bridge_path,
             android_dest_path: android_artifact_path,
             header_path,
@@ -145,10 +162,15 @@ impl Bind {
                 let ast = &self.get_ast_if_need(crate_name.clone())?;
                 self.gen_for_android(&crate_name, ast, config)?;
             }
+            Target::Mac => {
+                let ast_result = self.get_ast_if_need(crate_name.clone())?;
+                self.gen_for_mac(&crate_name, &ast_result, config)?;
+            }
             Target::All => {
                 let ast_result = self.get_ast_if_need(crate_name.clone())?;
                 self.gen_for_ios(&crate_name, &ast_result, config.clone())?;
-                self.gen_for_android(&crate_name, &ast_result, config)?;
+                self.gen_for_android(&crate_name, &ast_result, config.clone())?;
+                self.gen_for_mac(&crate_name, &ast_result, config)?;
             }
         };
         Ok(())
@@ -178,6 +200,53 @@ impl Bind {
         ast::AstHandler::new(crate_name)
             .parse(&prj_path)?
             .flush(&self.ast_path)
+    }
+
+    ///
+    /// generate the mac framework
+    fn gen_for_mac(
+        &self,
+        crate_name: &str,
+        ast_result: &AstResult,
+        config: Option<config::Config>,
+    ) -> Result<()> {
+        let mac = match config {
+            Some(ref config) => config.mac.clone(),
+            None => Some(Mac::default()),
+        };
+
+        let mac_process = MacProcess::new(
+            &self.prj_path,
+            &self.mac_artifact_path,
+            &self.mac_bridge_path,
+            &self.header_path,
+            crate_name,
+            ast_result,
+            mac,
+        );
+
+        match self.action {
+            Action::GenAst => (),
+            Action::GenBridge => mac_process.gen_bridge_src()?,
+            Action::GenArtifactCode => mac_process.gen_artifact_code()?,
+            Action::GenCHeader => mac_process.gen_c_header()?,
+            Action::BuildArtifact => {
+                mac_process.build_bridge_prj()?;
+                mac_process.copy_bridge_outputs()?;
+                // we don't generate artifact now. TODO generate cocoapods lib
+                // ios_process.build_artifact_prj()?;
+            }
+            Action::All => {
+                mac_process.gen_bridge_src()?;
+                mac_process.gen_artifact_code()?;
+                mac_process.build_bridge_prj()?;
+                mac_process.copy_bridge_outputs()?;
+                // we don't generate artifact now. TODO generate cocoapods lib
+                // ios_process.build_artifact_prj()?;
+            }
+        }
+
+        Ok(())
     }
 
     ///

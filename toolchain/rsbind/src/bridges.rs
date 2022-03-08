@@ -10,7 +10,7 @@ use crate::ast::imp::desc::*;
 use crate::ast::AstResult;
 use crate::bridge::gen;
 use crate::errors::*;
-use crate::ios::bridge as ios_bridge;
+use crate::swift::bridge as ios_bridge;
 
 pub(crate) enum BridgeGen<'a> {
     // create_name, ast, bridge_dir

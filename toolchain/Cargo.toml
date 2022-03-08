@@ -2,5 +2,5 @@
 members = [
     "rsbind",
     "ndk-tool",
-    "rsbind-build-script",
+    "build-script",
 ]

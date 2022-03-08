@@ -1,0 +1,16 @@
+PODS:
+  - rustlib (0.1.0)
+
+DEPENDENCIES:
+  - rustlib (from `../rustlib/_gen/mac_artifact`)
+
+EXTERNAL SOURCES:
+  rustlib:
+    :path: "../rustlib/_gen/mac_artifact"
+
+SPEC CHECKSUMS:
+  rustlib: be18a18f81a2a04b0e0bf652c3b08ada68b8e2f6
+
+PODFILE CHECKSUM: 84fa94aafbd724e616633f81f4b328596d37326f
+
+COCOAPODS: 1.11.2

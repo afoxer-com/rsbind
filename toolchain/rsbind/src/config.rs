@@ -4,6 +4,7 @@ use std::path::Path;
 
 use crate::android::config::Android;
 use crate::ios::config::Ios;
+use crate::mac::config::Mac;
 
 ///
 /// Configuration struct mapping from Rsbind.toml
@@ -12,6 +13,7 @@ use crate::ios::config::Ios;
 pub struct Config {
     pub android: Option<Android>,
     pub ios: Option<Ios>,
+    pub mac: Option<Mac>
 }
 
 ///

@@ -1,0 +1,13 @@
+use_frameworks!
+
+platform :osx
+
+target 'rustlib_Example' do
+  pod 'rustlib', :path => '../'
+
+  target 'rustlib_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end

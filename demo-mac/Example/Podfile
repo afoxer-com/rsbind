@@ -1,0 +1,33 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+platform :osx, "10.9"
+
+target 'MacDemo' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+
+  # Pods for MacDemo
+
+  target 'MacDemoTests' do
+    inherit! :search_paths
+    pod 'rustlib', :path => '../rustlib/_gen/mac_artifact'
+  end
+
+  target 'MacDemoUITests' do
+  end
+
+end
+
+# use_frameworks!
+
+# platform :osx
+
+# target 'demo-ios_Example' do
+#   pod 'rustlib', :path => '../rustlib/_gen/mac_artifact'
+# end
+
+# target 'demo-ios_ExampleTests' do
+
+# end
+

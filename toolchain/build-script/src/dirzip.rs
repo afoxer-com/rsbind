@@ -18,7 +18,6 @@ pub fn compress_dir(src_dir: &Path, target: &Path) {
     .unwrap();
 }
 
-#[warn(dead_code)]
 fn compress_file(src_dir: &Path, target: &Path) {
     let zipfile = std::fs::File::create(target).unwrap();
     let dir = WalkDir::new(src_dir);
@@ -51,17 +50,17 @@ where
         // Some unzip tools unzip files with directory paths correctly, some do not!
         if path.is_file() {
             println!("adding file {:?} as {:?} ...", path, name);
-            zip.start_file_from_path(name, options)?;
+            zip.start_file(name.to_string_lossy(), options)?;
             let mut f = File::open(path)?;
 
             f.read_to_end(&mut buffer)?;
             zip.write_all(&*buffer)?;
             buffer.clear();
-        } else if name.as_os_str().len() != 0 {
+        } else if !name.as_os_str().is_empty() {
             // Only if not root! Avoids path spec / warning
             // and mapname conversion failed error on unzip
             println!("adding dir {:?} as {:?} ...", path, name);
-            zip.add_directory_from_path(name, options)?;
+            zip.add_directory(name.to_string_lossy(), options)?;
         }
     }
     zip.finish()?;
@@ -81,10 +80,10 @@ pub fn extract(test: &Path, target: &Path) {
     }
     for i in 0..zip.len() {
         let mut file = zip.by_index(i).unwrap();
-        println!("Filename: {} {:?}", file.name(), file.sanitized_name());
+        println!("Filename: {} {:?}", file.name(), file.mangled_name());
         if file.is_dir() {
             println!("file utf8 path {:?}", file.name_raw());
-            let target = target.join(Path::new(&file.name().replace("\\", "")));
+            let target = target.join(Path::new(&file.name().replace('\\', "")));
             fs::create_dir_all(target).unwrap();
         } else {
             let file_path = target.join(Path::new(file.name()));
@@ -100,7 +99,6 @@ pub fn extract(test: &Path, target: &Path) {
     }
 }
 
-#[warn(dead_code)]
 fn create_dir(path: &Path) -> Result<(), std::io::Error> {
     fs::create_dir_all(path)
 }

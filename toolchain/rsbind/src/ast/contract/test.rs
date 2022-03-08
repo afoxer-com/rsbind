@@ -28,7 +28,7 @@ mod tests {
         assert_eq!(trait_desc[0].name, "FfiContract");
         assert_eq!(trait_desc[0].crate_name, "demo_crate");
         assert_eq!(trait_desc[0].mod_name, "demo_mod");
-        assert_eq!(trait_desc[0].is_callback, false);
+        assert!(!trait_desc[0].is_callback);
 
         assert_eq!(trait_desc[0].methods[0].name, "return_vec");
         assert_eq!(trait_desc[0].methods[0].args.len(), 0);
@@ -73,7 +73,7 @@ mod tests {
         assert_eq!(trait_desc[1].name, "FfiCallback");
         assert_eq!(trait_desc[1].mod_name, "demo_mod");
         assert_eq!(trait_desc[1].crate_name, "demo_crate");
-        assert_eq!(trait_desc[1].is_callback, true);
+        assert!(trait_desc[1].is_callback);
         assert_eq!(trait_desc[1].methods[0].name, "callback_vec");
         assert_eq!(
             trait_desc[1].methods[0].return_type,

@@ -17,16 +17,16 @@ impl Default for Ios {
     fn default() -> Self {
         let arch_phone = Some(
             PHONE_ARCHS
-                .to_vec()
-                .into_iter()
+                .iter()
+                .copied()
                 .map(|item| item.to_owned())
                 .collect(),
         );
 
         let arch_simu = Some(
             SIMULATOR_ARCHS
-                .to_vec()
-                .into_iter()
+                .iter()
+                .copied()
                 .map(|item| item.to_owned())
                 .collect(),
         );
@@ -58,18 +58,11 @@ impl Ios {
     }
 
     pub fn is_release(&self) -> bool {
-        match self.release {
-            Some(is_release) => is_release,
-            None => true,
-        }
+        self.release.unwrap_or(true)
     }
 
     pub fn iphoneos_archs(&self) -> Vec<String> {
-        let default_phone_archs = PHONE_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
+        let default_phone_archs = PHONE_ARCHS.iter().copied().map(|a| a.to_owned()).collect();
 
         match self.arch_phone {
             Some(ref arch) => arch.clone(),
@@ -79,8 +72,8 @@ impl Ios {
 
     pub fn simulator_archs(&self) -> Vec<String> {
         let default_phone_archs = SIMULATOR_ARCHS
-            .to_vec()
-            .into_iter()
+            .iter()
+            .copied()
             .map(|a| a.to_owned())
             .collect();
 

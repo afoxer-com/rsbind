@@ -132,23 +132,23 @@ impl Bind {
         let crate_name = self.parse_crate_name()?;
 
         if let Action::GenAst = self.action {
-            self.parse_ast(crate_name.clone())?;
+            self.parse_ast(crate_name)?;
             return Ok(());
         }
 
         match self.target {
             Target::Ios => {
                 let ast = &self.get_ast_if_need(crate_name.clone())?;
-                self.gen_for_ios(&crate_name, ast, config.clone())?;
+                self.gen_for_ios(&crate_name, ast, config)?;
             }
             Target::Android => {
                 let ast = &self.get_ast_if_need(crate_name.clone())?;
-                self.gen_for_android(&crate_name, ast, config.clone())?;
+                self.gen_for_android(&crate_name, ast, config)?;
             }
             Target::All => {
                 let ast_result = self.get_ast_if_need(crate_name.clone())?;
                 self.gen_for_ios(&crate_name, &ast_result, config.clone())?;
-                self.gen_for_android(&crate_name, &ast_result, config.clone())?;
+                self.gen_for_android(&crate_name, &ast_result, config)?;
             }
         };
         Ok(())
@@ -156,9 +156,7 @@ impl Bind {
 
     fn get_ast_if_need(&self, crate_name: String) -> Result<AstResult> {
         match self.action {
-            Action::GenBridge | Action::GenArtifactCode | Action::All => {
-                self.parse_ast(crate_name.clone())
-            }
+            Action::GenBridge | Action::GenArtifactCode | Action::All => self.parse_ast(crate_name),
             _ => {
                 use std::collections::HashMap;
                 let ast_result = AstResult {
@@ -201,7 +199,7 @@ impl Bind {
             &self.ios_bridge_path,
             &self.header_path,
             crate_name,
-            &ast_result,
+            ast_result,
             ios,
         );
 

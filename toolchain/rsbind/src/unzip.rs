@@ -3,14 +3,14 @@ use std::fs::File;
 use std::io::Cursor;
 use std::io::Read;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::Path;
 
 use zip::ZipArchive;
 
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
 
-pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
+pub(crate) fn unzip_to(buf: &[u8], path: &Path) -> Result<()> {
     let reader = Cursor::new(buf);
     let mut archive = ZipArchive::new(reader).map_err(|e| ZipError(e.to_string()))?;
 
@@ -20,7 +20,7 @@ pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
 
         println!("unzip file name = {}", &zip_file.name());
         let file_path = path.join(&zip_file.name());
-        if zip_file.name().ends_with("/") {
+        if zip_file.name().ends_with('/') {
             if file_path.exists() {
                 fs::remove_dir_all(&file_path)?;
             }
@@ -28,10 +28,9 @@ pub(crate) fn unzip_to(buf: &[u8], path: &PathBuf) -> Result<()> {
             continue;
         }
 
-        let parent_path = file_path.parent().ok_or(ZipError(format!(
-            "can't find parent path for {:?}",
-            &file_path
-        )))?;
+        let parent_path = file_path
+            .parent()
+            .ok_or_else(|| ZipError(format!("can't find parent path for {:?}", &file_path)))?;
 
         fs::create_dir_all(&parent_path)?;
 

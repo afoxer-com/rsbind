@@ -1,11 +1,10 @@
 use std::fs;
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use cbindgen;
 use cbindgen::{Config, Language};
-use fs_extra;
+
 use fs_extra::dir::CopyOptions;
 
 use crate::ast::AstResult;
@@ -22,10 +21,10 @@ use super::config::Ios;
 const IOS_ARCH: &str = "universal";
 
 pub(crate) struct IosProcess<'a> {
-    origin_prj_path: &'a PathBuf,
-    artifact_prj_path: &'a PathBuf,
-    bridge_prj_path: &'a PathBuf,
-    header_path: &'a PathBuf,
+    origin_prj_path: &'a Path,
+    artifact_prj_path: &'a Path,
+    bridge_prj_path: &'a Path,
+    header_path: &'a Path,
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
     config: Option<Ios>,
@@ -33,10 +32,10 @@ pub(crate) struct IosProcess<'a> {
 
 impl<'a> IosProcess<'a> {
     pub fn new(
-        origin_prj_path: &'a PathBuf,
-        dest_prj_path: &'a PathBuf,
-        bridge_prj_path: &'a PathBuf,
-        header_path: &'a PathBuf,
+        origin_prj_path: &'a Path,
+        dest_prj_path: &'a Path,
+        bridge_prj_path: &'a Path,
+        header_path: &'a Path,
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
         config: Option<Ios>,
@@ -78,7 +77,7 @@ impl<'a> IosProcess<'a> {
     fn lib_name(&self) -> String {
         format!(
             "lib{}_ios_bridge_prj.a",
-            &self.host_crate_name.replace("-", "_")
+            &self.host_crate_name.replace('-', "_")
         )
     }
 
@@ -196,7 +195,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!("run build rust project build failed.",)).into());
+            return Err(CommandError("run build rust project build failed.".to_string()).into());
         }
 
         println!("begin strip lib");
@@ -241,7 +240,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             "debug"
         };
 
-        fs_extra::copy_items(&vec![header_file], &header_dest, &options)
+        fs_extra::copy_items(&[header_file], &header_dest, &options)
             .map_err(|e| FileError(format!("move header file error. {:?}", e)))?;
 
         let lib_file = self
@@ -255,7 +254,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         if !lib_artifact.exists() {
             fs::create_dir_all(&lib_artifact)?;
         }
-        fs_extra::copy_items(&vec![lib_file], &lib_artifact, &options)
+        fs_extra::copy_items(&[lib_file], &lib_artifact, &options)
             .map_err(|e| FileError(format!("move lib file error. {:?}", e)))?;
 
         fs::rename(
@@ -276,12 +275,12 @@ impl<'a> BuildProcess for IosProcess<'a> {
         }
         fs::create_dir_all(&self.artifact_prj_path)?;
         let ios_template_buf: &[u8] = include_bytes!("res/template_ios.zip");
-        unzip::unzip_to(ios_template_buf, &self.artifact_prj_path)?;
+        unzip::unzip_to(ios_template_buf, self.artifact_prj_path)?;
 
         let parent = self
             .artifact_prj_path
             .parent()
-            .ok_or(FileError("can't find parent dir for swift".to_string()))?;
+            .ok_or_else(|| FileError("can't find parent dir for swift".to_string()))?;
         let swift_gen_path = parent.join("swift_gen");
         if swift_gen_path.exists() {
             fs::remove_dir_all(&swift_gen_path)?;
@@ -290,7 +289,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         SwiftCodeGen {
             swift_gen_dir: &swift_gen_path,
-            ast: &self.ast_result,
+            ast: self.ast_result,
         }
         .gen_swift_code()?;
         // artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
@@ -314,7 +313,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let dir = fs::read_dir(&swift_gen_path)?;
         for file in dir {
             let path = file?.path();
-            fs_extra::copy_items(&vec![path], &output_dir, &options)
+            fs_extra::copy_items(&[path], &output_dir, &options)
                 .map_err(|e| FileError(format!("copy iOS swift outputs failed. {:?}", e)))
                 .unwrap();
         }
@@ -331,7 +330,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let prj_file_path = prj_file.canonicalize()?;
         let prj_file_str = prj_file_path
             .to_str()
-            .ok_or(FileError("get xcodeproj path string error".to_string()))?;
+            .ok_or_else(|| FileError("get xcodeproj path string error".to_string()))?;
 
         // simulator output dir
         let simu_output_dir = PathBuf::from(&self.origin_prj_path)
@@ -344,7 +343,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let simu_output_dir_path = simu_output_dir.canonicalize().unwrap();
         let simu_output_dir_str = simu_output_dir_path
             .to_str()
-            .ok_or(FileError(format!("can't get ios outupt file string")))?;
+            .ok_or_else(|| FileError("can't get ios outupt file string".to_string()))?;
 
         // iphoneos output dir
         let iphone_output_dir = PathBuf::from(&self.origin_prj_path)
@@ -357,7 +356,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let iphone_output_dir_path = iphone_output_dir.canonicalize().unwrap();
         let iphone_output_dir_str = iphone_output_dir_path
             .to_str()
-            .ok_or(FileError(format!("can't get ios outupt file string")))?;
+            .ok_or_else(|| FileError("can't get ios outupt file string".to_string()))?;
 
         // universal output dir
         let universal_output_dir = PathBuf::from(&self.origin_prj_path)
@@ -370,7 +369,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
         let universal_output_dir_path = universal_output_dir.canonicalize().unwrap();
         let universal_output_dir_str = universal_output_dir_path
             .to_str()
-            .ok_or(FileError(format!("can't get ios outupt file string")))?;
+            .ok_or_else(|| FileError("can't get ios outupt file string".to_string()))?;
 
         println!("archive swift path: {}", simu_output_dir_str);
         println!("archive swift path: {}", iphone_output_dir_str);
@@ -400,7 +399,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         if !output.status.success() {
             return Err(
-                CommandError(format!("run archiving swift project build failed. ",)).into(),
+                CommandError("run archiving swift project build failed. ".to_string()).into(),
             );
         }
         Ok(())

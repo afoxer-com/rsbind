@@ -26,24 +26,24 @@ impl Default for Android {
     fn default() -> Self {
         let arch = Some(
             PHONE_ARCHS
-                .to_vec()
-                .into_iter()
+                .iter()
+                .copied()
                 .map(|item| item.to_owned())
                 .collect(),
         );
 
         let arch_64 = Some(
             PHONE64_ARCHS
-                .to_vec()
-                .into_iter()
+                .iter()
+                .copied()
                 .map(|item| item.to_owned())
                 .collect(),
         );
 
         let arch_x86 = Some(
             X86_ARCHS
-                .to_vec()
-                .into_iter()
+                .iter()
+                .copied()
                 .map(|item| item.to_owned())
                 .collect(),
         );
@@ -79,18 +79,11 @@ impl Android {
     }
 
     pub fn is_release(&self) -> bool {
-        match self.release {
-            Some(is_release) => is_release,
-            None => true,
-        }
+        self.release.unwrap_or(true)
     }
 
     pub fn phone_archs(&self) -> Vec<String> {
-        let default_phone_archs = PHONE_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
+        let default_phone_archs = PHONE_ARCHS.iter().copied().map(|a| a.to_owned()).collect();
 
         match self.arch {
             Some(ref arch) => arch.to_owned(),
@@ -100,8 +93,8 @@ impl Android {
 
     pub fn phone64_archs(&self) -> Vec<String> {
         let default_phone64_archs = PHONE64_ARCHS
-            .to_vec()
-            .into_iter()
+            .iter()
+            .copied()
             .map(|a| a.to_owned())
             .collect();
 
@@ -112,11 +105,7 @@ impl Android {
     }
 
     pub fn x86_archs(&self) -> Vec<String> {
-        let default_x86_archs = X86_ARCHS
-            .to_vec()
-            .into_iter()
-            .map(|a| a.to_owned())
-            .collect();
+        let default_x86_archs = X86_ARCHS.iter().copied().map(|a| a.to_owned()).collect();
 
         match self.arch_x86 {
             Some(ref arch) => arch.to_owned(),
@@ -131,14 +120,12 @@ impl Android {
         };
 
         let mut result = String::new();
-        let mut index = 0;
-        for ext_lib in ext_libs.iter() {
+        for (index, ext_lib) in ext_libs.iter().enumerate() {
             if index == 0 {
                 result = ext_lib.to_owned();
             } else if index < ext_libs.len() {
                 result = format!("{},{}", &result, ext_lib)
             }
-            index = index + 1;
         }
 
         result

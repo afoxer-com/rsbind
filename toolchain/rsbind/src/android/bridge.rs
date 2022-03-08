@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::TokenStreamExt;
@@ -16,10 +16,10 @@ use super::callback::*;
 /// create a new generator for java bridge files.
 ///
 pub(crate) fn new_gen<'a>(
-    out_dir: &'a PathBuf,
-    trait_descs: &'a Vec<TraitDesc>,
-    struct_descs: &'a Vec<StructDesc>,
-    imp_desc: &'a Vec<ImpDesc>,
+    out_dir: &'a Path,
+    trait_descs: &'a [TraitDesc],
+    struct_descs: &'a [StructDesc],
+    imp_desc: &'a [ImpDesc],
     java_namespace: &'a str,
 ) -> BridgeFileGen<'a, JniFileGenStrategy<'a>> {
     BridgeFileGen {
@@ -42,10 +42,10 @@ pub(crate) struct JniFileGenStrategy<'a> {
 }
 
 impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
-    fn gen_sdk_file(&self, mod_names: &Vec<String>) -> Result<TokenStream> {
+    fn gen_sdk_file(&self, mod_names: &[String]) -> Result<TokenStream> {
         let mod_idents = mod_names
             .iter()
-            .map(|name| Ident::new(&name, Span::call_site()))
+            .map(|name| Ident::new(name, Span::call_site()))
             .collect::<Vec<Ident>>();
         Ok(quote! {
             use jni::sys::JNI_VERSION_1_6;
@@ -85,10 +85,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         })
     }
 
-    fn quote_common_part(&self, trait_desc: &Vec<TraitDesc>) -> Result<TokenStream> {
+    fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream> {
         let class_names = trait_desc
             .iter()
-            .map(|desc| format!("{}.{}", self.java_namespace, &desc.name).replace(".", "/"))
+            .map(|desc| format!("{}.{}", self.java_namespace, &desc.name).replace('.', "/"))
             .collect::<Vec<String>>();
 
         Ok(quote! {
@@ -144,19 +144,19 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         trait_desc: &TraitDesc,
         _impl_desc: &ImpDesc,
         method: &MethodDesc,
-        _callbacks: &Vec<&TraitDesc>,
-        _structs: &Vec<StructDesc>,
+        _callbacks: &[&TraitDesc],
+        _structs: &[StructDesc],
     ) -> Result<TokenStream> {
         println!(
             "[bridge][{}.{}]  🔆  begin quote jni bridge method signature.",
             &trait_desc.name, &method.name
         );
-        let namespace = self.java_namespace.replace(".", "_");
+        let namespace = self.java_namespace.replace('.', "_");
         let method_name = format!(
             "Java_{}_{}_native_1{}",
             &namespace,
             trait_desc.name,
-            &method.name.replace("_", "_1")
+            &method.name.replace('_', "_1")
         );
         let method_name_ident = Ident::new(&method_name, Span::call_site());
         let arg_names = method
@@ -212,7 +212,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         &self,
         trait_desc: &TraitDesc,
         arg: &ArgDesc,
-        callbacks: &Vec<&TraitDesc>,
+        callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
         println!(
             "[bridge]  🔆  begin quote jni bridge method argument convert => {}:{}",
@@ -225,7 +225,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         );
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
         let _class_name =
-            format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
+            format!("{}.{}", &self.java_namespace, &trait_desc.name).replace('.', "/");
 
         let result = match arg.clone().ty {
             AstType::Byte(origin)
@@ -359,9 +359,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 }
             }
             _ => {
-                let ty_ident = self
-                    .ty_to_tokens(&return_ty, TypeDirection::Return)
-                    .unwrap();
+                let ty_ident = self.ty_to_tokens(return_ty, TypeDirection::Return).unwrap();
                 quote! {
                     #ret_name_ident as #ty_ident
                 }

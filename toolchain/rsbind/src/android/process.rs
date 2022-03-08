@@ -1,10 +1,9 @@
 use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
-use std::path::PathBuf;
+use std::path::Path;
 use std::process::Command;
 
-use fs_extra;
 use fs_extra::dir::CopyOptions;
 use syn::__private::str;
 
@@ -20,12 +19,12 @@ use crate::unzip;
 
 use super::config::Android;
 
-const MAGIC_NUM: &'static str = "*521%";
+const MAGIC_NUM: &str = "*521%";
 
 pub(crate) struct AndroidProcess<'a> {
-    origin_prj_path: &'a PathBuf,
-    artifact_prj_path: &'a PathBuf,
-    bridge_prj_path: &'a PathBuf,
+    origin_prj_path: &'a Path,
+    artifact_prj_path: &'a Path,
+    bridge_prj_path: &'a Path,
     host_crate_name: &'a str,
     ast_result: &'a AstResult,
     config: Option<Android>,
@@ -33,9 +32,9 @@ pub(crate) struct AndroidProcess<'a> {
 
 impl<'a> AndroidProcess<'a> {
     pub fn new(
-        origin_prj_path: &'a PathBuf,
-        artifact_prj_path: &'a PathBuf,
-        bridge_prj_path: &'a PathBuf,
+        origin_prj_path: &'a Path,
+        artifact_prj_path: &'a Path,
+        bridge_prj_path: &'a Path,
         host_crate_name: &'a str,
         ast_result: &'a AstResult,
         config: Option<Android>,
@@ -55,7 +54,7 @@ impl<'a> AndroidProcess<'a> {
     fn lib_name(&self) -> String {
         format!(
             "lib{}_android_bridge_prj.so",
-            &self.host_crate_name.replace("-", "_")
+            &self.host_crate_name.replace('-', "_")
         )
     }
 
@@ -116,9 +115,9 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         let mut x86_archs = self.config().x86_archs();
 
         let mut archs = vec![];
-        archs.extend(phone_archs.drain(..));
-        archs.extend(phone64_archs.drain(..));
-        archs.extend(x86_archs.drain(..));
+        archs.append(&mut phone_archs);
+        archs.append(&mut phone64_archs);
+        archs.append(&mut x86_archs);
 
         let config = BuildConfig {
             lib_name: self.lib_name(),
@@ -186,7 +185,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
 
             println!("copying {:?} --> {:?}", armeabi_src, armeabi_artifact);
 
-            fs_extra::copy_items(&vec![armeabi_src], &armeabi_artifact, &options)
+            fs_extra::copy_items(&[armeabi_src], &armeabi_artifact, &options)
                 .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))?;
             fs::rename(
                 &armeabi_artifact.join(&self.lib_name()),
@@ -206,7 +205,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             }
             fs::create_dir_all(&self.artifact_prj_path).unwrap();
             let android_template_buf: &[u8] = include_bytes!("res/template_android.zip");
-            unzip::unzip_to(android_template_buf, &self.artifact_prj_path).unwrap();
+            unzip::unzip_to(android_template_buf, self.artifact_prj_path).unwrap();
 
             let manifest_path = self
                 .artifact_prj_path
@@ -236,7 +235,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         let parent = self
             .artifact_prj_path
             .parent()
-            .ok_or(FileError("can't find parent dir for java".to_string()))?;
+            .ok_or_else(|| FileError("can't find parent dir for java".to_string()))?;
         let java_gen_path = parent.join("java_gen");
         if java_gen_path.exists() {
             fs::remove_dir_all(&java_gen_path)?;
@@ -245,7 +244,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
 
         JavaCodeGen {
             java_gen_dir: &java_gen_path,
-            ast: &self.ast_result,
+            ast: self.ast_result,
             namespace: self.config().namespace(),
             so_name: self.config().so_name(),
             ext_libs: self.config().ext_libs(),
@@ -266,7 +265,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         fs::create_dir_all(&output_dir).unwrap();
 
         let namespace = self.config().namespace();
-        let pkg_split = namespace.split(".").collect::<Vec<&str>>();
+        let pkg_split = namespace.split('.').collect::<Vec<&str>>();
         for pkg_part in pkg_split.iter() {
             output_dir = output_dir.join(pkg_part);
         }
@@ -280,7 +279,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             depth: 65535,
         };
 
-        fs_extra::copy_items(&vec![java_gen_path], &output_dir, &options)
+        fs_extra::copy_items(&[java_gen_path], &output_dir, &options)
             .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))
             .unwrap();
 
@@ -290,7 +289,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
     fn build_artifact_prj(&self) -> Result<()> {
         println!("build java artifact project.");
 
-        let build_cmd = format!("chmod a+x ./gradlew && ./gradlew aR");
+        let build_cmd = "chmod a+x ./gradlew && ./gradlew aR".to_string();
 
         let output = Command::new("sh")
             .arg("-c")
@@ -302,7 +301,9 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         io::stderr().write_all(&output.stderr)?;
 
         if !output.status.success() {
-            return Err(CommandError(format!("run building java artifact project failed.")).into());
+            return Err(
+                CommandError("run building java artifact project failed.".to_string()).into(),
+            );
         }
 
         let options = CopyOptions {
@@ -327,7 +328,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         }
         fs::create_dir_all(&target).unwrap();
 
-        fs_extra::copy_items(&vec![src_arr], &target, &options)
+        fs_extra::copy_items(&[src_arr], &target, &options)
             .map_err(|e| FileError(format!("copy android bridge outputs failed. {:?}", e)))
             .unwrap();
 

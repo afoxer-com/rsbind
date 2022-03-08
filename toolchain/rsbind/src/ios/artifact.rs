@@ -30,7 +30,7 @@ impl<'a> SwiftCodeGen<'a> {
 
         // generate all the callbacks.
         for each in callbacks.clone().iter() {
-            let gen = CallbackGen { desc: &each };
+            let gen = CallbackGen { desc: each };
 
             let callback_str = gen.gen()?;
             let file_name = format!("{}.swift", &each.name);
@@ -134,7 +134,7 @@ impl<'a> TraitGen<'a> {
         for method in self.desc.methods.iter() {
             println!("generate swift codes for {}", &method.name);
             // Method signature
-            let mut m = self.fill_method_sig(&method)?;
+            let mut m = self.fill_method_sig(method)?;
 
             let mut method_body: Tokens<Swift> = Tokens::new();
 
@@ -142,7 +142,7 @@ impl<'a> TraitGen<'a> {
             for arg in method.args.iter() {
                 if let AstType::Vec(base) = arg.ty.clone() {
                     if let AstBaseType::Byte(_) = base.clone() {
-                        byte_count = byte_count + 1;
+                        byte_count += 1;
                         method_body.push(toks!(
                             arg.name.clone(),
                             ".withUnsafeBufferPointer { ",
@@ -154,13 +154,13 @@ impl<'a> TraitGen<'a> {
             }
 
             // Argument convert
-            self.fill_arg_convert(&mut method_body, &method)?;
+            self.fill_arg_convert(&mut method_body, method)?;
 
             // Call native method
-            self.fill_call_native_method(&mut method_body, &method)?;
+            self.fill_call_native_method(&mut method_body, method)?;
 
             // Return type convert
-            self.fill_return_type_convert(&mut method_body, &method)?;
+            self.fill_return_type_convert(&mut method_body, method)?;
 
             for _i in 0..byte_count {
                 method_body.push("}");
@@ -343,7 +343,7 @@ impl<'a> TraitGen<'a> {
         method_body.push(toks!("globalIndex = ", index_name.clone()));
         method_body.push(toks!(
             "globalCallbacks[",
-            index_name.clone(),
+            index_name,
             "] = ",
             arg.name.clone()
         ));
@@ -358,7 +358,7 @@ impl<'a> TraitGen<'a> {
             .iter()
             .filter(|callback| callback.name == arg.ty.origin())
             .collect::<Vec<&TraitDesc>>();
-        if callbacks.len() <= 0 {
+        if callbacks.is_empty() {
             panic!("No Callback {} found!", arg.ty.origin());
         }
 
@@ -402,7 +402,7 @@ impl<'a> TraitGen<'a> {
             closure,
             " = {"
         ));
-        method_body.push(toks!(arg_params.clone(), " in\n"));
+        method_body.push(toks!(arg_params, " in\n"));
         Ok(())
     }
 
@@ -514,7 +514,7 @@ impl<'a> TraitGen<'a> {
                         "let decoder = JSONDecoder()\n",
                         format!("c_option_{}", &cb_arg.name),
                         " = try! decoder.decode(",
-                        cb_arg_str.clone(),
+                        cb_arg_str,
                         ".self, from: ",
                         format!("c_tmp_json_{}", &cb_arg.name),
                         ")\n",
@@ -548,7 +548,7 @@ impl<'a> TraitGen<'a> {
                     "let decoder = JSONDecoder()\n",
                     format!("c_option_{}", &cb_arg.name),
                     " = try! decoder.decode(",
-                    cb_arg_str.clone(),
+                    cb_arg_str,
                     ".self, from: ",
                     format!("c_tmp_json_{}", &cb_arg.name),
                     ")\n",
@@ -652,7 +652,7 @@ impl<'a> TraitGen<'a> {
         let free_fn_name = format!("{}_callback_free", &arg.name);
         method_body.push(toks!(
             "let ",
-            free_fn_name.clone(),
+            free_fn_name,
             " : @convention(c)(Int64) -> () = {\n",
             "(index) in\n",
             "globalCallbacks.removeValue(forKey: index)\n",
@@ -669,11 +669,11 @@ impl<'a> TraitGen<'a> {
         let method_name = format!("{}_{}", &self.desc.mod_name, &method.name);
         match method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!(method_name.clone(), "("));
+                method_body.push(toks!(method_name, "("));
             }
             _ => {
-                println!("quote method call for {}", method_name.clone());
-                method_body.push(toks!("let result = ", method_name.clone(), "("));
+                println!("quote method call for {}", method_name);
+                method_body.push(toks!("let result = ", method_name, "("));
                 for (index, item) in method.args.clone().into_iter().enumerate() {
                     let converted = format!("s_{}", &item.name);
                     if index == method.args.len() - 1 {
@@ -693,7 +693,7 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Swift>,
         method: &MethodDesc,
     ) -> Result<()> {
-        let crate_name = self.desc.crate_name.replace("-", "_");
+        let crate_name = self.desc.crate_name.replace('-', "_");
         match method.return_type.clone() {
             AstType::Void => {}
             AstType::Byte(_) => {
@@ -730,7 +730,7 @@ impl<'a> TraitGen<'a> {
                     "let ret_str_json = ret_str.data(using: .utf8)!\n",
                     "let decoder = JSONDecoder()\n",
                     "s_tmp_result = try! decoder.decode(",
-                    Swift::from(return_ty.clone()),
+                    Swift::from(return_ty),
                     ".self, from: ret_str_json)\n",
                     "}\n",
                     "let s_result = s_tmp_result!"
@@ -748,7 +748,7 @@ impl<'a> TraitGen<'a> {
                     "let ret_str_json = ret_str.data(using: .utf8)!\n",
                     "let decoder = JSONDecoder()\n",
                     "s_tmp_result = try! decoder.decode(",
-                    struct_name.clone(),
+                    struct_name,
                     ".self, from: ret_str_json)\n",
                     "}\n",
                     "let s_result = s_tmp_result!\n"
@@ -795,8 +795,8 @@ impl SwiftType {
                 };
                 format!("[{}]", base_ty.to_str())
             }
-            AstType::Callback(origin) => origin.clone(),
-            AstType::Struct(origin) => origin.clone(),
+            AstType::Callback(origin) => origin,
+            AstType::Struct(origin) => origin,
         };
     }
 
@@ -819,11 +819,11 @@ impl From<SwiftType> for Swift<'static> {
             AstType::Boolean => swift::BOOLEAN,
             AstType::String => swift::local("String"),
             AstType::Vec(base) => match base {
-                AstBaseType::Struct(_) => SwiftType::new(AstType::from(base.clone())).to_array(),
-                AstBaseType::Byte(_) => SwiftType::new(AstType::from(base.clone())).to_array(),
-                _ => SwiftType::new(AstType::from(base.clone())).to_array(),
+                AstBaseType::Struct(_) => SwiftType::new(AstType::from(base)).to_array(),
+                AstBaseType::Byte(_) => SwiftType::new(AstType::from(base)).to_array(),
+                _ => SwiftType::new(AstType::from(base)).to_array(),
             },
-            AstType::Callback(origin) | AstType::Struct(origin) => swift::local(origin.clone()),
+            AstType::Callback(origin) | AstType::Struct(origin) => swift::local(origin),
         }
     }
 }

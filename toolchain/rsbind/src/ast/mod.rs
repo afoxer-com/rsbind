@@ -1,12 +1,9 @@
+use crate::errors::ErrorKind::*;
+use crate::errors::*;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
-use std::path::PathBuf;
-
-use serde_json;
-
-use crate::errors::ErrorKind::*;
-use crate::errors::*;
+use std::path::{Path, PathBuf};
 
 use self::contract::desc::*;
 use self::imp::desc::*;
@@ -37,7 +34,7 @@ impl AstHandler {
         AstHandler { crate_name }
     }
 
-    pub(crate) fn parse(&self, origin_prj_path: &PathBuf) -> Result<AstResult> {
+    pub(crate) fn parse(&self, origin_prj_path: &Path) -> Result<AstResult> {
         let imp_dir_path = origin_prj_path.join(IMP_DIR);
         let imp_desc = imp::parser::parse_dir(&imp_dir_path)?;
 
@@ -74,7 +71,7 @@ impl AstHandler {
 }
 
 impl AstResult {
-    pub(crate) fn flush(self, ast_dir: &PathBuf) -> Result<Self> {
+    pub(crate) fn flush(self, ast_dir: &Path) -> Result<Self> {
         for each_mod in self.trait_descs.iter() {
             let trait_desc_list = each_mod.1;
             for trait_desc in trait_desc_list {

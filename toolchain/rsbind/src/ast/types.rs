@@ -110,15 +110,15 @@ impl From<AstBaseType> for AstType {
     fn from(base_ty: AstBaseType) -> Self {
         match base_ty {
             AstBaseType::Void => AstType::Void,
-            AstBaseType::Byte(origin) => AstType::Byte(origin.clone()),
-            AstBaseType::Int(origin) => AstType::Int(origin.clone()),
-            AstBaseType::Long(origin) => AstType::Long(origin.clone()),
-            AstBaseType::Float(origin) => AstType::Float(origin.clone()),
-            AstBaseType::Double(origin) => AstType::Double(origin.clone()),
+            AstBaseType::Byte(origin) => AstType::Byte(origin),
+            AstBaseType::Int(origin) => AstType::Int(origin),
+            AstBaseType::Long(origin) => AstType::Long(origin),
+            AstBaseType::Float(origin) => AstType::Float(origin),
+            AstBaseType::Double(origin) => AstType::Double(origin),
             AstBaseType::Boolean => AstType::Boolean,
             AstBaseType::String => AstType::String,
-            AstBaseType::Callback(origin) => AstType::Callback(origin.clone()),
-            AstBaseType::Struct(origin) => AstType::Struct(origin.clone()),
+            AstBaseType::Callback(origin) => AstType::Callback(origin),
+            AstBaseType::Struct(origin) => AstType::Struct(origin),
         }
     }
 }

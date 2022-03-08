@@ -44,7 +44,7 @@ impl<'a> JavaCodeGen<'a> {
         // generate all the callbacks.
         for each in callbacks.clone().iter() {
             let gen = CallbackGen {
-                desc: &each,
+                desc: each,
                 pkg: self.namespace.clone(),
             };
 
@@ -193,19 +193,16 @@ impl<'a> TraitGen<'a> {
         for method in methods.into_iter() {
             for arg in method.args.clone().into_iter() {
                 // Select the callbacks in arguments
-                match arg.ty {
-                    AstType::Callback(_) => {
-                        let callback = self
-                            .callbacks
-                            .iter()
-                            .filter(|callback| callback.name == arg.ty.origin())
-                            .collect::<Vec<&TraitDesc>>();
-                        println!("callback xxxx is {:?}", callback.clone());
-                        if callback.len() > 0 && !sel_callbacks.contains(&callback[0]) {
-                            sel_callbacks.push(callback[0]);
-                        }
+                if let AstType::Callback(_) = arg.ty {
+                    let callback = self
+                        .callbacks
+                        .iter()
+                        .filter(|callback| callback.name == arg.ty.origin())
+                        .collect::<Vec<&TraitDesc>>();
+                    println!("callback xxxx is {:?}", callback.clone());
+                    if !callback.is_empty() && !sel_callbacks.contains(&callback[0]) {
+                        sel_callbacks.push(callback[0]);
                     }
-                    _ => (),
                 }
             }
         }
@@ -213,17 +210,17 @@ impl<'a> TraitGen<'a> {
         // invoke callback functions
         for callback in sel_callbacks.iter() {
             for cb_method in callback.methods.iter() {
-                let mut m = self.fill_cb_method_sig(&cb_method, &callback)?;
+                let mut m = self.fill_cb_method_sig(cb_method, callback)?;
 
                 let mut cb_body = toks!();
                 // argument convert
-                self.fill_cb_arg_convert(&mut cb_body, &cb_method)?;
+                self.fill_cb_arg_convert(&mut cb_body, cb_method)?;
 
                 // callback invoke
-                self.fill_cb_invoke(&mut cb_body, &cb_method, &callback)?;
+                self.fill_cb_invoke(&mut cb_body, cb_method, callback)?;
 
                 // return type convert
-                self.fill_cb_return_convert(&mut cb_body, &cb_method)?;
+                self.fill_cb_return_convert(&mut cb_body, cb_method)?;
 
                 m.body = cb_body;
 
@@ -242,10 +239,14 @@ impl<'a> TraitGen<'a> {
         body.nested({
             let mut load_lib_tokens = Tokens::new();
             load_lib_tokens.push(toks!("System.loadLibrary(\"", self.so_name.clone(), "\");"));
-            let ext_libs = self.ext_libs.split(",").collect::<Vec<&str>>();
+            let ext_libs = self.ext_libs.split(',').collect::<Vec<&str>>();
             for ext_lib in ext_libs.iter() {
                 if !ext_lib.to_owned().is_empty() {
-                    load_lib_tokens.push(toks!("System.loadLibrary(\"", ext_lib.clone(), "\");"));
+                    load_lib_tokens.push(toks!(
+                        "System.loadLibrary(\"",
+                        ext_lib.to_owned(),
+                        "\");"
+                    ));
                 }
             }
             load_lib_tokens
@@ -290,7 +291,7 @@ impl<'a> TraitGen<'a> {
         m.modifiers = vec![Modifier::Public, Modifier::Static];
 
         let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
-        m.returns = Java::from(return_ty.clone());
+        m.returns = Java::from(return_ty);
 
         for arg in method.args.clone().into_iter() {
             // Add arguments
@@ -429,7 +430,7 @@ impl<'a> TraitGen<'a> {
                     method_body.push(toks!("return ret;"));
                 }
                 _ => {
-                    let sub_ty = return_ty.clone().get_base_ty();
+                    let sub_ty = return_ty.get_base_ty();
                     let json = java::imported("com.google.gson", "Gson");
                     method_body.push(toks!(
                         "return new ",
@@ -449,7 +450,7 @@ impl<'a> TraitGen<'a> {
                     "return new ",
                     json,
                     "().fromJson(ret,",
-                    origin.clone(),
+                    origin,
                     ".class);"
                 ));
             }
@@ -592,7 +593,7 @@ impl<'a> TraitGen<'a> {
                     "callback.",
                     cb_method.name.clone(),
                     "(",
-                    arg_calls.clone(),
+                    arg_calls,
                     ");"
                 ));
             }
@@ -603,7 +604,7 @@ impl<'a> TraitGen<'a> {
                     " result = callback.",
                     cb_method.name.clone(),
                     "(",
-                    arg_calls.clone(),
+                    arg_calls,
                     ");"
                 ));
             }
@@ -702,7 +703,7 @@ impl JavaType {
     pub(crate) fn get_base_ty(&self) -> Java<'static> {
         match self.ast_type.clone() {
             AstType::Vec(base) => match base {
-                AstBaseType::Struct(origin) => java::local(origin.clone()),
+                AstBaseType::Struct(origin) => java::local(origin),
                 _ => Java::from(JavaType::new(AstType::from(base), self.pkg.clone())),
             },
             _ => Java::from(self.clone()),
@@ -745,7 +746,7 @@ impl From<JavaType> for Java<'static> {
                 _ => JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_boxed_array(),
             },
             AstType::Void => java::VOID,
-            AstType::Callback(origin) | AstType::Struct(origin) => java::local(origin.clone()),
+            AstType::Callback(origin) | AstType::Struct(origin) => java::local(origin),
         }
     }
 }

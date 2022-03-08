@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::Path;
 
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
@@ -15,12 +15,12 @@ use super::callback::*;
 /// create a new c bridges generator.
 ///
 pub(crate) fn new_gen<'a>(
-    out_dir: &'a PathBuf,
-    trait_descs: &'a Vec<TraitDesc>,
-    struct_descs: &'a Vec<StructDesc>,
-    imp_desc: &'a Vec<ImpDesc>,
+    out_dir: &'a Path,
+    trait_descs: &'a [TraitDesc],
+    struct_descs: &'a [StructDesc],
+    imp_desc: &'a [ImpDesc],
 ) -> BridgeFileGen<'a, CFileGenStrategy> {
-    return BridgeFileGen {
+    BridgeFileGen {
         out_dir,
         trait_descs,
         struct_descs,
@@ -28,7 +28,7 @@ pub(crate) fn new_gen<'a>(
         strategy: CFileGenStrategy {
             callback_strategy: CCallbackStrategy {},
         },
-    };
+    }
 }
 
 ///
@@ -41,7 +41,7 @@ pub(crate) struct CFileGenStrategy {
 impl CFileGenStrategy {}
 
 impl FileGenStrategy for CFileGenStrategy {
-    fn gen_sdk_file(&self, _mod_names: &Vec<String>) -> Result<TokenStream> {
+    fn gen_sdk_file(&self, _mod_names: &[String]) -> Result<TokenStream> {
         Ok(quote!())
     }
 
@@ -54,7 +54,7 @@ impl FileGenStrategy for CFileGenStrategy {
         })
     }
 
-    fn quote_common_part(&self, _traits: &Vec<TraitDesc>) -> Result<TokenStream> {
+    fn quote_common_part(&self, _traits: &[TraitDesc]) -> Result<TokenStream> {
         Ok(quote! {})
     }
 
@@ -104,8 +104,8 @@ impl FileGenStrategy for CFileGenStrategy {
         trait_desc: &TraitDesc,
         _impl_desc: &ImpDesc,
         method: &MethodDesc,
-        callbacks: &Vec<&TraitDesc>,
-        _structs: &Vec<StructDesc>,
+        callbacks: &[&TraitDesc],
+        _structs: &[StructDesc],
     ) -> Result<TokenStream> {
         let fun_name = Ident::new(
             &format!("{}_{}", &trait_desc.mod_name, &method.name),
@@ -115,20 +115,14 @@ impl FileGenStrategy for CFileGenStrategy {
         let arg_names = method
             .args
             .iter()
-            .filter(|arg| match arg.ty {
-                AstType::Void => false,
-                _ => true,
-            })
+            .filter(|arg| !matches!(arg.ty, AstType::Void))
             .map(|arg| Ident::new(&arg.name, Span::call_site()))
             .collect::<Vec<Ident>>();
 
         let arg_types = method
             .args
             .iter()
-            .filter(|arg| match arg.ty {
-                AstType::Void => false,
-                _ => true,
-            })
+            .filter(|arg| !matches!(arg.ty, AstType::Void))
             .map(|arg| match arg.ty.clone() {
                 AstType::Callback(origin) => {
                     let mut callback_trait = None;
@@ -151,7 +145,7 @@ impl FileGenStrategy for CFileGenStrategy {
             .collect::<Vec<TokenStream>>();
 
         let ret_ty_tokens = RustMapping::map_sig_return_type(&method.return_type);
-        let sig_define = if arg_names.len() <= 0 {
+        let sig_define = if arg_names.is_empty() {
             match method.return_type {
                 AstType::Void => quote! {
                     #[no_mangle]
@@ -175,14 +169,14 @@ impl FileGenStrategy for CFileGenStrategy {
             }
         };
 
-        return Ok(sig_define);
+        Ok(sig_define)
     }
 
     fn quote_arg_convert(
         &self,
         trait_desc: &TraitDesc,
         arg: &ArgDesc,
-        callbacks: &Vec<&TraitDesc>,
+        callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
         let rust_arg_name = Ident::new(
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
@@ -217,7 +211,7 @@ impl FileGenStrategy for CFileGenStrategy {
             }
             AstType::Vec(base) => {
                 if let AstBaseType::Byte(origin) = base {
-                    if origin.clone().contains("i8") {
+                    if origin.contains("i8") {
                         quote! {
                             let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i8), #arg_name_ident.len as usize).to_vec() };
                         }
@@ -288,7 +282,7 @@ impl FileGenStrategy for CFileGenStrategy {
                 }
             }
             _ => {
-                let ty_ident = RustMapping::map_sig_return_type(&ty);
+                let ty_ident = RustMapping::map_sig_return_type(ty);
                 quote! {
                     #ret_name_ident as #ty_ident
                 }

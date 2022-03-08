@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use proc_macro2::{Ident, Span};
 
@@ -14,14 +14,14 @@ use crate::errors::*;
 ///
 pub(crate) trait ModGenStrategy {
     fn mod_name(&self, mod_name: &str) -> String;
-    fn sdk_gen(&self, out_dir: &PathBuf, file_name: &str, mod_names: &Vec<String>) -> Result<()>;
+    fn sdk_gen(&self, out_dir: &Path, file_name: &str, mod_names: &[String]) -> Result<()>;
     fn file_gen(
         &self,
-        out_dir: &PathBuf,
+        out_dir: &Path,
         file_name: &str,
-        trait_descs: &Vec<TraitDesc>,
-        struct_descs: &Vec<StructDesc>,
-        imp_desc: &Vec<ImpDesc>,
+        trait_descs: &[TraitDesc],
+        struct_descs: &[StructDesc],
+        imp_desc: &[ImpDesc],
     ) -> Result<()>;
 }
 
@@ -56,7 +56,7 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
                 &emtpy_vec
             };
 
-            let out_mod_name = self.mod_gen_strategy.mod_name(&mod_name);
+            let out_mod_name = self.mod_gen_strategy.mod_name(mod_name);
             let out_file_name = format!("{}.rs", &out_mod_name);
 
             self.mod_gen_strategy
@@ -78,14 +78,13 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
         bridges.push("sdk".to_owned());
 
         // generate common.rs
-        self.gen_common_code(&self.bridge_dir).unwrap();
+        self.gen_common_code(self.bridge_dir).unwrap();
 
         // generate bridge/mod.rs
-        self.gen_bridge_mod_code(&self.bridge_dir, &bridges)
-            .unwrap();
+        self.gen_bridge_mod_code(self.bridge_dir, &bridges).unwrap();
 
         // generate _gen/mod.rs
-        self.gen_mode_code(&self.bridge_dir).unwrap();
+        self.gen_mode_code(self.bridge_dir).unwrap();
 
         Ok(())
     }
@@ -93,8 +92,8 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
     ///
     /// generate common.rs
     ///
-    fn gen_common_code(&self, bridge_dir: &PathBuf) -> Result<()> {
-        let crate_name = &self.crate_name.replace("-", "_");
+    fn gen_common_code(&self, bridge_dir: &Path) -> Result<()> {
+        let crate_name = &self.crate_name.replace('-', "_");
         let free_fun_ident = Ident::new(&format!("{}_free_rust", crate_name), Span::call_site());
         let free_str_fun_ident = Ident::new(&format!("{}_free_str", crate_name), Span::call_site());
 
@@ -159,7 +158,7 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
     ///
     /// generate mod.rs in [c/java]/bridge dir.
     ///
-    fn gen_bridge_mod_code(&self, out_dir: &PathBuf, bridges: &Vec<String>) -> Result<()> {
+    fn gen_bridge_mod_code(&self, out_dir: &Path, bridges: &[String]) -> Result<()> {
         let bridge_ident = bridges
             .iter()
             .map(|bridge| Ident::new(bridge, Span::call_site()))
@@ -182,7 +181,7 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
     ///
     /// generate the mode.rs in src/[c/java] directory.
     ///
-    fn gen_mode_code(&self, out_dir: &PathBuf) -> Result<()> {
+    fn gen_mode_code(&self, out_dir: &Path) -> Result<()> {
         let gen_mod_tokens = quote! {
             pub mod bridge;
         };

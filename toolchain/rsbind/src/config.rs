@@ -1,8 +1,6 @@
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
-
-use toml;
+use std::path::Path;
 
 use crate::android::config::Android;
 use crate::ios::config::Ios;
@@ -19,7 +17,7 @@ pub struct Config {
 ///
 /// Parsing Rsbind.toml to Config struct.
 ///
-pub fn parse(prj_path: &PathBuf) -> Option<Config> {
+pub fn parse(prj_path: &Path) -> Option<Config> {
     let mut s = String::new();
     let path = prj_path.join("Rsbind.toml");
     if !path.exists() {

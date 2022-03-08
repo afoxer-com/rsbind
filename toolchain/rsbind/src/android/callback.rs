@@ -15,7 +15,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
         &self,
         arg: &ArgDesc,
         trait_desc: &TraitDesc,
-        callbacks: &Vec<&TraitDesc>,
+        callbacks: &[&TraitDesc],
     ) -> TokenStream {
         println!(
             "[bridge] 🔆  begin quote callback argument in method convert => {}.{}",
@@ -26,7 +26,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
             Span::call_site(),
         );
-        let class_name = format!("{}.{}", &self.java_namespace, &trait_desc.name).replace(".", "/");
+        let class_name = format!("{}.{}", &self.java_namespace, &trait_desc.name).replace('.', "/");
         let struct_name = &format!("{}_struct", arg.name);
         let struct_ident = Ident::new(struct_name, Span::call_site());
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());

@@ -1,6 +1,6 @@
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::Path;
 
 use proc_macro2::{Ident, Span, TokenStream};
 
@@ -24,10 +24,10 @@ pub(crate) enum TypeDirection {
 /// Executor for generationg core files of bridge mod.
 ///
 pub(crate) struct BridgeFileGen<'a, T: FileGenStrategy> {
-    pub out_dir: &'a PathBuf,
-    pub trait_descs: &'a Vec<TraitDesc>,
-    pub struct_descs: &'a Vec<StructDesc>,
-    pub imp_desc: &'a Vec<ImpDesc>,
+    pub out_dir: &'a Path,
+    pub trait_descs: &'a [TraitDesc],
+    pub struct_descs: &'a [StructDesc],
+    pub imp_desc: &'a [ImpDesc],
     pub strategy: T,
 }
 
@@ -35,9 +35,9 @@ pub(crate) struct BridgeFileGen<'a, T: FileGenStrategy> {
 /// Strategy for generating core files in bridge mod.
 ///
 pub(crate) trait FileGenStrategy {
-    fn gen_sdk_file(&self, mod_names: &Vec<String>) -> Result<TokenStream>;
+    fn gen_sdk_file(&self, mod_names: &[String]) -> Result<TokenStream>;
     fn quote_common_use_part(&self) -> Result<TokenStream>;
-    fn quote_common_part(&self, trait_desc: &Vec<TraitDesc>) -> Result<TokenStream>;
+    fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream>;
     fn quote_callback_structures(&self, callback: &TraitDesc) -> Result<TokenStream>;
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream>;
     fn quote_method_sig(
@@ -45,14 +45,14 @@ pub(crate) trait FileGenStrategy {
         trait_desc: &TraitDesc,
         impl_desc: &ImpDesc,
         method: &MethodDesc,
-        callbacks: &Vec<&TraitDesc>,
-        structs: &Vec<StructDesc>,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
     ) -> Result<TokenStream>;
     fn quote_arg_convert(
         &self,
         trait_desc: &TraitDesc,
         args: &ArgDesc,
-        callbacks: &Vec<&TraitDesc>,
+        callbacks: &[&TraitDesc],
     ) -> Result<TokenStream>;
     fn quote_return_convert(&self, return_ty: &AstType, ret_name: &str) -> Result<TokenStream>;
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream>;
@@ -63,7 +63,7 @@ pub(crate) trait CallbackGenStrategy {
         &self,
         arg: &ArgDesc,
         trait_desc: &TraitDesc,
-        callbacks: &Vec<&TraitDesc>,
+        callbacks: &[&TraitDesc],
     ) -> TokenStream;
 }
 
@@ -71,7 +71,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
     ///
     /// generate sdk.rs files
     ///
-    pub(crate) fn gen_sdk_file(&self, file_name: &str, mod_names: &Vec<String>) -> Result<()> {
+    pub(crate) fn gen_sdk_file(&self, file_name: &str, mod_names: &[String]) -> Result<()> {
         let result = self.strategy.gen_sdk_file(mod_names).unwrap();
 
         let out_file_path = self.out_dir.join(file_name);
@@ -96,14 +96,11 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         };
 
         for bridge_code in bridge_codes {
-            match bridge_code.result {
-                Ok(code) => {
-                    merge_tokens = quote! {
-                        #merge_tokens
-                        #code
-                    };
-                }
-                _ => (),
+            if let Ok(code) = bridge_code.result {
+                merge_tokens = quote! {
+                    #merge_tokens
+                    #code
+                };
             }
         }
 
@@ -130,14 +127,14 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                         return false;
                     }
                 }
-                return true;
+                true
             })
             .collect::<Vec<&TraitDesc>>();
 
         println!("callbacks is {:?}", &callbacks);
 
         for struct_desc in self.struct_descs.iter() {
-            let tokens = self.strategy.quote_for_structures(&struct_desc);
+            let tokens = self.strategy.quote_for_structures(struct_desc);
             results.push(GenResult { result: tokens });
         }
 
@@ -159,19 +156,19 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     desc.name
                 ))
                 .into());
-            } else if imps.len() <= 0 {
+            } else if imps.is_empty() {
                 println!(
                     "You haven't impl the trait {}, so I guess it is a callback",
                     desc.name
                 );
                 results.push(GenResult {
-                    result: self.strategy.quote_callback_structures(&desc),
+                    result: self.strategy.quote_callback_structures(desc),
                 });
             } else {
                 results.push(GenResult {
                     result: self.generate_for_one_trait(
                         desc,
-                        &imps[0],
+                        imps[0],
                         &callbacks,
                         self.struct_descs,
                     ),
@@ -186,8 +183,8 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         &self,
         trait_desc: &TraitDesc,
         imp: &ImpDesc,
-        callbacks: &Vec<&TraitDesc>,
-        structs: &Vec<StructDesc>,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
     ) -> Result<TokenStream> {
         println!(
             "[bridge][{}]  🔆  begin generate bridge on trait.",
@@ -242,7 +239,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     trait_desc.name
                 ))
                 .into());
-            } else if imps.len() <= 0 {
+            } else if imps.is_empty() {
                 println!(
                     "You haven't impl the trait {}, I guess it is a callback",
                     trait_desc.name
@@ -280,8 +277,8 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         trait_desc: &TraitDesc,
         imp: &ImpDesc,
         method: &MethodDesc,
-        callbacks: &Vec<&TraitDesc>,
-        structs: &Vec<StructDesc>,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
     ) -> Result<TokenStream> {
         println!(
             "[bridge][{}.{}]  🔆 ️begin quote method.",

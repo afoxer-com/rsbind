@@ -13,7 +13,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
         &self,
         arg: &ArgDesc,
         _trait_desc: &TraitDesc,
-        callbacks: &Vec<&TraitDesc>,
+        callbacks: &[&TraitDesc],
     ) -> TokenStream {
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
 
@@ -31,8 +31,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
         let mut method_names = Vec::new();
         let mut callback_methods = TokenStream::new();
         let mut callback_struct = TokenStream::new();
-        if callback_desc.is_some() {
-            let callback_desc = callback_desc.unwrap();
+        if let Some(callback_desc) = callback_desc {
             for method in callback_desc.methods.iter() {
                 println!(
                     "quote method {} in callback {}",
@@ -123,30 +122,21 @@ impl CallbackGenStrategy for CCallbackStrategy {
                 let arg_names = &method
                     .args
                     .iter()
-                    .filter(|arg| match arg.ty {
-                        AstType::Void => false,
-                        _ => true,
-                    })
+                    .filter(|arg| !matches!(arg.ty, AstType::Void))
                     .map(|arg| Ident::new(&arg.name, Span::call_site()))
                     .collect::<Vec<Ident>>();
 
                 let convert_arg_names = &method
                     .args
                     .iter()
-                    .filter(|arg| match arg.ty {
-                        AstType::Void => false,
-                        _ => true,
-                    })
+                    .filter(|arg| !matches!(arg.ty, AstType::Void))
                     .map(|arg| Ident::new(&format!("c_{}", &arg.name), Span::call_site()))
                     .collect::<Vec<Ident>>();
 
                 let arg_types = &method
                     .args
                     .iter()
-                    .filter(|arg| match arg.ty {
-                        AstType::Void => false,
-                        _ => true,
-                    })
+                    .filter(|arg| !matches!(arg.ty, AstType::Void))
                     .map(|arg| match arg.ty.clone() {
                         AstType::Vec(vec_inner_name) => {
                             let vec_innder_ident =
@@ -273,10 +263,7 @@ impl CCallbackStrategy {
             let arg_types = method
                 .args
                 .iter()
-                .filter(|arg| match arg.ty {
-                    AstType::Void => false,
-                    _ => true,
-                })
+                .filter(|arg| !matches!(arg.ty, AstType::Void))
                 .map(|arg| RustMapping::map_sig_arg_type(&arg.ty))
                 .collect::<Vec<TokenStream>>();
 
@@ -295,6 +282,6 @@ impl CCallbackStrategy {
             }
         };
 
-        return Ok(callback_struct);
+        Ok(callback_struct)
     }
 }

@@ -37,3 +37,16 @@ jobs:
       run: cd demo-ios/Example && pod install
     - name: Build-Demo
       run: xcodebuild -workspace "demo-ios/Example/demo-ios.xcworkspace" -scheme "demo-ios-Example" -sdk iphonesimulator -configuration "Debug" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" ARCHS="x86_64" clean build
+
+  build-mac:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build-Rust
+      run: cd demo-mac/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . mac all
+    - name: Pod-Install
+      run: cd demo-mac/Example && pod install
+    - name: Test-Demo
+      run: xcodebuild test -workspace "demo-mac/Example/MacDemo.xcworkspace" -scheme MacDemoTests

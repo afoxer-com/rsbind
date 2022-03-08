@@ -4,6 +4,8 @@ version = "0.1.0"
 authors = ["sidney.wang <sidney.wang@foxmail.com>"]
 edition = "2021"
 readme = "README.md"
+description = "provide tools to bind rust interface with other language and export library artifact directly."
+license = "Apache-2.0"
 
 [dependencies]
 quote = "1.0.14"

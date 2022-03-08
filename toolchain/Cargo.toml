@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "template",
+    "rsbind-template",
     "rsbind",
     "ndk-tool",
     "rsbind-build-script",

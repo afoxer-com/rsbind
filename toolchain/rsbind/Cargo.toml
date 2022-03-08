@@ -19,9 +19,9 @@ fs_extra = "1.1.0"
 toml = "0.5.1"
 error-chain = "0.12.1"
 ndk-build = "0.4.3"
-rsgen = { git = "https://github.com/sidneywang/rsgen", branch = "master" }
+rstgen = "0.1.0"
 template = { path = "../template" }
-ndk-tool = { path = "../ndk-tool" }
+ndk-tool = "0.1.0"
 
 [dependencies.syn]
 version = "1.0.84"

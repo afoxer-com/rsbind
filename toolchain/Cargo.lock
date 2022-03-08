@@ -349,6 +349,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ndk-tool"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e727d4261136aa7a2670f55ffb75774c78b1d0b71fef785507f26fcea41a6af"
+dependencies = [
+ "error-chain",
+ "ndk-build",
+]
+
+[[package]]
 name = "object"
 version = "0.27.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -427,10 +437,10 @@ dependencies = [
  "error-chain",
  "fs_extra",
  "ndk-build",
- "ndk-tool",
+ "ndk-tool 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2",
  "quote",
- "rsgen",
+ "rstgen",
  "serde",
  "serde_derive",
  "serde_json",
@@ -441,9 +451,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "rsgen"
-version = "0.3.29"
-source = "git+https://github.com/sidneywang/rsgen?branch=master#d6576222e3fcd1f03cdbbc04988c1a8042b1f165"
+name = "rstgen"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ba84e71ff7bbe8a3628e3fc22dca3359d650969e18aa3b32a016a1eb759274a3"
 
 [[package]]
 name = "rustc-demangle"

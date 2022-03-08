@@ -53,11 +53,11 @@ impl YourContract for YourImplemetation {
 
 Rsbind usage:
 ```sh
-rsbind path-of-project android/ios/all ast/bridge/artifact/header/build/all
+rsbind path-of-project android/ios/mac/all ast/bridge/artifact/header/build/mac/all
 ```
 - ast: generate simplified ast files with json format to _gen/ast.
-- bridge: generate c methods to expose our interface to _gen/[ios/android]_bridge.
-- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android]_artifact).
+- bridge: generate c methods to expose our interface to _gen/[ios/android/mac]_bridge.
+- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android/mac]_artifact).
 - build: build bridge modules and copy output to artifact project and then build artifact project.
 - all: run all the steps for binding.
 
@@ -90,6 +90,11 @@ features_def = ["xxxx=[]"]
 rustc_param = ""
 arch_phone = ["armv7-apple-ios"]
 arch_simu = ["i386-apple-ios", "x86_64-apple-ios"]
+release = true
+features_def = []
+
+[mac]
+rustc_param = ""
 release = true
 features_def = []
 ```

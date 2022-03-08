@@ -40,19 +40,6 @@ fn main() {
         Path::new(&format!("{}/template/template-bridge-mac.zip", outdir)),
     );
 
-    if !Path::new(&format!("{}/template/template-android.zip", outdir)).exists() {
-        panic!("/template/template-android.zip doesn't exist.");
-    }
-
-    fs::copy(
-        &format!("{}/template/template-android.zip", outdir),
-        "src/android/res/template_android.zip",
-    )
-    .unwrap();
-
-    if !Path::new(&format!("{}/template/template-ios.zip", outdir)).exists() {
-        panic!("template/template-ios.zip doesn't exist.");
-    }
 
     fs::copy(
         &format!("{}/template/template-ios.zip", outdir),
@@ -60,27 +47,29 @@ fn main() {
     )
     .unwrap();
 
-    if !Path::new(&format!("{}/template/template-bridge-android.zip", outdir)).exists() {
-        panic!("template/template-bridge-android.zip doesn't exist.");
-    }
+    fs::copy(
+        &format!("{}/template/template-bridge-ios.zip", outdir),
+        "src/ios/res/template_bridge_ios.zip",
+    )
+        .unwrap();
+
     fs::copy(
         &format!("{}/template/template-bridge-android.zip", outdir),
         "src/android/res/template_bridge_android.zip",
     )
     .unwrap();
 
-    if !Path::new(&format!("{}/template/template-bridge-mac.zip", outdir)).exists() {
-        panic!("template/template-bridge-mac.zip doesn't exist.");
-    }
+    fs::copy(
+        &format!("{}/template/template-android.zip", outdir),
+        "src/android/res/template_android.zip",
+    )
+        .unwrap();
+
     fs::copy(
         &format!("{}/template/template-bridge-mac.zip", outdir),
         "src/mac/res/template_bridge_mac.zip",
     )
     .unwrap();
-
-    if !Path::new(&format!("{}/template/template-mac.zip", outdir)).exists() {
-        panic!("template/template-mac.zip doesn't exist.");
-    }
 
     fs::copy(
         &format!("{}/template/template-mac.zip", outdir),

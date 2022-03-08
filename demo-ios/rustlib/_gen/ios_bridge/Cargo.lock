@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "demo_ios_bridge_prj"
+name = "demo_mac_bridge_prj"
 version = "0.1.0"
 dependencies = [
  "demo",

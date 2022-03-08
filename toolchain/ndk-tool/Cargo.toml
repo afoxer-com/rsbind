@@ -2,6 +2,9 @@
 name = "ndk-tool"
 version = "0.1.0"
 edition = "2021"
+readme = "README.md"
+description = "Build android so file used in rsbind"
+license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

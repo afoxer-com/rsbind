@@ -22,6 +22,8 @@ extern crate zip;
 use std::fs;
 use std::path::PathBuf;
 
+use crate::mac::config::Mac;
+use crate::mac::process::MacProcess;
 use android::config::Android;
 use android::process::AndroidProcess;
 use ast::AstResult;
@@ -29,8 +31,6 @@ use base::process::*;
 use errors::*;
 use ios::config::Ios;
 use ios::process::IosProcess;
-use crate::mac::config::Mac;
-use crate::mac::process::MacProcess;
 
 mod android;
 mod ast;
@@ -41,10 +41,10 @@ mod cargo;
 mod config;
 mod errors;
 mod ios;
+mod mac;
+mod swift;
 mod test;
 mod unzip;
-mod swift;
-mod mac;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";

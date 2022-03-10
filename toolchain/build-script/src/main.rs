@@ -40,7 +40,6 @@ fn main() {
         Path::new(&format!("{}/template/template-bridge-mac.zip", outdir)),
     );
 
-
     fs::copy(
         &format!("{}/template/template-ios.zip", outdir),
         "src/ios/res/template_ios.zip",
@@ -51,7 +50,7 @@ fn main() {
         &format!("{}/template/template-bridge-ios.zip", outdir),
         "src/ios/res/template_bridge_ios.zip",
     )
-        .unwrap();
+    .unwrap();
 
     fs::copy(
         &format!("{}/template/template-bridge-android.zip", outdir),
@@ -63,7 +62,7 @@ fn main() {
         &format!("{}/template/template-android.zip", outdir),
         "src/android/res/template_android.zip",
     )
-        .unwrap();
+    .unwrap();
 
     fs::copy(
         &format!("{}/template/template-bridge-mac.zip", outdir),

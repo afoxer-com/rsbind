@@ -140,16 +140,14 @@ impl<'a> TraitGen<'a> {
 
             let mut byte_count = 0;
             for arg in method.args.iter() {
-                if let AstType::Vec(base) = arg.ty.clone() {
-                    if let AstBaseType::Byte(_) = base.clone() {
-                        byte_count += 1;
-                        method_body.push(toks!(
-                            arg.name.clone(),
-                            ".withUnsafeBufferPointer { ",
-                            arg.name.clone(),
-                            "_buffer in"
-                        ));
-                    }
+                if let AstType::Vec(AstBaseType::Byte(_)) = arg.ty.clone() {
+                    byte_count += 1;
+                    method_body.push(toks!(
+                        arg.name.clone(),
+                        ".withUnsafeBufferPointer { ",
+                        arg.name.clone(),
+                        "_buffer in"
+                    ));
                 }
             }
 
@@ -251,38 +249,37 @@ impl<'a> TraitGen<'a> {
                 AstType::String => {
                     method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
                 }
-                AstType::Vec(base) => {
-                    if let AstBaseType::Byte(_) = base {
-                        let arg_buffer_name = format!("{}_buffer", &arg.name);
-                        method_body.push(toks!(
-                            "let ",
-                            s_arg_name.clone(),
-                            " = CInt8Array(ptr: ",
-                            arg_buffer_name.clone(),
-                            ".baseAddress, len: Int32(",
-                            arg_buffer_name.clone(),
-                            ".count))"
-                        ))
-                    } else {
-                        let encoder_name = format!("{}_encoder", &arg.name);
-                        method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                        method_body.push(toks!(
-                            "let ",
-                            format!("data_{}", &arg.name),
-                            " = try! ",
-                            encoder_name.clone(),
-                            ".encode(",
-                            arg.name.clone(),
-                            ")"
-                        ));
-                        method_body.push(toks!(
-                            "let ",
-                            format!("s_{}", &arg.name),
-                            " = String(data: ",
-                            format!("data_{}", &arg.name),
-                            ", encoding: .utf8)!"
-                        ))
-                    }
+                AstType::Vec(AstBaseType::Byte(_)) => {
+                    let arg_buffer_name = format!("{}_buffer", &arg.name);
+                    method_body.push(toks!(
+                        "let ",
+                        s_arg_name.clone(),
+                        " = CInt8Array(ptr: ",
+                        arg_buffer_name.clone(),
+                        ".baseAddress, len: Int32(",
+                        arg_buffer_name.clone(),
+                        ".count))"
+                    ))
+                }
+                AstType::Vec(_) => {
+                    let encoder_name = format!("{}_encoder", &arg.name);
+                    method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
+                    method_body.push(toks!(
+                        "let ",
+                        format!("data_{}", &arg.name),
+                        " = try! ",
+                        encoder_name.clone(),
+                        ".encode(",
+                        arg.name.clone(),
+                        ")"
+                    ));
+                    method_body.push(toks!(
+                        "let ",
+                        format!("s_{}", &arg.name),
+                        " = String(data: ",
+                        format!("data_{}", &arg.name),
+                        ", encoding: .utf8)!"
+                    ))
                 }
                 AstType::Struct(_) => {}
                 AstType::Callback(_) => {
@@ -483,50 +480,48 @@ impl<'a> TraitGen<'a> {
             AstType::Callback(_) => {
                 panic!("Don't support callback argument in callback");
             }
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte(_) => method_body.push(toks!(
+            AstType::Vec(AstBaseType::Byte(_)) => method_body.push(toks!(
+                "let ",
+                format!("c_{}", &cb_arg.name),
+                " = Array<Int8>(UnsafeBufferPointer(start: ",
+                cb_arg.name.clone(),
+                ".ptr, count: Int(",
+                cb_arg.name.clone(),
+                ".len)))"
+            )),
+            AstType::Vec(_) => {
+                method_body.push(toks!(
+                    "let ",
+                    format!("c_tmp_{}", &cb_arg.name),
+                    " = String(cString:",
+                    cb_arg.name.clone(),
+                    "!)\n",
+                    "var ",
+                    format!("c_option_{}", &cb_arg.name),
+                    " : ",
+                    cb_arg_str.clone(),
+                    "?\n",
+                    "autoreleasepool {\n",
+                    "let ",
+                    format!("c_tmp_json_{}", &cb_arg.name),
+                    " = ",
+                    format!("c_tmp_{}", &cb_arg.name),
+                    ".data(using: .utf8)!\n",
+                    "let decoder = JSONDecoder()\n",
+                    format!("c_option_{}", &cb_arg.name),
+                    " = try! decoder.decode(",
+                    cb_arg_str,
+                    ".self, from: ",
+                    format!("c_tmp_json_{}", &cb_arg.name),
+                    ")\n",
+                    "}\n",
                     "let ",
                     format!("c_{}", &cb_arg.name),
-                    " = Array<Int8>(UnsafeBufferPointer(start: ",
-                    cb_arg.name.clone(),
-                    ".ptr, count: Int(",
-                    cb_arg.name.clone(),
-                    ".len)))"
-                )),
-                _ => {
-                    method_body.push(toks!(
-                        "let ",
-                        format!("c_tmp_{}", &cb_arg.name),
-                        " = String(cString:",
-                        cb_arg.name.clone(),
-                        "!)\n",
-                        "var ",
-                        format!("c_option_{}", &cb_arg.name),
-                        " : ",
-                        cb_arg_str.clone(),
-                        "?\n",
-                        "autoreleasepool {\n",
-                        "let ",
-                        format!("c_tmp_json_{}", &cb_arg.name),
-                        " = ",
-                        format!("c_tmp_{}", &cb_arg.name),
-                        ".data(using: .utf8)!\n",
-                        "let decoder = JSONDecoder()\n",
-                        format!("c_option_{}", &cb_arg.name),
-                        " = try! decoder.decode(",
-                        cb_arg_str,
-                        ".self, from: ",
-                        format!("c_tmp_json_{}", &cb_arg.name),
-                        ")\n",
-                        "}\n",
-                        "let ",
-                        format!("c_{}", &cb_arg.name),
-                        " = ",
-                        format!("c_option_{}", &cb_arg.name),
-                        "!"
-                    ));
-                }
-            },
+                    " = ",
+                    format!("c_option_{}", &cb_arg.name),
+                    "!"
+                ));
+            }
             AstType::Struct(_) => {
                 method_body.push(toks!(
                     "let ",

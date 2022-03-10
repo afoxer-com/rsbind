@@ -56,43 +56,41 @@ impl CallbackGenStrategy for CCallbackStrategy {
                                 let #cb_arg_name = CString::new(#cb_origin_arg_name).unwrap().into_raw();
                             }
                         }
-                        AstType::Vec(ref base_ty) => {
+                        AstType::Vec(AstBaseType::Byte(_)) => {
                             let cb_tmp_arg_name =
                                 Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            match base_ty {
-                                AstBaseType::Byte(_) => {
-                                    quote! {
-                                        let #cb_arg_name = unsafe {
-                                            CInt8Array {
-                                                ptr: #cb_origin_arg_name.as_ptr() as (*const i8),
-                                                len: #cb_origin_arg_name.len() as i32
-                                            }
-                                        };
+                            quote! {
+                                let #cb_arg_name = unsafe {
+                                    CInt8Array {
+                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i8),
+                                        len: #cb_origin_arg_name.len() as i32
                                     }
-                                }
-                                AstBaseType::Struct(struct_name) => {
-                                    strs_to_release.push(cb_arg_name.clone());
-                                    let struct_ident = Ident::new(
-                                        &format!("Struct_{}", &struct_name),
-                                        Span::call_site(),
-                                    );
-                                    let cb_tmp_vec_arg_name = Ident::new(
-                                        &format!("c_tmp_vec_{}", cb_arg.name),
-                                        Span::call_site(),
-                                    );
-                                    quote! {
-                                        let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                                        let #cb_tmp_arg_name = serde_json::to_string(&#cb_tmp_vec_arg_name);
-                                        let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
-                                    }
-                                }
-                                _ => {
-                                    strs_to_release.push(cb_arg_name.clone());
-                                    quote! {
-                                        let #cb_tmp_arg_name = serde_json::to_string(&#cb_origin_arg_name);
-                                        let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
-                                    }
-                                }
+                                };
+                            }
+                        }
+                        AstType::Vec(AstBaseType::Struct(struct_name)) => {
+                            let cb_tmp_arg_name =
+                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
+                            strs_to_release.push(cb_arg_name.clone());
+                            let struct_ident =
+                                Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
+                            let cb_tmp_vec_arg_name = Ident::new(
+                                &format!("c_tmp_vec_{}", cb_arg.name),
+                                Span::call_site(),
+                            );
+                            quote! {
+                                let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
+                                let #cb_tmp_arg_name = serde_json::to_string(&#cb_tmp_vec_arg_name);
+                                let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
+                            }
+                        }
+                        AstType::Vec(_) => {
+                            let cb_tmp_arg_name =
+                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
+                            strs_to_release.push(cb_arg_name.clone());
+                            quote! {
+                                let #cb_tmp_arg_name = serde_json::to_string(&#cb_origin_arg_name);
+                                let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
                             }
                         }
                         AstType::Struct(origin) => {

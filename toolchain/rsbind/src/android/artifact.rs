@@ -345,32 +345,30 @@ impl<'a> TraitGen<'a> {
                         " ? 1 : 0;"
                     ));
                 }
-                AstType::Vec(ref base) => match base {
-                    AstBaseType::Byte(_) => {
-                        let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
-                        let java = Java::from(java);
-                        method_body.push(toks!(
-                            java,
-                            " ",
-                            converted.clone(),
-                            " = ",
-                            arg.name.clone(),
-                            ";"
-                        ));
-                    }
-                    _ => {
-                        let json_cls = java::imported("com.google.gson", "Gson");
-                        method_body.push(toks!(
-                            "String ",
-                            converted.clone(),
-                            " = new ",
-                            json_cls,
-                            "().toJson(",
-                            arg.name.clone(),
-                            ");"
-                        ));
-                    }
-                },
+                AstType::Vec(AstBaseType::Byte(_)) => {
+                    let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                    let java = Java::from(java);
+                    method_body.push(toks!(
+                        java,
+                        " ",
+                        converted.clone(),
+                        " = ",
+                        arg.name.clone(),
+                        ";"
+                    ));
+                }
+                AstType::Vec(_) => {
+                    let json_cls = java::imported("com.google.gson", "Gson");
+                    method_body.push(toks!(
+                        "String ",
+                        converted.clone(),
+                        " = new ",
+                        json_cls,
+                        "().toJson(",
+                        arg.name.clone(),
+                        ");"
+                    ));
+                }
                 _ => {
                     let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
                     let java = Java::from(java);
@@ -425,22 +423,20 @@ impl<'a> TraitGen<'a> {
 
         match return_ty.ast_type.clone() {
             AstType::Void => (),
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte(_) => {
-                    method_body.push(toks!("return ret;"));
-                }
-                _ => {
-                    let sub_ty = return_ty.get_base_ty();
-                    let json = java::imported("com.google.gson", "Gson");
-                    method_body.push(toks!(
-                        "return new ",
-                        json,
-                        "().fromJson(ret, ",
-                        sub_ty.clone().as_boxed(),
-                        "[].class);"
-                    ));
-                }
-            },
+            AstType::Vec(AstBaseType::Byte(_)) => {
+                method_body.push(toks!("return ret;"));
+            }
+            AstType::Vec(_) => {
+                let sub_ty = return_ty.get_base_ty();
+                let json = java::imported("com.google.gson", "Gson");
+                method_body.push(toks!(
+                    "return new ",
+                    json,
+                    "().fromJson(ret, ",
+                    sub_ty.clone().as_boxed(),
+                    "[].class);"
+                ));
+            }
             AstType::Boolean => {
                 method_body.push(toks!("return ret > 0 ? true : false;"));
             }
@@ -517,37 +513,35 @@ impl<'a> TraitGen<'a> {
                         ".class);"
                     ));
                 }
-                AstType::Vec(base) => match base.clone() {
-                    AstBaseType::Byte(_) => {
-                        let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
-                        cb_body.push(toks!(
-                            java.get_base_ty(),
-                            "[] ",
-                            "j_",
-                            arg.name.clone(),
-                            " = ",
-                            arg.name.clone(),
-                            ";"
-                        ));
-                    }
-                    _ => {
-                        let json = java::imported("com.google.gson", "Gson");
-                        let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
-                        cb_body.push(toks!(
-                            java.get_base_ty().as_boxed(),
-                            "[] ",
-                            "j_",
-                            arg.name.clone(),
-                            " = new ",
-                            json,
-                            "().fromJson(",
-                            arg.name.clone(),
-                            ", ",
-                            java.get_base_ty().as_boxed(),
-                            "[].class);"
-                        ));
-                    }
-                },
+                AstType::Vec(AstBaseType::Byte(_)) => {
+                    let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                    cb_body.push(toks!(
+                        java.get_base_ty(),
+                        "[] ",
+                        "j_",
+                        arg.name.clone(),
+                        " = ",
+                        arg.name.clone(),
+                        ";"
+                    ));
+                }
+                AstType::Vec(_) => {
+                    let json = java::imported("com.google.gson", "Gson");
+                    let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                    cb_body.push(toks!(
+                        java.get_base_ty().as_boxed(),
+                        "[] ",
+                        "j_",
+                        arg.name.clone(),
+                        " = new ",
+                        json,
+                        "().fromJson(",
+                        arg.name.clone(),
+                        ", ",
+                        java.get_base_ty().as_boxed(),
+                        "[].class);"
+                    ));
+                }
                 _ => {
                     let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
                     cb_body.push(toks!(
@@ -689,10 +683,8 @@ impl JavaType {
     pub(crate) fn to_transfer(&self) -> Java<'static> {
         match self.ast_type.clone() {
             AstType::Boolean => java::INTEGER,
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte(_) => Java::from(self.clone()),
-                _ => java::imported("java.lang", "String"),
-            },
+            AstType::Vec(AstBaseType::Byte(_)) => Java::from(self.clone()),
+            AstType::Vec(_) => java::imported("java.lang", "String"),
             AstType::Struct(_) => java::imported("java.lang", "String"),
             AstType::Callback(_) => java::LONG,
             _ => Java::from(self.clone()),
@@ -702,10 +694,8 @@ impl JavaType {
     /// If JavaType is an Vec(base), we will return base, else we will return itself.
     pub(crate) fn get_base_ty(&self) -> Java<'static> {
         match self.ast_type.clone() {
-            AstType::Vec(base) => match base {
-                AstBaseType::Struct(origin) => java::local(origin),
-                _ => Java::from(JavaType::new(AstType::from(base), self.pkg.clone())),
-            },
+            AstType::Vec(AstBaseType::Struct(origin)) => java::local(origin),
+            AstType::Vec(base) => Java::from(JavaType::new(AstType::from(base), self.pkg.clone())),
             _ => Java::from(self.clone()),
         }
     }

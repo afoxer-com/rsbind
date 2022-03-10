@@ -248,42 +248,38 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     let #rust_arg_name: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
                 }
             }
-            AstType::Vec(base) => match base {
-                AstBaseType::Byte(origin) => {
-                    if origin.contains("i8") {
-                        let tmp_arg_name =
-                            Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-                        let tmp_arg_ptr =
-                            Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
-                        let tmp_arg_len =
-                            Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
-                        let tmp_arg_cap =
-                            Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
-                        quote! {
-                            let mut #tmp_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
-                            let #tmp_arg_ptr = #tmp_arg_name.as_mut_ptr();
-                            let #tmp_arg_len = #tmp_arg_name.len();
-                            let #tmp_arg_cap = #tmp_arg_name.capacity();
-                            let #rust_arg_name = unsafe {
-                                std::mem::forget(#tmp_arg_name);
-                                Vec::from_raw_parts(#tmp_arg_ptr as (* mut i8), #tmp_arg_len, #tmp_arg_cap)
-                            };
-                        }
-                    } else {
-                        quote! {
-                            let #rust_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
-                        }
-                    }
-                }
-                _ => {
-                    let json_arg_ident =
-                        Ident::new(&format!("json_{}", &arg.name), Span::call_site());
+            AstType::Vec(AstBaseType::Byte(origin)) => {
+                if origin.contains("i8") {
+                    let tmp_arg_name = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
+                    let tmp_arg_ptr =
+                        Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
+                    let tmp_arg_len =
+                        Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
+                    let tmp_arg_cap =
+                        Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
                     quote! {
-                        let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
-                        let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
+                        let mut #tmp_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
+                        let #tmp_arg_ptr = #tmp_arg_name.as_mut_ptr();
+                        let #tmp_arg_len = #tmp_arg_name.len();
+                        let #tmp_arg_cap = #tmp_arg_name.capacity();
+                        let #rust_arg_name = unsafe {
+                            std::mem::forget(#tmp_arg_name);
+                            Vec::from_raw_parts(#tmp_arg_ptr as (* mut i8), #tmp_arg_len, #tmp_arg_cap)
+                        };
+                    }
+                } else {
+                    quote! {
+                        let #rust_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
                     }
                 }
-            },
+            }
+            AstType::Vec(_) => {
+                let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
+                quote! {
+                    let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
+                    let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
+                }
+            }
             AstType::Callback(_) => self
                 .java_callback_strategy
                 .arg_convert(arg, trait_desc, callbacks),
@@ -316,41 +312,39 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             AstType::String => quote! {
                 env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner()
             },
-            AstType::Vec(ref base_ty) => match base_ty {
-                AstBaseType::Struct(struct_name) => {
-                    let struct_ident =
-                        Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
+            AstType::Vec(AstBaseType::Struct(struct_name)) => {
+                let struct_ident =
+                    Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
+                quote! {
+                    let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
+                    let json_ret = serde_json::to_string(&ret_value);
+                    env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
+                }
+            }
+            AstType::Vec(AstBaseType::Byte(origin)) => {
+                if origin.contains("i8") {
                     quote! {
-                        let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                        let json_ret = serde_json::to_string(&ret_value);
-                        env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
+                        let ret_value_ptr = ret_value.as_mut_ptr();
+                        let ret_value_len = ret_value.len();
+                        let ret_value_cap = ret_value.capacity();
+                        let tmp_ret_name = unsafe {
+                            std::mem::forget(ret_value);
+                            Vec::from_raw_parts(ret_value_ptr as (* mut u8), ret_value_len, ret_value_cap)
+                        };
+                        env.byte_array_from_slice(&tmp_ret_name).unwrap()
                     }
-                }
-                AstBaseType::Byte(origin) => {
-                    if origin.contains("i8") {
-                        quote! {
-                            let ret_value_ptr = ret_value.as_mut_ptr();
-                            let ret_value_len = ret_value.len();
-                            let ret_value_cap = ret_value.capacity();
-                            let tmp_ret_name = unsafe {
-                                std::mem::forget(ret_value);
-                                Vec::from_raw_parts(ret_value_ptr as (* mut u8), ret_value_len, ret_value_cap)
-                            };
-                            env.byte_array_from_slice(&tmp_ret_name).unwrap()
-                        }
-                    } else {
-                        quote! {
-                            env.byte_array_from_slice(&ret_value).unwrap()
-                        }
-                    }
-                }
-                _ => {
+                } else {
                     quote! {
-                        let json_ret = serde_json::to_string(&ret_value);
-                        env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
+                        env.byte_array_from_slice(&ret_value).unwrap()
                     }
                 }
-            },
+            }
+            AstType::Vec(_) => {
+                quote! {
+                    let json_ret = serde_json::to_string(&ret_value);
+                    env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
+                }
+            }
             AstType::Struct(name) => {
                 let struct_copy_name = Ident::new(&format!("Struct_{}", name), Span::call_site());
                 quote! {

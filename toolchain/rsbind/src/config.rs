@@ -13,7 +13,7 @@ use crate::mac::config::Mac;
 pub struct Config {
     pub android: Option<Android>,
     pub ios: Option<Ios>,
-    pub mac: Option<Mac>
+    pub mac: Option<Mac>,
 }
 
 ///

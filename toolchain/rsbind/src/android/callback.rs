@@ -168,18 +168,16 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         JValue::Double(#cb_arg_name),
                     },
 
-                    AstType::Vec(ref base) => {
-                        if let AstBaseType::Byte(_) = base {
-                            quote! {
-                                JValue::Object(JObject::from(#cb_arg_name)),
-                            }
-                        } else {
-                            quote! {
-                                JValue::Object(#cb_arg_name),
-                            }
+                    AstType::Vec(AstBaseType::Byte(_)) => {
+                        quote! {
+                            JValue::Object(JObject::from(#cb_arg_name)),
                         }
                     }
-
+                    AstType::Vec(_) => {
+                        quote! {
+                            JValue::Object(#cb_arg_name),
+                        }
+                    }
                     _ => quote! {
                         JValue::Object(#cb_arg_name),
                     },

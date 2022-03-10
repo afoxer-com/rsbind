@@ -209,27 +209,24 @@ impl FileGenStrategy for CFileGenStrategy {
                     let #rust_arg_name: String = #c_slice_ident.to_owned();
                 }
             }
-            AstType::Vec(base) => {
-                if let AstBaseType::Byte(origin) = base {
-                    if origin.contains("i8") {
-                        quote! {
-                            let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i8), #arg_name_ident.len as usize).to_vec() };
-                        }
-                    } else {
-                        quote! {
-                            let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u8), #arg_name_ident.len as usize).to_vec() };
-                        }
+            AstType::Vec(AstBaseType::Byte(origin)) => {
+                if origin.contains("i8") {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i8), #arg_name_ident.len as usize).to_vec() };
                     }
                 } else {
-                    let c_str_ident =
-                        Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                    let c_slice_ident =
-                        Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
                     quote! {
-                        let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
-                        let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
-                        let #rust_arg_name = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u8), #arg_name_ident.len as usize).to_vec() };
                     }
+                }
+            }
+            AstType::Vec(_) => {
+                let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                let c_slice_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                quote! {
+                    let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
+                    let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
+                    let #rust_arg_name = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
                 }
             }
             AstType::Callback(origin) => {
@@ -256,23 +253,21 @@ impl FileGenStrategy for CFileGenStrategy {
             AstType::String => quote! {
                 CString::new(#ret_name_ident).unwrap().into_raw()
             },
-            AstType::Vec(ref base_ty) => match base_ty {
-                AstBaseType::Struct(struct_name) => {
-                    let struct_ident =
-                        Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
-                    quote! {
-                        let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                        let json_ret = serde_json::to_string(&ret_value);
-                        CString::new(json_ret.unwrap()).unwrap().into_raw()
-                    }
+            AstType::Vec(AstBaseType::Struct(struct_name)) => {
+                let struct_ident =
+                    Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
+                quote! {
+                    let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
+                    let json_ret = serde_json::to_string(&ret_value);
+                    CString::new(json_ret.unwrap()).unwrap().into_raw()
                 }
-                _ => {
-                    quote! {
-                        let json_ret = serde_json::to_string(&ret_value);
-                        CString::new(json_ret.unwrap()).unwrap().into_raw()
-                    }
+            }
+            AstType::Vec(_) => {
+                quote! {
+                    let json_ret = serde_json::to_string(&ret_value);
+                    CString::new(json_ret.unwrap()).unwrap().into_raw()
                 }
-            },
+            }
             AstType::Struct(origin) => {
                 let struct_copy_name =
                     Ident::new(&format!("Struct_{}", &origin), Span::call_site());

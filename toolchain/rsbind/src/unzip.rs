@@ -18,13 +18,13 @@ pub(crate) fn unzip_to(buf: &[u8], path: &Path) -> Result<()> {
     for i in 0..archive.len() {
         let zip_file = archive.by_index(i).map_err(|e| ZipError(e.to_string()))?;
 
-        println!("unzip file name = {}", &zip_file.name());
         let file_path = path.join(&zip_file.name());
-        if zip_file.name().ends_with('/') {
-            if file_path.exists() {
-                fs::remove_dir_all(&file_path)?;
+        println!("unzip file name = {} ==> {:?}", &zip_file.name(), &file_path);
+
+        if zip_file.is_dir() {
+            if !file_path.exists() {
+                fs::create_dir_all(&file_path)?;
             }
-            fs::create_dir_all(&file_path)?;
             continue;
         }
 

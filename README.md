@@ -53,11 +53,11 @@ impl YourContract for YourImplemetation {
 
 Rsbind usage:
 ```sh
-rsbind path-of-project android/ios/mac/all ast/bridge/artifact/header/build/mac/all
+rsbind path-of-project android/ios/mac/jar/all  ast/bridge/artifact/header/build/all
 ```
 - ast: generate simplified ast files with json format to _gen/ast.
-- bridge: generate c methods to expose our interface to _gen/[ios/android/mac]_bridge.
-- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android/mac]_artifact).
+- bridge: generate c methods to expose our interface to _gen/[ios/android/mac/jar]_bridge.
+- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android/mac/jar]_artifact).
 - build: build bridge modules and copy output to artifact project and then build artifact project.
 - all: run all the steps for binding.
 
@@ -97,6 +97,15 @@ features_def = []
 rustc_param = ""
 release = true
 features_def = []
+
+[jar]
+rustc_param = ""
+release = true
+namespace = "com.afoxer.xxx.ffi"
+so_name = "demo"
+#ext_lib = []
+#features_def = ["xxxx=[]"]
+
 ```
 
 # Supported Types

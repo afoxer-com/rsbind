@@ -24,13 +24,15 @@ use std::path::PathBuf;
 
 use crate::mac::config::Mac;
 use crate::mac::process::MacProcess;
-use android::config::Android;
-use android::process::AndroidProcess;
-use ast::AstResult;
-use base::process::*;
-use errors::*;
-use ios::config::Ios;
-use ios::process::IosProcess;
+use crate::android::config::Android;
+use crate::android::process::AndroidProcess;
+use crate::ast::AstResult;
+use crate::base::process::*;
+use crate::errors::*;
+use crate::ios::config::Ios;
+use crate::ios::process::IosProcess;
+use crate::jar::config::Jar;
+use crate::jar::process::JarProcess;
 
 mod android;
 mod ast;
@@ -45,6 +47,8 @@ mod mac;
 mod swift;
 mod test;
 mod unzip;
+mod jar;
+mod java;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
@@ -55,6 +59,8 @@ const MAC_PROJ: &str = "mac_artifact";
 const MAC_BRIDGE_PROJ: &str = "mac_bridge";
 const ANDROID_BRIDGE_PROJ: &str = "android_bridge";
 const ANDROID_PROJ: &str = "android_artifact";
+const JAR_BRIDGE_PROJ: &str = "jar_bridge";
+const JAR_PROJ: &str = "jar_artifact";
 
 pub struct Bind {
     prj_path: PathBuf,
@@ -63,7 +69,9 @@ pub struct Bind {
     mac_artifact_path: PathBuf,
     mac_bridge_path: PathBuf,
     android_bridge_path: PathBuf,
-    android_dest_path: PathBuf,
+    android_artifact_path: PathBuf,
+    jar_bridge_path: PathBuf,
+    jar_artifact_path: PathBuf,
     header_path: PathBuf,
     ast_path: PathBuf,
     target: Target,
@@ -74,6 +82,7 @@ pub enum Target {
     Android,
     Ios,
     Mac,
+    Jar,
     All,
 }
 
@@ -124,6 +133,11 @@ impl Bind {
 
         let android_artifact_path = root.join(GEN_DIR_NAME).join(ANDROID_PROJ);
 
+        // ./_gen/jar_bridge
+        let jar_bridge_path = root.join(GEN_DIR_NAME).join(JAR_BRIDGE_PROJ);
+
+        let jar_artifact_path = root.join(GEN_DIR_NAME).join(JAR_PROJ);
+
         Bind {
             prj_path: root,
             ios_artifact_path,
@@ -131,7 +145,9 @@ impl Bind {
             mac_artifact_path,
             mac_bridge_path,
             android_bridge_path,
-            android_dest_path: android_artifact_path,
+            android_artifact_path,
+            jar_bridge_path,
+            jar_artifact_path,
             header_path,
             ast_path,
             target,
@@ -153,24 +169,25 @@ impl Bind {
             return Ok(());
         }
 
+        let ast = &self.get_ast_if_need(crate_name.clone())?;
         match self.target {
             Target::Ios => {
-                let ast = &self.get_ast_if_need(crate_name.clone())?;
                 self.gen_for_ios(&crate_name, ast, config)?;
             }
             Target::Android => {
-                let ast = &self.get_ast_if_need(crate_name.clone())?;
                 self.gen_for_android(&crate_name, ast, config)?;
             }
             Target::Mac => {
-                let ast_result = self.get_ast_if_need(crate_name.clone())?;
-                self.gen_for_mac(&crate_name, &ast_result, config)?;
+                self.gen_for_mac(&crate_name, ast, config)?;
+            }
+            Target::Jar => {
+                self.gen_for_jar(&crate_name, ast, config)?;
             }
             Target::All => {
-                let ast_result = self.get_ast_if_need(crate_name.clone())?;
-                self.gen_for_ios(&crate_name, &ast_result, config.clone())?;
-                self.gen_for_android(&crate_name, &ast_result, config.clone())?;
-                self.gen_for_mac(&crate_name, &ast_result, config)?;
+                self.gen_for_ios(&crate_name, ast, config.clone())?;
+                self.gen_for_android(&crate_name, ast, config.clone())?;
+                self.gen_for_mac(&crate_name, ast, config.clone())?;
+                self.gen_for_jar(&crate_name, ast, config)?;
             }
         };
         Ok(())
@@ -200,6 +217,51 @@ impl Bind {
         ast::AstHandler::new(crate_name)
             .parse(&prj_path)?
             .flush(&self.ast_path)
+    }
+
+
+    ///
+    /// generate the jar framework
+    fn gen_for_jar(
+        &self,
+        crate_name: &str,
+        ast_result: &AstResult,
+        config: Option<config::Config>,
+    ) -> Result<()> {
+        let jar = match config {
+            Some(ref config) => config.jar.clone(),
+            None => Some(Jar::default()),
+        };
+
+        let jar_process = JarProcess::new(
+            &self.prj_path,
+            &self.jar_artifact_path,
+            &self.jar_bridge_path,
+            crate_name,
+            ast_result,
+            jar,
+        );
+
+        match self.action {
+            Action::GenAst => (),
+            Action::GenBridge => jar_process.gen_bridge_src()?,
+            Action::GenArtifactCode => jar_process.gen_artifact_code()?,
+            Action::GenCHeader => {},
+            Action::BuildArtifact => {
+                jar_process.build_bridge_prj()?;
+                jar_process.copy_bridge_outputs()?;
+                jar_process.build_artifact_prj()?;
+            }
+            Action::All => {
+                jar_process.gen_bridge_src()?;
+                jar_process.gen_artifact_code()?;
+                jar_process.build_bridge_prj()?;
+                jar_process.copy_bridge_outputs()?;
+                jar_process.build_artifact_prj()?;
+            }
+        }
+
+        Ok(())
     }
 
     ///
@@ -312,7 +374,7 @@ impl Bind {
 
         let android_process = AndroidProcess::new(
             &self.prj_path,
-            &self.android_dest_path,
+            &self.android_artifact_path,
             &self.android_bridge_path,
             crate_name,
             ast_result,

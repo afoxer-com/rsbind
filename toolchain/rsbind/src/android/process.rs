@@ -7,7 +7,7 @@ use std::process::Command;
 use fs_extra::dir::CopyOptions;
 use syn::__private::str;
 
-use crate::android::artifact::JavaCodeGen;
+use crate::java::artifact::JavaCodeGen;
 use crate::ast::AstResult;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
@@ -259,15 +259,16 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             .join("src")
             .join("main")
             .join("java");
-        if output_dir.exists() {
-            fs::remove_dir_all(&output_dir).unwrap();
-        }
         fs::create_dir_all(&output_dir).unwrap();
 
         let namespace = self.config().namespace();
         let pkg_split = namespace.split('.').collect::<Vec<&str>>();
         for pkg_part in pkg_split.iter() {
             output_dir = output_dir.join(pkg_part);
+        }
+
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir).unwrap();
         }
 
         let options = CopyOptions {

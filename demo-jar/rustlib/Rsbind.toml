@@ -1,0 +1,8 @@
+
+[jar]
+rustc_param = ""
+release = true
+namespace = "com.afoxer.xxx.ffi"
+so_name = "demo"
+#ext_lib = []
+#features_def = ["xxxx=[]"]

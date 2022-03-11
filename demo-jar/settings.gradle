@@ -1,0 +1,4 @@
+rootProject.name = 'demo'
+include ':app'
+include ':rustlib'
+project(":rustlib").projectDir = file("rustlib/_gen/jar_artifact/rustlib")

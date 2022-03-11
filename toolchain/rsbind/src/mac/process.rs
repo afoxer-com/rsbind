@@ -124,12 +124,6 @@ impl<'a> BuildProcess for MacProcess<'a> {
     fn build_bridge_prj(&self) -> Result<()> {
         println!("run building rust project for Mac");
 
-        let debug_release = if self.config().is_release() {
-            "release"
-        } else {
-            "debug"
-        };
-
         let build_cmds = format!(
             "cargo build --lib {} --target-dir {} {}",
             self.config().release_str(),

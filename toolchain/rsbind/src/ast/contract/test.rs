@@ -22,7 +22,7 @@ mod tests {
         ";
 
         let (trait_desc, struct_desc) =
-            parse_from_str("demo_crate", "demo_mod", contract_str).unwrap();
+            parse_from_str("demo_crate", "demo_mod", contract_str, "contract").unwrap();
         assert_eq!(trait_desc.len(), 2);
         assert_eq!(struct_desc.len(), 1);
         assert_eq!(trait_desc[0].name, "FfiContract");

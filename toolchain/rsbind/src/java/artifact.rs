@@ -238,7 +238,11 @@ impl<'a> TraitGen<'a> {
         body.push("static {");
         body.nested({
             let mut load_lib_tokens = Tokens::new();
-            load_lib_tokens.push(toks!("com.afoxer.rsbind.Common.loadLibrary(\"", self.so_name.clone(), "\");"));
+            load_lib_tokens.push(toks!(
+                "com.afoxer.rsbind.Common.loadLibrary(\"",
+                self.so_name.clone(),
+                "\");"
+            ));
             let ext_libs = self.ext_libs.split(',').collect::<Vec<&str>>();
             for ext_lib in ext_libs.iter() {
                 if !ext_lib.to_owned().is_empty() {

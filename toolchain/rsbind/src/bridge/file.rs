@@ -246,7 +246,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                 );
             } else {
                 let use_part = self
-                    .quote_one_use_part(&trait_desc.mod_name, &imps[0].mod_name)
+                    .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
                     .unwrap();
                 merge = quote! {
                    #use_part
@@ -258,15 +258,24 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         Ok(merge)
     }
 
-    fn quote_one_use_part(&self, trait_mod_name: &str, imp_mod_name: &str) -> Result<TokenStream> {
-        let trait_ident = Ident::new(trait_mod_name, Span::call_site());
-        let mod_ident = Ident::new(imp_mod_name, Span::call_site());
-        let use_part = quote! {
-            use ::imp::#mod_ident::*;
-            use ::contract::#trait_ident::*;
-        };
+    fn quote_one_use_part(&self, trait_mod_path: &str, imp_mod_path: &str) -> Result<TokenStream> {
+        let trait_mod_splits: Vec<Ident> = trait_mod_path
+            .split("::")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|str| Ident::new(str, Span::call_site()))
+            .collect();
+        let imp_mod_splits: Vec<Ident> = imp_mod_path
+            .split("::")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|str| Ident::new(str, Span::call_site()))
+            .collect();
 
-        Ok(use_part)
+        Ok(quote! {
+            use #(#trait_mod_splits::)**;
+            use #(#imp_mod_splits::)**;
+        })
     }
 
     ///

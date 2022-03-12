@@ -4,12 +4,12 @@
 //!
 use std::path::{Path, PathBuf};
 
-use crate::java::bridge as android_bridge;
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::AstResult;
 use crate::bridge::gen;
 use crate::errors::*;
+use crate::java::bridge as android_bridge;
 use crate::swift::bridge as ios_bridge;
 
 pub(crate) enum BridgeGen<'a> {

@@ -7,13 +7,13 @@ use std::process::Command;
 use fs_extra::dir::CopyOptions;
 use syn::__private::str;
 
-use crate::java::artifact::JavaCodeGen;
 use crate::ast::AstResult;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
 use crate::bridges::BridgeGen::JavaGen;
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::java::artifact::JavaCodeGen;
 use crate::ndk_tool::{build, BuildConfig};
 use crate::unzip;
 

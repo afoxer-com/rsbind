@@ -15,7 +15,7 @@ use super::desc::*;
 ///
 /// Parse all the files in a directory.
 ///
-pub(crate) fn parse_dir(dir: &Path) -> Result<Vec<ImpDesc>> {
+pub(crate) fn parse_dir(dir: &Path, mod_path: &str) -> Result<Vec<ImpDesc>> {
     println!("begin parsing dir {:?}", dir);
     let mut result: Vec<ImpDesc> = vec![];
 
@@ -33,7 +33,8 @@ pub(crate) fn parse_dir(dir: &Path) -> Result<Vec<ImpDesc>> {
         }
 
         println!("begin parsing file => {} ", path_str);
-        let one_file_result = parse(path_str)?;
+        let path = format!("{}::{}", mod_path, file_path.file_stem().unwrap().to_string_lossy());
+        let one_file_result = parse(path_str, &path)?;
         for each in one_file_result {
             result.push(each)
         }
@@ -44,7 +45,7 @@ pub(crate) fn parse_dir(dir: &Path) -> Result<Vec<ImpDesc>> {
 ///
 /// parse a implementation file to description info.
 ///
-pub(crate) fn parse(file: &str) -> Result<Vec<ImpDesc>> {
+pub(crate) fn parse(file: &str, mod_path: &str) -> Result<Vec<ImpDesc>> {
     // open file.
     let mut real_file = fs::File::open(file).map_err(|e| ParseError(e.to_string()))?;
 
@@ -57,15 +58,16 @@ pub(crate) fn parse(file: &str) -> Result<Vec<ImpDesc>> {
     // parse file to ast.
     let syn_file = syn::parse_file(&content).map_err(|e| ParseError(e.to_string()))?;
 
-    parse_content(&syn_file, file)
+    parse_content(&syn_file, file, mod_path)
 }
 
-fn parse_content(file: &syn::File, file_name: &str) -> Result<Vec<ImpDesc>> {
+fn parse_content(file: &syn::File, file_path: &str, mod_path: &str) -> Result<Vec<ImpDesc>> {
     let mut imp_descs: Vec<ImpDesc> = vec![];
 
     for item in file.items.iter() {
         let mut trait_ident = None;
         let mut impl_ident = None;
+        let mut path = "".to_string();
         match *item {
             syn::Item::Impl(ref imp_inner) => {
                 if let Some((_, path, _)) = &imp_inner.trait_ {
@@ -80,18 +82,20 @@ fn parse_content(file: &syn::File, file_name: &str) -> Result<Vec<ImpDesc>> {
             _ => continue,
         }
 
-        let mod_name = PathBuf::from(file_name.to_string())
+        let mod_name = PathBuf::from(file_path.to_string())
             .file_stem()
             .unwrap()
             .to_str()
             .unwrap()
             .to_string();
+
         match (trait_ident, impl_ident) {
             (Some(trait_name), Some(impl_name)) => {
                 let imp_desc = ImpDesc {
                     name: impl_name,
                     contract: trait_name,
                     mod_name,
+                    mod_path: mod_path.to_string()
                 };
                 imp_descs.push(imp_desc)
             }

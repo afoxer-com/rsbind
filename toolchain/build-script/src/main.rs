@@ -89,11 +89,11 @@ fn main() {
         &format!("{}/template/template-bridge-jar.zip", outdir),
         "src/jar/res/template_bridge_jar.zip",
     )
-        .unwrap();
+    .unwrap();
 
     fs::copy(
         &format!("{}/template/template-jar.zip", outdir),
         "src/jar/res/template_jar.zip",
     )
-        .unwrap();
+    .unwrap();
 }

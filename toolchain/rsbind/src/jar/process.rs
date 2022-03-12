@@ -134,11 +134,7 @@ impl<'a> BuildProcess for JarProcess<'a> {
         }
 
         if let Some(rustc_param) = self.config().rustc_param {
-            build_cmds = format!(
-                "{} {}",
-                &build_cmds,
-                &rustc_param
-            );
+            build_cmds = format!("{} {}", &build_cmds, &rustc_param);
         }
 
         println!("run building => {}", &build_cmds);

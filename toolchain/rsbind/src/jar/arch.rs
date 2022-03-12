@@ -10,7 +10,7 @@ pub(crate) enum Arch {
     Osx32,
     Osx64,
     OsxPpc,
-    OsxArm64
+    OsxArm64,
 }
 
 impl Arch {
@@ -55,7 +55,8 @@ impl Arch {
             Arch::Osx32 => "osx_32",
             Arch::Osx64 => "osx_64",
             Arch::OsxPpc => "osx_ppc",
-            Arch::OsxArm64 => "osx_arm64"
-        }.to_string()
+            Arch::OsxArm64 => "osx_arm64",
+        }
+        .to_string()
     }
 }

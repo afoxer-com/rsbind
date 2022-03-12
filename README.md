@@ -8,7 +8,13 @@
 # Step by step.
 1. [Setup rust environment](/docs/env.md).
 2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
-3. Create a Rust library, which contains two directory, contract and imp. You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
+3. Create a Rust library, which contains two mod, contract and imp. There are two structures you can arrange.
+- First structure:  
+![alt First structure picture](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/first_structure.jpg)
+- Second structure:  
+![alt Second structure picture](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/second_structure.jpg)
+
+ You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
 ```rust
 // such as your code in contract dir as below:
 pub trait YourContract {

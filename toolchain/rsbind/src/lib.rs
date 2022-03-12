@@ -22,8 +22,6 @@ extern crate zip;
 use std::fs;
 use std::path::PathBuf;
 
-use crate::mac::config::Mac;
-use crate::mac::process::MacProcess;
 use crate::android::config::Android;
 use crate::android::process::AndroidProcess;
 use crate::ast::AstResult;
@@ -33,6 +31,8 @@ use crate::ios::config::Ios;
 use crate::ios::process::IosProcess;
 use crate::jar::config::Jar;
 use crate::jar::process::JarProcess;
+use crate::mac::config::Mac;
+use crate::mac::process::MacProcess;
 
 mod android;
 mod ast;
@@ -43,12 +43,12 @@ mod cargo;
 mod config;
 mod errors;
 mod ios;
+mod jar;
+mod java;
 mod mac;
 mod swift;
 mod test;
 mod unzip;
-mod jar;
-mod java;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
@@ -219,7 +219,6 @@ impl Bind {
             .flush(&self.ast_path)
     }
 
-
     ///
     /// generate the jar framework
     fn gen_for_jar(
@@ -246,7 +245,7 @@ impl Bind {
             Action::GenAst => (),
             Action::GenBridge => jar_process.gen_bridge_src()?,
             Action::GenArtifactCode => jar_process.gen_artifact_code()?,
-            Action::GenCHeader => {},
+            Action::GenCHeader => {}
             Action::BuildArtifact => {
                 jar_process.build_bridge_prj()?;
                 jar_process.copy_bridge_outputs()?;

@@ -19,7 +19,11 @@ pub(crate) fn unzip_to(buf: &[u8], path: &Path) -> Result<()> {
         let zip_file = archive.by_index(i).map_err(|e| ZipError(e.to_string()))?;
 
         let file_path = path.join(&zip_file.name());
-        println!("unzip file name = {} ==> {:?}", &zip_file.name(), &file_path);
+        println!(
+            "unzip file name = {} ==> {:?}",
+            &zip_file.name(),
+            &file_path
+        );
 
         if zip_file.is_dir() {
             if !file_path.exists() {

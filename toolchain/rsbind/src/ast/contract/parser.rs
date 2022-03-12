@@ -19,6 +19,7 @@ use super::desc::*;
 pub(crate) fn parse(
     crate_name: String,
     file_path: &Path,
+    mod_path: &str
 ) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
     let mut file = File::open(file_path).map_err(|e| ParseError(e.to_string()))?;
 
@@ -33,13 +34,14 @@ pub(crate) fn parse(
         .unwrap()
         .to_string();
 
-    parse_from_str(&crate_name, &mod_name, &src)
+    parse_from_str(&crate_name, &mod_name, &src, mod_path)
 }
 
 pub(crate) fn parse_from_str(
     crate_name: &str,
     mod_name: &str,
     src: &str,
+    mod_path: &str
 ) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
     let syn_file = syn::parse_file(src).map_err(|e| ParseError(e.to_string()))?;
 
@@ -59,6 +61,7 @@ pub(crate) fn parse_from_str(
                     name: trait_name,
                     ty: "trait".to_string(),
                     mod_name: mod_name.to_string(),
+                    mod_path: mod_path.to_string(),
                     crate_name: crate_name.to_string(),
                     is_callback: methods.1,
                     methods: methods.0,
@@ -98,6 +101,7 @@ pub(crate) fn parse_from_str(
                     name: stuct_name,
                     ty: "struct".to_string(),
                     mod_name: mod_name.to_string(),
+                    mod_path: mod_path.to_string(),
                     crate_name: crate_name.to_string(),
                     fields: field_descs,
                 };
@@ -240,30 +244,27 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
                 let angle_bracketed = &segments[segments.len() - 1].arguments;
                 if let syn::PathArguments::AngleBracketed(t) = angle_bracketed {
                     println!("parsing Boxed inner.");
-                    let arg = &t.args[0];
-                    if let syn::GenericArgument::Type(ty) = arg {
-                        match ty {
-                            syn::Type::Path(ref type_path) => {
-                                println!("found boxed types = {:?})", type_path);
-                                let segments = &(type_path.path.segments);
-                                let ident = (&segments[segments.len() - 1].ident).to_string();
-                                arg_type = Some(AstType::new("Box", &ident));
-                            }
-                            syn::Type::TraitObject(ref trait_obj) => {
-                                if trait_obj.dyn_token.is_some() {
-                                    let bounds = &trait_obj.bounds;
-                                    for bound in bounds.iter() {
-                                        if let TypeParamBound::Trait(trait_bound) = bound.clone() {
-                                            let segments = trait_bound.path.segments;
-                                            let ident =
-                                                (&segments[segments.len() - 1].ident).to_string();
-                                            arg_type = Some(AstType::new("Box", &ident));
-                                        }
+                    match &t.args[0] {
+                        syn::GenericArgument::Type(syn::Type::Path(ref type_path)) => {
+                            println!("found boxed types = {:?})", type_path);
+                            let segments = &(type_path.path.segments);
+                            let ident = (&segments[segments.len() - 1].ident).to_string();
+                            arg_type = Some(AstType::new("Box", &ident));
+                        }
+                        syn::GenericArgument::Type(syn::Type::TraitObject(ref trait_obj)) => {
+                            if trait_obj.dyn_token.is_some() {
+                                let bounds = &trait_obj.bounds;
+                                for bound in bounds.iter() {
+                                    if let TypeParamBound::Trait(trait_bound) = bound.clone() {
+                                        let segments = trait_bound.path.segments;
+                                        let ident =
+                                            (&segments[segments.len() - 1].ident).to_string();
+                                        arg_type = Some(AstType::new("Box", &ident));
                                     }
                                 }
                             }
-                            _ => {}
                         }
+                        _ => {}
                     }
                 }
             } else if ident == "Vec" {

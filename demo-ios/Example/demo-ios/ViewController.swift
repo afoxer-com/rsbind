@@ -10,6 +10,8 @@ import UIKit
 import rustlib
 
 class ViewController: UIViewController, DemoCallback {
+    private var demoTrait = RustLib.newDemoTrait();
+    
     func test_f32_30(arg: Float, arg2: Float) -> Float {
         30.0
     }
@@ -101,8 +103,8 @@ class ViewController: UIViewController, DemoCallback {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        DemoTrait.setup()
-        DemoTrait.test_arg_callback_16(arg: self)
+        demoTrait.setup()
+        demoTrait.test_arg_callback_16(arg: self)
     }
 
     override func didReceiveMemoryWarning() {

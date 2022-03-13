@@ -20,7 +20,7 @@ use crate::java::callback::CallbackGen;
 use crate::java::internal::InnerTraitGen;
 use crate::java::interface::InterfaceGen;
 use crate::java::manager::ManagerGen;
-use crate::java::wrapper::OuterTraitGen;
+use crate::java::wrapper::WrapperGen;
 use crate::java::struct_::StructGen;
 
 pub(crate) struct JavaCodeGen<'a> {
@@ -78,7 +78,7 @@ impl<'a> JavaCodeGen<'a> {
                     let path = self.java_gen_dir.clone().join(file_name);
                     fs::write(path, str)?;
 
-                    let gen = OuterTraitGen {
+                    let gen = WrapperGen {
                         desc: each,
                         pkg: self.namespace.clone()
                     };

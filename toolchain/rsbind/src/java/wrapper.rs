@@ -6,12 +6,12 @@ use crate::ast::types::AstType;
 use crate::errors::*;
 use crate::java::types::{JavaType, to_java_file};
 
-pub(crate) struct OuterTraitGen<'a> {
+pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,
     pub pkg: String,
 }
 
-impl<'a> OuterTraitGen<'a> {
+impl<'a> WrapperGen<'a> {
     /// Generate Java Code for rust trait.
     pub(crate) fn gen(&self) -> Result<String> {
         let outer_class_name = format!("Rust{}", &self.desc.name);

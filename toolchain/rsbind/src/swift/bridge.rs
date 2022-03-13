@@ -10,7 +10,7 @@ use crate::errors::*;
 use crate::swift::mapping::RustMapping;
 use proc_macro2::{Ident, Span, TokenStream};
 
-use super::callback::*;
+use super::bridge_cb::*;
 
 ///
 /// create a new c bridges generator.

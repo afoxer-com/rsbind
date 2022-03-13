@@ -196,6 +196,18 @@ pub extern "C" fn test_contract1_test_arg_vec_bool_13(arg_true: *const c_char) -
     ret_value as i32
 }
 #[no_mangle]
+pub extern "C" fn test_contract1_test_arg_vec_struct_14(arg: *const c_char) -> i32 {
+    let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let c_tmp_arg: Vec<Struct_DemoStruct> = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
+    let r_arg = c_tmp_arg
+        .into_iter()
+        .map(|each| DemoStruct::from(each))
+        .collect();
+    let ret_value = TestContract1Imp::test_arg_vec_struct_14(r_arg);
+    ret_value as i32
+}
+#[no_mangle]
 pub extern "C" fn test_contract1_test_two_vec_arg_15(
     arg: *const c_char,
     arg1: *const c_char,

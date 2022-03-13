@@ -73,6 +73,8 @@ int32_t test_contract1_test_arg_vec_u32_12(const char *arg);
 
 int32_t test_contract1_test_arg_vec_bool_13(const char *arg_true);
 
+int32_t test_contract1_test_arg_vec_struct_14(const char *arg);
+
 int32_t test_contract1_test_two_vec_arg_15(const char *arg, const char *arg1);
 
 char *test_contract1_test_return_vec_str(void);

@@ -7,30 +7,33 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1E124AB026B6347FA854B771A5D4EDE6 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */; };
+		0B9E0AC07EB85989EDAA832573F305DE /* DemoStruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AB288DDC7A6C462E22CE9FC93844B97 /* DemoStruct.swift */; };
+		322ED76D5C86725D8135E5B75FA70EA4 /* DemoTrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA44FC86DE0551F081C1ADAE5C75383D /* DemoTrait.swift */; };
 		3689326136711C9920A2FCAA461F02A0 /* Pods-demo-ios_Example-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = B410C7C32FCC2F581F7967F5318060A1 /* Pods-demo-ios_Example-dummy.m */; };
-		4B48FE13673920354B4D0453A907CE57 /* rustlib-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = B1164F854F86D54596710B30EC31A184 /* rustlib-dummy.m */; };
 		5337D698D253815EF15FA5BBDC1E86A5 /* Pods-demo-ios_ExampleTests-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = AF58E68231B27E7DE6CEEF0CB64D575C /* Pods-demo-ios_ExampleTests-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		5576789956BC63EF3FAEF3B7E7970638 /* RustLib.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C9ACE2D86E8DE3D73C5CA5BB40868F4 /* RustLib.swift */; };
 		754BC5E1E34D98F63EA1807C71AD973D /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */; };
-		80C5B53DAE03E76807EB74DA3AF6DF50 /* rustlib-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 753F1040BCA54395E78EF103EDA7D00A /* rustlib-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		8060E754A387E6452307E7FC5CB5C7D4 /* RustDemoTrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = B598E73AF654B8DA897BC19DD9B0F372 /* RustDemoTrait.swift */; };
 		82B7EBF0B6BA13073B96B5651178BC93 /* Pods-demo-ios_ExampleTests-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = BB0FFD919DC6E99EBE453822AA75C21B /* Pods-demo-ios_ExampleTests-dummy.m */; };
-		CED7C186844B815E609E51C9BF3B632B /* DemoStruct.swift in Sources */ = {isa = PBXBuildFile; fileRef = 856BFCA09F58E22CE0383F203CF7B94A /* DemoStruct.swift */; };
-		CF0459A7E6C437835E6AB5140C2DB253 /* DemoCallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A6A3F187702C1366EB6DF7EFE804C8D /* DemoCallback.swift */; };
-		D948682DED00631A6A45EFF56FE0C837 /* ffi.h in Headers */ = {isa = PBXBuildFile; fileRef = A0CBA97AB042FA1B17D6135F756EC541 /* ffi.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		E6C58DF42A5D27226A80348E77B893DC /* DemoTrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6301C3028C546B7CD1A237F4A32D9063 /* DemoTrait.swift */; };
+		BC5E538B4A260043038662470B64A7B5 /* ffi.h in Headers */ = {isa = PBXBuildFile; fileRef = 7272D368036D1D91DAEA586589505096 /* ffi.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		BC62D350D52EB8A0723EFF46D2A83329 /* rustlib-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = A3D5E5F047A00F9D72DABEEF18ABA3E4 /* rustlib-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		C0A96F2380816DA06BE492CC617F355E /* DemoCallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE33BF560FA9109B4910BC861C95B3E1 /* DemoCallback.swift */; };
+		D8BEDA2701266D17FFBFFB5AA8D5E282 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */; };
+		E6CED5798AC1719DD9377EA9CC483A43 /* InternalDemoTrait.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40187E1120AF1CA4F5718375F04F4FD0 /* InternalDemoTrait.swift */; };
+		FC1369134EFC2C3EFA41A62C5D918CB2 /* rustlib-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = D50010E4C6D39EDB34B7612C71843B27 /* rustlib-dummy.m */; };
 		FED132E901AC14198DA33EE5DD9EAC1B /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */; };
 		FF0363365DFA44BC0D91BE05A223A79C /* Pods-demo-ios_Example-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 13729AB0FE5208C39D8C286623BF2D3F /* Pods-demo-ios_Example-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		21F6D61DCE0722A775B38EFA50EC8A16 /* PBXContainerItemProxy */ = {
+		BACB846E6A25F606F3717A64539D15AB /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = FAAF59FE2761F66386446F68F35CD3B0;
 			remoteInfo = rustlib;
 		};
-		C52FBF351274ABFAE2A6597BC3391218 /* PBXContainerItemProxy */ = {
+		C52BC37F665EF48D2C078AAA7E1C0C8F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
 			proxyType = 1;
@@ -40,42 +43,45 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		0050F82060B3C1D01FD7175C19720C81 /* rustlib-prefix.pch */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "rustlib-prefix.pch"; sourceTree = "<group>"; };
-		0285D78BCCDEBDF333E883E1D0D650B0 /* rustlib.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = rustlib.modulemap; sourceTree = "<group>"; };
+		01E0751E66B6D5D748A62F91425A797D /* libFfi.a */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = archive.ar; name = libFfi.a; path = rustlib/Libraries/libFfi.a; sourceTree = "<group>"; };
 		10848B948EB09982D117D4DCF80FAAE7 /* rustlib */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = rustlib; path = rustlib.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		13729AB0FE5208C39D8C286623BF2D3F /* Pods-demo-ios_Example-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-demo-ios_Example-umbrella.h"; sourceTree = "<group>"; };
 		23DD4B4683BEF1414CC8AB67F8F760F3 /* Pods-demo-ios_Example-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-demo-ios_Example-frameworks.sh"; sourceTree = "<group>"; };
 		2870DF59249055E869E38958F75E1A13 /* Pods-demo-ios_Example */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-demo-ios_Example"; path = Pods_demo_ios_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		3F9561A8107ABF3ECD46A798B1371474 /* libFfi.a */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = archive.ar; name = libFfi.a; path = rustlib/Libraries/libFfi.a; sourceTree = "<group>"; };
+		3AB288DDC7A6C462E22CE9FC93844B97 /* DemoStruct.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DemoStruct.swift; path = rustlib/Classes/DemoStruct.swift; sourceTree = "<group>"; };
+		3EAAFC659CBD6207BFF8818F4F91F0F1 /* rustlib.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = rustlib.debug.xcconfig; sourceTree = "<group>"; };
+		40187E1120AF1CA4F5718375F04F4FD0 /* InternalDemoTrait.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = InternalDemoTrait.swift; path = rustlib/Classes/InternalDemoTrait.swift; sourceTree = "<group>"; };
 		434C566DE4E405252C5AAEB339032CFC /* Pods-demo-ios_ExampleTests.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-demo-ios_ExampleTests.modulemap"; sourceTree = "<group>"; };
-		46E708E7BE8F5D598101684CDCBA120D /* rustlib-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "rustlib-Info.plist"; sourceTree = "<group>"; };
+		496FF97754C52E120F581ED8646BDFCA /* rustlib.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = rustlib.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		4CDA353306568774478CB05B358D30D7 /* Pods-demo-ios_Example-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-demo-ios_Example-acknowledgements.plist"; sourceTree = "<group>"; };
 		52CE1ABF900CF368AA7A799DFBED3E7A /* Pods-demo-ios_ExampleTests-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-demo-ios_ExampleTests-Info.plist"; sourceTree = "<group>"; };
-		585B635C965942303211150A1AE3AFC9 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
-		6301C3028C546B7CD1A237F4A32D9063 /* DemoTrait.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DemoTrait.swift; path = rustlib/Classes/DemoTrait.swift; sourceTree = "<group>"; };
 		6418470A8E44F2D9A6C838FD1E0D516C /* Pods-demo-ios_Example.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-demo-ios_Example.modulemap"; sourceTree = "<group>"; };
-		69178B18FF9D6321D621FA0A0F0BA5B7 /* rustlib.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = rustlib.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		7272D368036D1D91DAEA586589505096 /* ffi.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = ffi.h; path = rustlib/Classes/ffi.h; sourceTree = "<group>"; };
 		72A8C86318D943932F39AF377D46D5ED /* Pods-demo-ios_ExampleTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-demo-ios_ExampleTests.debug.xcconfig"; sourceTree = "<group>"; };
 		73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS14.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		753F1040BCA54395E78EF103EDA7D00A /* rustlib-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "rustlib-umbrella.h"; sourceTree = "<group>"; };
-		7A6A3F187702C1366EB6DF7EFE804C8D /* DemoCallback.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DemoCallback.swift; path = rustlib/Classes/DemoCallback.swift; sourceTree = "<group>"; };
+		74C756FAC971BB9C1E577DE9D55F5455 /* rustlib-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "rustlib-Info.plist"; sourceTree = "<group>"; };
+		757DE0EF212C5AC1AD9E17C85E7E3FD8 /* rustlib-prefix.pch */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "rustlib-prefix.pch"; sourceTree = "<group>"; };
 		7F853C925EA0777716559E77F49A55E8 /* Pods-demo-ios_Example-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-demo-ios_Example-Info.plist"; sourceTree = "<group>"; };
 		835AEF2FB2F7765158E37D8879099AC9 /* Pods-demo-ios_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-demo-ios_Example.release.xcconfig"; sourceTree = "<group>"; };
-		856BFCA09F58E22CE0383F203CF7B94A /* DemoStruct.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DemoStruct.swift; path = rustlib/Classes/DemoStruct.swift; sourceTree = "<group>"; };
+		8AF8CB1B45C4FBB51B036FFB662645FB /* rustlib.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = rustlib.modulemap; sourceTree = "<group>"; };
+		91798F4067AC50B28D986D9CDC4A37C4 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; path = README.md; sourceTree = "<group>"; };
 		9BF8A79A9CD310198758009EDD9D435A /* Pods-demo-ios_ExampleTests-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-demo-ios_ExampleTests-acknowledgements.plist"; sourceTree = "<group>"; };
+		9C9ACE2D86E8DE3D73C5CA5BB40868F4 /* RustLib.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RustLib.swift; path = rustlib/Classes/RustLib.swift; sourceTree = "<group>"; };
 		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
-		A0CBA97AB042FA1B17D6135F756EC541 /* ffi.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = ffi.h; path = rustlib/Classes/ffi.h; sourceTree = "<group>"; };
-		A637CF7D06BF1288B6E010939FDD96D5 /* rustlib.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = rustlib.debug.xcconfig; sourceTree = "<group>"; };
+		A3D5E5F047A00F9D72DABEEF18ABA3E4 /* rustlib-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "rustlib-umbrella.h"; sourceTree = "<group>"; };
 		AF58E68231B27E7DE6CEEF0CB64D575C /* Pods-demo-ios_ExampleTests-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-demo-ios_ExampleTests-umbrella.h"; sourceTree = "<group>"; };
-		B1164F854F86D54596710B30EC31A184 /* rustlib-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "rustlib-dummy.m"; sourceTree = "<group>"; };
 		B410C7C32FCC2F581F7967F5318060A1 /* Pods-demo-ios_Example-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-demo-ios_Example-dummy.m"; sourceTree = "<group>"; };
+		B598E73AF654B8DA897BC19DD9B0F372 /* RustDemoTrait.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = RustDemoTrait.swift; path = rustlib/Classes/RustDemoTrait.swift; sourceTree = "<group>"; };
 		BB0FFD919DC6E99EBE453822AA75C21B /* Pods-demo-ios_ExampleTests-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-demo-ios_ExampleTests-dummy.m"; sourceTree = "<group>"; };
+		BD8EF83B88C9EA2147430757DF755FDB /* rustlib.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = rustlib.release.xcconfig; sourceTree = "<group>"; };
 		C6655C7FE87D15626BEA4F275F32ECDE /* Pods-demo-ios_ExampleTests */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-demo-ios_ExampleTests"; path = Pods_demo_ios_ExampleTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C8228AE726F0B08267E8E24CCC410A73 /* Pods-demo-ios_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-demo-ios_Example.debug.xcconfig"; sourceTree = "<group>"; };
+		CB09B0AFE0B731CF43420CFCC9B136D3 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE; sourceTree = "<group>"; };
+		CE33BF560FA9109B4910BC861C95B3E1 /* DemoCallback.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DemoCallback.swift; path = rustlib/Classes/DemoCallback.swift; sourceTree = "<group>"; };
 		D14B5DF2FE7E6FE281324F0D76BDA79D /* Pods-demo-ios_ExampleTests-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-demo-ios_ExampleTests-acknowledgements.markdown"; sourceTree = "<group>"; };
 		D24C12DDB13A2BBC6993D8F0C0DF5CFC /* Pods-demo-ios_Example-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-demo-ios_Example-acknowledgements.markdown"; sourceTree = "<group>"; };
-		D56C210A249D82F9BD8710A9FAE260B1 /* rustlib.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = rustlib.release.xcconfig; sourceTree = "<group>"; };
-		E76F180D7CF488262BED6A74383DB0B2 /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; path = LICENSE; sourceTree = "<group>"; };
+		D50010E4C6D39EDB34B7612C71843B27 /* rustlib-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "rustlib-dummy.m"; sourceTree = "<group>"; };
+		EA44FC86DE0551F081C1ADAE5C75383D /* DemoTrait.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DemoTrait.swift; path = rustlib/Classes/DemoTrait.swift; sourceTree = "<group>"; };
 		EC586FCA252FB4720323D312A215D193 /* Pods-demo-ios_ExampleTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-demo-ios_ExampleTests.release.xcconfig"; sourceTree = "<group>"; };
 		FCD25C8F1F82276F6C964476D4594492 /* Pods-demo-ios_ExampleTests-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-demo-ios_ExampleTests-frameworks.sh"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -89,11 +95,11 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		98B4EEA32264F73F4F02374BED330EA5 /* Frameworks */ = {
+		89772C088EA971AFF64DE7F58DEA67D7 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1E124AB026B6347FA854B771A5D4EDE6 /* Foundation.framework in Frameworks */,
+				D8BEDA2701266D17FFBFFB5AA8D5E282 /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -108,30 +114,38 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		107AB329B0D627AC737F56BD2BE08757 /* Development Pods */ = {
-			isa = PBXGroup;
-			children = (
-				AAE5C898A5EFCA367FAE44E2B5B20A86 /* rustlib */,
-			);
-			name = "Development Pods";
-			sourceTree = "<group>";
-		};
-		1455FB6A07AD3AFD1E5295B2E483BC68 /* Pod */ = {
-			isa = PBXGroup;
-			children = (
-				E76F180D7CF488262BED6A74383DB0B2 /* LICENSE */,
-				585B635C965942303211150A1AE3AFC9 /* README.md */,
-				69178B18FF9D6321D621FA0A0F0BA5B7 /* rustlib.podspec */,
-			);
-			name = Pod;
-			sourceTree = "<group>";
-		};
 		578452D2E740E91742655AC8F1636D1F /* iOS */ = {
 			isa = PBXGroup;
 			children = (
 				73010CC983E3809BECEE5348DA1BB8C6 /* Foundation.framework */,
 			);
 			name = iOS;
+			sourceTree = "<group>";
+		};
+		5F21C367B35694DF16226FB44EDE50FD /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				01E0751E66B6D5D748A62F91425A797D /* libFfi.a */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6C63AF796CD6B69CB1B70650523413FA /* Pod */ = {
+			isa = PBXGroup;
+			children = (
+				CB09B0AFE0B731CF43420CFCC9B136D3 /* LICENSE */,
+				91798F4067AC50B28D986D9CDC4A37C4 /* README.md */,
+				496FF97754C52E120F581ED8646BDFCA /* rustlib.podspec */,
+			);
+			name = Pod;
+			sourceTree = "<group>";
+		};
+		8014DA7F1B461C7BAC8624B0AF2BD503 /* Development Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E43DE22F6DA0C890FD1B46DE1613FD1F /* rustlib */,
+			);
+			name = "Development Pods";
 			sourceTree = "<group>";
 		};
 		94E8F5DD9B7C74898ED521C108004F81 /* Pods-demo-ios_Example */ = {
@@ -151,34 +165,11 @@
 			path = "Target Support Files/Pods-demo-ios_Example";
 			sourceTree = "<group>";
 		};
-		AAE5C898A5EFCA367FAE44E2B5B20A86 /* rustlib */ = {
-			isa = PBXGroup;
-			children = (
-				7A6A3F187702C1366EB6DF7EFE804C8D /* DemoCallback.swift */,
-				856BFCA09F58E22CE0383F203CF7B94A /* DemoStruct.swift */,
-				6301C3028C546B7CD1A237F4A32D9063 /* DemoTrait.swift */,
-				A0CBA97AB042FA1B17D6135F756EC541 /* ffi.h */,
-				CAF16FD1055D696D758CCDCF80378E31 /* Frameworks */,
-				1455FB6A07AD3AFD1E5295B2E483BC68 /* Pod */,
-				E6B2AA49813A464CAF13A94A2C02BAB7 /* Support Files */,
-			);
-			name = rustlib;
-			path = ../../rustlib/_gen/ios_artifact;
-			sourceTree = "<group>";
-		};
-		CAF16FD1055D696D758CCDCF80378E31 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				3F9561A8107ABF3ECD46A798B1371474 /* libFfi.a */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		CF1408CF629C7361332E53B88F7BD30C = {
 			isa = PBXGroup;
 			children = (
 				9D940727FF8FB9C785EB98E56350EF41 /* Podfile */,
-				107AB329B0D627AC737F56BD2BE08757 /* Development Pods */,
+				8014DA7F1B461C7BAC8624B0AF2BD503 /* Development Pods */,
 				D210D550F4EA176C3123ED886F8F87F5 /* Frameworks */,
 				DEB004486B263C01B410BE288260B76D /* Products */,
 				F28EF3F5A44AAA7F94B6DC50878E83A8 /* Targets Support Files */,
@@ -203,19 +194,22 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		E6B2AA49813A464CAF13A94A2C02BAB7 /* Support Files */ = {
+		E43DE22F6DA0C890FD1B46DE1613FD1F /* rustlib */ = {
 			isa = PBXGroup;
 			children = (
-				0285D78BCCDEBDF333E883E1D0D650B0 /* rustlib.modulemap */,
-				B1164F854F86D54596710B30EC31A184 /* rustlib-dummy.m */,
-				46E708E7BE8F5D598101684CDCBA120D /* rustlib-Info.plist */,
-				0050F82060B3C1D01FD7175C19720C81 /* rustlib-prefix.pch */,
-				753F1040BCA54395E78EF103EDA7D00A /* rustlib-umbrella.h */,
-				A637CF7D06BF1288B6E010939FDD96D5 /* rustlib.debug.xcconfig */,
-				D56C210A249D82F9BD8710A9FAE260B1 /* rustlib.release.xcconfig */,
+				CE33BF560FA9109B4910BC861C95B3E1 /* DemoCallback.swift */,
+				3AB288DDC7A6C462E22CE9FC93844B97 /* DemoStruct.swift */,
+				EA44FC86DE0551F081C1ADAE5C75383D /* DemoTrait.swift */,
+				7272D368036D1D91DAEA586589505096 /* ffi.h */,
+				40187E1120AF1CA4F5718375F04F4FD0 /* InternalDemoTrait.swift */,
+				B598E73AF654B8DA897BC19DD9B0F372 /* RustDemoTrait.swift */,
+				9C9ACE2D86E8DE3D73C5CA5BB40868F4 /* RustLib.swift */,
+				5F21C367B35694DF16226FB44EDE50FD /* Frameworks */,
+				6C63AF796CD6B69CB1B70650523413FA /* Pod */,
+				EEFD84E61406335896927AA51E067DD3 /* Support Files */,
 			);
-			name = "Support Files";
-			path = "../../../Example/Pods/Target Support Files/rustlib";
+			name = rustlib;
+			path = ../../rustlib/_gen/ios_artifact;
 			sourceTree = "<group>";
 		};
 		EB27B22CD875CF83ECC5A614664D1AE7 /* Pods-demo-ios_ExampleTests */ = {
@@ -235,6 +229,21 @@
 			path = "Target Support Files/Pods-demo-ios_ExampleTests";
 			sourceTree = "<group>";
 		};
+		EEFD84E61406335896927AA51E067DD3 /* Support Files */ = {
+			isa = PBXGroup;
+			children = (
+				8AF8CB1B45C4FBB51B036FFB662645FB /* rustlib.modulemap */,
+				D50010E4C6D39EDB34B7612C71843B27 /* rustlib-dummy.m */,
+				74C756FAC971BB9C1E577DE9D55F5455 /* rustlib-Info.plist */,
+				757DE0EF212C5AC1AD9E17C85E7E3FD8 /* rustlib-prefix.pch */,
+				A3D5E5F047A00F9D72DABEEF18ABA3E4 /* rustlib-umbrella.h */,
+				3EAAFC659CBD6207BFF8818F4F91F0F1 /* rustlib.debug.xcconfig */,
+				BD8EF83B88C9EA2147430757DF755FDB /* rustlib.release.xcconfig */,
+			);
+			name = "Support Files";
+			path = "../../../Example/Pods/Target Support Files/rustlib";
+			sourceTree = "<group>";
+		};
 		F28EF3F5A44AAA7F94B6DC50878E83A8 /* Targets Support Files */ = {
 			isa = PBXGroup;
 			children = (
@@ -247,12 +256,12 @@
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
-		145784E116DB0F279144582C04CEADC0 /* Headers */ = {
+		5F1EB5360D88269FEAE1F2DA12386A09 /* Headers */ = {
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D948682DED00631A6A45EFF56FE0C837 /* ffi.h in Headers */,
-				80C5B53DAE03E76807EB74DA3AF6DF50 /* rustlib-umbrella.h in Headers */,
+				BC5E538B4A260043038662470B64A7B5 /* ffi.h in Headers */,
+				BC62D350D52EB8A0723EFF46D2A83329 /* rustlib-umbrella.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -287,7 +296,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				2412538AFF003C396BFEE43423576A74 /* PBXTargetDependency */,
+				F35D785DB07957FBDBCD4A0EB8FED1A1 /* PBXTargetDependency */,
 			);
 			name = "Pods-demo-ios_ExampleTests";
 			productName = Pods_demo_ios_ExampleTests;
@@ -306,7 +315,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				687B2102E15EE3B52586FC924CF0B3FD /* PBXTargetDependency */,
+				231E38B767C18F30F27502463A9407E6 /* PBXTargetDependency */,
 			);
 			name = "Pods-demo-ios_Example";
 			productName = Pods_demo_ios_Example;
@@ -315,12 +324,12 @@
 		};
 		FAAF59FE2761F66386446F68F35CD3B0 /* rustlib */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 5E364603E85A22D74ACD0DDFCF112080 /* Build configuration list for PBXNativeTarget "rustlib" */;
+			buildConfigurationList = 8E62133B838FE58D7FC80EDB18B53F85 /* Build configuration list for PBXNativeTarget "rustlib" */;
 			buildPhases = (
-				145784E116DB0F279144582C04CEADC0 /* Headers */,
-				CECBECB2B5FD8E564DDA8DEC5D8D3AB6 /* Sources */,
-				98B4EEA32264F73F4F02374BED330EA5 /* Frameworks */,
-				3F308DFCD7FD031E7EF1CF776E01D3B0 /* Resources */,
+				5F1EB5360D88269FEAE1F2DA12386A09 /* Headers */,
+				3F5BC1A35379BCC9326103737151A170 /* Sources */,
+				89772C088EA971AFF64DE7F58DEA67D7 /* Frameworks */,
+				EFF5D9CC3A922ADA4759DFDE0011C033 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -361,13 +370,6 @@
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		3F308DFCD7FD031E7EF1CF776E01D3B0 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		497FE6717B0F49FFFE64842D1C1078B4 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -376,6 +378,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		83196C2B2FB30EE9DB07DBE92D3476F5 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EFF5D9CC3A922ADA4759DFDE0011C033 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -393,6 +402,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		3F5BC1A35379BCC9326103737151A170 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0A96F2380816DA06BE492CC617F355E /* DemoCallback.swift in Sources */,
+				0B9E0AC07EB85989EDAA832573F305DE /* DemoStruct.swift in Sources */,
+				322ED76D5C86725D8135E5B75FA70EA4 /* DemoTrait.swift in Sources */,
+				E6CED5798AC1719DD9377EA9CC483A43 /* InternalDemoTrait.swift in Sources */,
+				8060E754A387E6452307E7FC5CB5C7D4 /* RustDemoTrait.swift in Sources */,
+				5576789956BC63EF3FAEF3B7E7970638 /* RustLib.swift in Sources */,
+				FC1369134EFC2C3EFA41A62C5D918CB2 /* rustlib-dummy.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		80F18FD3E2D7256E157E73AA6F29E6AD /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -401,31 +424,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		CECBECB2B5FD8E564DDA8DEC5D8D3AB6 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				CF0459A7E6C437835E6AB5140C2DB253 /* DemoCallback.swift in Sources */,
-				CED7C186844B815E609E51C9BF3B632B /* DemoStruct.swift in Sources */,
-				E6C58DF42A5D27226A80348E77B893DC /* DemoTrait.swift in Sources */,
-				4B48FE13673920354B4D0453A907CE57 /* rustlib-dummy.m in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		2412538AFF003C396BFEE43423576A74 /* PBXTargetDependency */ = {
+		231E38B767C18F30F27502463A9407E6 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = rustlib;
 			target = FAAF59FE2761F66386446F68F35CD3B0 /* rustlib */;
-			targetProxy = 21F6D61DCE0722A775B38EFA50EC8A16 /* PBXContainerItemProxy */;
+			targetProxy = C52BC37F665EF48D2C078AAA7E1C0C8F /* PBXContainerItemProxy */;
 		};
-		687B2102E15EE3B52586FC924CF0B3FD /* PBXTargetDependency */ = {
+		F35D785DB07957FBDBCD4A0EB8FED1A1 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = rustlib;
 			target = FAAF59FE2761F66386446F68F35CD3B0 /* rustlib */;
-			targetProxy = C52FBF351274ABFAE2A6597BC3391218 /* PBXContainerItemProxy */;
+			targetProxy = BACB846E6A25F606F3717A64539D15AB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -593,9 +605,9 @@
 			};
 			name = Debug;
 		};
-		B4720DBCAA9AD6F4FC542B17B6E9EF4A /* Release */ = {
+		833F9AF07842DF86572217BC36CFF7A4 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D56C210A249D82F9BD8710A9FAE260B1 /* rustlib.release.xcconfig */;
+			baseConfigurationReference = BD8EF83B88C9EA2147430757DF755FDB /* rustlib.release.xcconfig */;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
@@ -624,9 +636,9 @@
 			};
 			name = Release;
 		};
-		C3D2C6EA0406897786E2264C0CD00122 /* Debug */ = {
+		C6008E6A6D11A5F6104E99B79DA1AF97 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = A637CF7D06BF1288B6E010939FDD96D5 /* rustlib.debug.xcconfig */;
+			baseConfigurationReference = 3EAAFC659CBD6207BFF8818F4F91F0F1 /* rustlib.debug.xcconfig */;
 			buildSettings = {
 				"CODE_SIGN_IDENTITY[sdk=appletvos*]" = "";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";
@@ -770,20 +782,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		5E364603E85A22D74ACD0DDFCF112080 /* Build configuration list for PBXNativeTarget "rustlib" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				C3D2C6EA0406897786E2264C0CD00122 /* Debug */,
-				B4720DBCAA9AD6F4FC542B17B6E9EF4A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		8A25EC3F07A35B4837BD0DC702B3E4A1 /* Build configuration list for PBXNativeTarget "Pods-demo-ios_Example" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				68255820F7C20EA35206C584D71D1259 /* Debug */,
 				49E35A542B70406BFB967757651CF257 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		8E62133B838FE58D7FC80EDB18B53F85 /* Build configuration list for PBXNativeTarget "rustlib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C6008E6A6D11A5F6104E99B79DA1AF97 /* Debug */,
+				833F9AF07842DF86572217BC36CFF7A4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

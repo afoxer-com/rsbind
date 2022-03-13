@@ -1,19 +1,20 @@
 //
-//  demo_ios_ExampleTests.swift
-//  demo-ios_ExampleTests
+//  MacDemoTests.swift
+//  MacDemoTests
 //
-//  Created by xin.wang on 2022/2/27.
-//  Copyright © 2022 CocoaPods. All rights reserved.
+//  Created by sidney on 2022/3/8.
 //
+
 
 import XCTest
 import rustlib
 
 class demo_ios_ExampleTests: XCTestCase {
-
+    private var demoTrait: DemoTrait = RustLib.newDemoTrait()
+    
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
-        DemoTrait.setup();
+        demoTrait.setup()
     }
 
     override func tearDownWithError() throws {
@@ -23,45 +24,48 @@ class demo_ios_ExampleTests: XCTestCase {
     func testBase() throws {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
-        XCTAssertEqual(DemoTrait.test_u8_1(arg: 100, arg2: 101), 1)
-        XCTAssertEqual(DemoTrait.test_i8_2(arg: 100, arg2: 101), 2)
-        XCTAssertEqual(DemoTrait.test_i16_3(arg: 100, arg2: 101), 3)
-        XCTAssertEqual(DemoTrait.test_u16_4(arg: 100, arg2: 101), 4)
-        XCTAssertEqual(DemoTrait.test_i32_5(arg: 100, arg2: 101), 5)
-        XCTAssertEqual(DemoTrait.test_u32_6(arg: 100, arg2: 101), 6)
-        XCTAssertEqual(DemoTrait.test_f32_30(arg: 100.0, arg2: 101.0), 30)
-        XCTAssertEqual(DemoTrait.test_f64_31(arg: 100.0, arg2: 101.0), 31)
-        XCTAssertEqual(DemoTrait.test_bool_false(arg_true: true, arg2_false: false), false)
-        XCTAssertEqual(DemoTrait.test_str(arg: "Hello world"), "Hello world")
-        XCTAssertEqual(DemoTrait.test_arg_vec_str_7(arg: ["Hello world"]), 7)
-        XCTAssertEqual(DemoTrait.test_arg_vec_u8_true(arg: [100]), true)
-        XCTAssertEqual(DemoTrait.test_arg_vec_i8_6(arg: [100]), 6)
-        XCTAssertEqual(DemoTrait.test_arg_vec_i16_9(arg: [100]), 9)
-        XCTAssertEqual(DemoTrait.test_arg_vec_u16_10(arg: [100]), 10)
-        XCTAssertEqual(DemoTrait.test_arg_vec_i32_11(arg: [100]), 11)
-        XCTAssertEqual(DemoTrait.test_arg_vec_u32_12(arg: [100]), 12)
-        XCTAssertEqual(DemoTrait.test_arg_vec_bool_13(arg_true: [true]), 13)
-        XCTAssertEqual(DemoTrait.test_two_vec_arg_15(arg: [100], arg1: [101]), 15)
-        assertStruct(demoStruct: DemoTrait.test_return_struct())
+        XCTAssertEqual(demoTrait.test_u8_1(arg: 100, arg2: 101), 1)
+        XCTAssertEqual(demoTrait.test_i8_2(arg: 100, arg2: 101), 2)
+        XCTAssertEqual(demoTrait.test_i16_3(arg: 100, arg2: 101), 3)
+        XCTAssertEqual(demoTrait.test_u16_4(arg: 100, arg2: 101), 4)
+        XCTAssertEqual(demoTrait.test_i32_5(arg: 100, arg2: 101), 5)
+        XCTAssertEqual(demoTrait.test_u32_6(arg: 100, arg2: 101), 6)
+        XCTAssertEqual(demoTrait.test_f32_30(arg: 100.0, arg2: 101.0), 30)
+        XCTAssertEqual(demoTrait.test_f64_31(arg: 100.0, arg2: 101.0), 31)
+        XCTAssertEqual(demoTrait.test_bool_false(arg_true: true, arg2_false: false), false)
+        XCTAssertEqual(demoTrait.test_str(arg: "Hello world"), "Hello world")
+        XCTAssertEqual(demoTrait.test_arg_vec_str_7(arg: ["Hello world"]), 7)
+        XCTAssertEqual(demoTrait.test_arg_vec_u8_true(arg: [100]), true)
+        XCTAssertEqual(demoTrait.test_arg_vec_i8_6(arg: [100]), 6)
+        XCTAssertEqual(demoTrait.test_arg_vec_i16_9(arg: [100]), 9)
+        XCTAssertEqual(demoTrait.test_arg_vec_u16_10(arg: [100]), 10)
+        XCTAssertEqual(demoTrait.test_arg_vec_i32_11(arg: [100]), 11)
+        XCTAssertEqual(demoTrait.test_arg_vec_u32_12(arg: [100]), 12)
+        XCTAssertEqual(demoTrait.test_arg_vec_bool_13(arg_true: [true]), 13)
+        XCTAssertEqual(demoTrait.test_two_vec_arg_15(arg: [100], arg1: [101]), 15)
+        let demoStruct = demoTrait.test_return_struct()
+        assertStruct(demoStruct: demoStruct)
+        demoTrait.test_arg_struct(arg: demoStruct)
+        XCTAssertEqual(demoTrait.test_arg_vec_struct_14(arg: [demoStruct]), 14)
     }
     
     func testReturnVec() throws {
-        XCTAssertEqual(DemoTrait.test_return_vec_str(), ["Hello world"])
-        XCTAssertEqual(DemoTrait.test_return_vec_u8(), [100])
-        XCTAssertEqual(DemoTrait.test_return_vec_i8(), [100])
-        XCTAssertEqual(DemoTrait.test_return_vec_i16(), [100])
-        XCTAssertEqual(DemoTrait.test_return_vec_u16(), [100])
-        XCTAssertEqual(DemoTrait.test_return_vec_i32(), [100])
-        XCTAssertEqual(DemoTrait.test_return_vec_u32(), [100])
-        XCTAssertEqual(DemoTrait.test_return_vec_bool_true(), [true])
-        XCTAssertEqual(DemoTrait.test_two_vec_u8(input: [100]), [100])
-        let demoStruct = DemoTrait.test_return_vec_struct()
+        XCTAssertEqual(demoTrait.test_return_vec_str(), ["Hello world"])
+        XCTAssertEqual(demoTrait.test_return_vec_u8(), [100])
+        XCTAssertEqual(demoTrait.test_return_vec_i8(), [100])
+        XCTAssertEqual(demoTrait.test_return_vec_i16(), [100])
+        XCTAssertEqual(demoTrait.test_return_vec_u16(), [100])
+        XCTAssertEqual(demoTrait.test_return_vec_i32(), [100])
+        XCTAssertEqual(demoTrait.test_return_vec_u32(), [100])
+        XCTAssertEqual(demoTrait.test_return_vec_bool_true(), [true])
+        XCTAssertEqual(demoTrait.test_two_vec_u8(input: [100]), [100])
+        let demoStruct = demoTrait.test_return_vec_struct()
         assertStruct(demoStruct: demoStruct[0])
     }
     
     func testCallback() throws {
-        XCTAssertEqual(DemoTrait.test_arg_callback_16(arg: createCallback(demoTest: self)), 16)
-        XCTAssertEqual(DemoTrait.test_two_arg_callback_20(arg: createCallback(demoTest: self), arg1: createCallback(demoTest: self)), 20)
+        XCTAssertEqual(demoTrait.test_arg_callback_16(arg: createCallback(demoTest: self)), 16)
+        XCTAssertEqual(demoTrait.test_two_arg_callback_20(arg: createCallback(demoTest: self), arg1: createCallback(demoTest: self)), 20)
     }
 
     func testPerformanceExample() throws {

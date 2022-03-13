@@ -1,14 +1,21 @@
 [![Build](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
-
+[![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.
 - It generate bindings from a Rust package and packaged to android aar or iOS lib. You don't need to write jni or other ffi code with this tool.
-
+  
+The tool may be useful for the people who want to use Rust as a cross-platform language and exporting multiple artifact for each platform.
 
 # Step by step.
 1. [Setup rust environment](/docs/env.md).
 2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
-3. Create a Rust library, which contains two directory, contract and imp. You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
+3. Create a Rust library, which contains two mod, contract and imp. There are two structures you can arrange.
+- First structure:  
+![alt First structure picture](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/first_structure.jpg)
+- Second structure:  
+![alt Second structure picture](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/second_structure.jpg)
+
+ You can put your interface to contract module and implemation to imp module. Expose these two modules in lib.rs.
 ```rust
 // such as your code in contract dir as below:
 pub trait YourContract {
@@ -36,7 +43,7 @@ impl YourContract for YourImplemetation {
         format!("Your test_simple result is {}_{}", arg1, arg2)
     }
 
-    fn test_callback(arg: Box<Callback>) {
+    fn test_callback(arg: Box<dyn Callback>) {
         arg.on_callback(123i64, "hello callback".to_owned());
     }
 
@@ -53,11 +60,11 @@ impl YourContract for YourImplemetation {
 
 Rsbind usage:
 ```sh
-rsbind path-of-project android/ios/all ast/bridge/artifact/header/build/all
+rsbind path-of-project android/ios/mac/jar/all  ast/bridge/artifact/header/build/all
 ```
 - ast: generate simplified ast files with json format to _gen/ast.
-- bridge: generate c methods to expose our interface to _gen/[ios/android]_bridge.
-- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android]_artifact).
+- bridge: generate c methods to expose our interface to _gen/[ios/android/mac/jar]_bridge.
+- artifact: generate java/swift wrapper and c header, and then put then into a project(_gen/[ios/android/mac/jar]_artifact).
 - build: build bridge modules and copy output to artifact project and then build artifact project.
 - all: run all the steps for binding.
 
@@ -92,6 +99,20 @@ arch_phone = ["armv7-apple-ios"]
 arch_simu = ["i386-apple-ios", "x86_64-apple-ios"]
 release = true
 features_def = []
+
+[mac]
+rustc_param = ""
+release = true
+features_def = []
+
+[jar]
+rustc_param = ""
+release = true
+namespace = "com.afoxer.xxx.ffi"
+so_name = "demo"
+#ext_lib = []
+#features_def = ["xxxx=[]"]
+
 ```
 
 # Supported Types
@@ -104,13 +125,10 @@ supported types in Callback:
 
 ## Note:
 These is not supported yet:
-- Vec < Struct >
-- Struct in trait paramters.
 - Callback in return type.
 
 In Callback:
 - Return String.
-- TODO: add callback support for return types.
 
 Will support it in near future.
 

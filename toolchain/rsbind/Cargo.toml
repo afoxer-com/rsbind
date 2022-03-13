@@ -1,9 +1,9 @@
 [package]
 name = "rsbind"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["sidney.wang <sidney.wang@foxmail.com>"]
 edition = "2021"
-readme = "README.md"
+readme = "../../README.md"
 description = "provide tools to bind rust interface with other language and export library artifact directly."
 license = "Apache-2.0"
 

@@ -3,7 +3,8 @@
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.
 - It generate bindings from a Rust package and packaged to android aar or iOS lib. You don't need to write jni or other ffi code with this tool.
-
+  
+The tool may be useful for the people who want to use Rust as a cross-platform language and exporting multiple artifact for each platform.
 
 # Step by step.
 1. [Setup rust environment](/docs/env.md).

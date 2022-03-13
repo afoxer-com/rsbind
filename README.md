@@ -1,5 +1,5 @@
 [![Build](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
-
+[![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.
 - It generate bindings from a Rust package and packaged to android aar or iOS lib. You don't need to write jni or other ffi code with this tool.

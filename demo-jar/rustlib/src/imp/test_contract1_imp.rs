@@ -65,7 +65,7 @@ impl DemoTrait for TestContract1Imp {
 
     fn test_arg_vec_i8_6(arg: Vec<i8>) -> i32 {
         assert_eq(arg.get(0).unwrap(), &100i8, "test_arg_vec_i8_6");
-        8
+        6
     }
 
     fn test_arg_vec_i16_9(arg: Vec<i16>) -> i32 {
@@ -156,6 +156,10 @@ impl DemoTrait for TestContract1Imp {
 
     fn test_return_struct() -> DemoStruct {
         new_struct()
+    }
+
+    fn test_arg_struct(arg: DemoStruct) {
+        assert_struct(&arg, "test_arg_struct");
     }
 
     fn test_no_return() {}

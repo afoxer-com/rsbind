@@ -19,7 +19,7 @@ use super::desc::*;
 pub(crate) fn parse(
     crate_name: String,
     file_path: &Path,
-    mod_path: &str
+    mod_path: &str,
 ) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
     let mut file = File::open(file_path).map_err(|e| ParseError(e.to_string()))?;
 
@@ -41,7 +41,7 @@ pub(crate) fn parse_from_str(
     crate_name: &str,
     mod_name: &str,
     src: &str,
-    mod_path: &str
+    mod_path: &str,
 ) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
     let syn_file = syn::parse_file(src).map_err(|e| ParseError(e.to_string()))?;
 

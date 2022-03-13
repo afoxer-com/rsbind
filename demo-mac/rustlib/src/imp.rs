@@ -2,19 +2,13 @@ use contract::DemoCallback;
 use contract::DemoStruct;
 use contract::DemoTrait;
 
-use log::{Level, LevelFilter};
-use oslog::OsLogger;
+use log::Level;
 
 pub struct TestContract1Imp {}
 
 impl DemoTrait for TestContract1Imp {
     fn setup() {
-        error!("We call init");
-        // OsLogger::new("com.afoxer.test")
-        //     .level_filter(LevelFilter::Debug)
-        //     .category_level_filter("Settings", LevelFilter::Trace)
-        //     .init()
-        //     .unwrap();
+        error!("We call setup");
     }
 
     fn test_u8_1(arg: u8, arg2: u8) -> u8 {
@@ -174,6 +168,10 @@ impl DemoTrait for TestContract1Imp {
         new_struct()
     }
 
+    fn test_arg_struct(arg: DemoStruct) {
+        assert_struct(&arg, "test_arg_struct");
+    }
+
     fn test_no_return() {}
 }
 
@@ -194,10 +192,9 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     assert_eq(&arg.test_bool_false(true, false), &false, "handle_callback");
     // assert_eq(arg.test_str("Hello world".to_string()), "Hello world".to_string());
     error!("We call handle_callback test_f32_30");
-    assert_eq!(&arg.test_f32_30(100.0, 101.0), &30.0, "handle_callback");
+    assert(arg.test_f32_30(100.0, 101.0) > 29.0, "test_f32_30");
     error!("We call handle_callback test_f64_31");
-    assert_eq!(&arg.test_f64_31(100.0, 101.0), &31.0, "handle_callback");
-
+    assert(arg.test_f64_31(100.0, 101.0) > 30.0, "test_f64_31");
     error!("We call handle_callback test_arg_vec_str_18");
     assert_eq(
         &arg.test_arg_vec_str_18(vec!["Hello world".to_string()]),

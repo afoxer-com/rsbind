@@ -63,16 +63,8 @@ public class RustLibTest {
     @Test
     public void testRustLibStruct() {
         DemoStruct demoStruct = DemoTrait.test_return_struct();
-        Assertions.assertEquals(demoStruct.arg1, 1);
-        Assertions.assertEquals(demoStruct.arg2, 2);
-        Assertions.assertEquals(demoStruct.arg3, 3);
-        Assertions.assertEquals(demoStruct.arg4, 4);
-        Assertions.assertEquals(demoStruct.arg5, 5);
-        Assertions.assertEquals(demoStruct.arg6, 6);
-        Assertions.assertEquals(demoStruct.arg7_str, "Hello world");
-        Assertions.assertEquals(demoStruct.arg8_false, false);
-        Assertions.assertTrue(demoStruct.arg9 > 0);
-        Assertions.assertTrue(demoStruct.arg10 > 0);
+        assertStruct(demoStruct);
+        DemoTrait.test_arg_struct(demoStruct);
     }
 
     @Test

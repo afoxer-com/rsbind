@@ -13,3 +13,4 @@ target
 .iml
 *.xcuserdatad
 local.properties
+.DS_Store

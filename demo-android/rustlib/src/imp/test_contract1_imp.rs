@@ -164,6 +164,10 @@ impl DemoTrait for TestContract1Imp {
         new_struct()
     }
 
+    fn test_arg_struct(arg: DemoStruct) {
+        assert_struct(&arg, "test_arg_struct");
+    }
+
     fn test_no_return() {}
 
     fn test_f32_30(arg: f32, arg2: f32) -> f32 {

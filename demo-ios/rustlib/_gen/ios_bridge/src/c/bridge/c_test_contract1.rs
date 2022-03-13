@@ -34,6 +34,22 @@ impl From<DemoStruct> for Struct_DemoStruct {
         }
     }
 }
+impl From<Struct_DemoStruct> for DemoStruct {
+    fn from(origin: Struct_DemoStruct) -> Self {
+        DemoStruct {
+            arg1: origin.arg1,
+            arg2: origin.arg2,
+            arg3: origin.arg3,
+            arg4: origin.arg4,
+            arg5: origin.arg5,
+            arg6: origin.arg6,
+            arg7_str: origin.arg7_str,
+            arg8_false: origin.arg8_false,
+            arg9: origin.arg9,
+            arg10: origin.arg10,
+        }
+    }
+}
 #[no_mangle]
 pub extern "C" fn test_contract1_setup() {
     TestContract1Imp::setup();
@@ -116,8 +132,8 @@ pub extern "C" fn test_contract1_test_str(arg: *const c_char) -> *mut c_char {
 #[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_str_7(arg: *const c_char) -> i32 {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let r_arg = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_arg_vec_str_7(r_arg);
     ret_value as i32
 }
@@ -142,40 +158,40 @@ pub extern "C" fn test_contract1_test_arg_vec_i8_6(arg: CInt8Array) -> i32 {
 #[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_i16_9(arg: *const c_char) -> i32 {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let r_arg = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_arg_vec_i16_9(r_arg);
     ret_value as i32
 }
 #[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_u16_10(arg: *const c_char) -> i32 {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let r_arg = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_arg_vec_u16_10(r_arg);
     ret_value as i32
 }
 #[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_i32_11(arg: *const c_char) -> i32 {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let r_arg = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_arg_vec_i32_11(r_arg);
     ret_value as i32
 }
 #[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_u32_12(arg: *const c_char) -> i32 {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let r_arg = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_arg_vec_u32_12(r_arg);
     ret_value as i32
 }
 #[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_bool_13(arg_true: *const c_char) -> i32 {
     let c_str_arg_true: &CStr = unsafe { CStr::from_ptr(arg_true) };
-    let c_str_arg_true: &str = c_str_arg_true.to_str().unwrap();
-    let r_arg_true = serde_json::from_str(&c_str_arg_true.to_owned()).unwrap();
+    let c_slice_arg_true: &str = c_str_arg_true.to_str().unwrap();
+    let r_arg_true = serde_json::from_str(&c_slice_arg_true.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_arg_vec_bool_13(r_arg_true);
     ret_value as i32
 }
@@ -185,11 +201,11 @@ pub extern "C" fn test_contract1_test_two_vec_arg_15(
     arg1: *const c_char,
 ) -> i32 {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
-    let c_str_arg: &str = c_str_arg.to_str().unwrap();
-    let r_arg = serde_json::from_str(&c_str_arg.to_owned()).unwrap();
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let r_arg = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
     let c_str_arg1: &CStr = unsafe { CStr::from_ptr(arg1) };
-    let c_str_arg1: &str = c_str_arg1.to_str().unwrap();
-    let r_arg1 = serde_json::from_str(&c_str_arg1.to_owned()).unwrap();
+    let c_slice_arg1: &str = c_str_arg1.to_str().unwrap();
+    let r_arg1 = serde_json::from_str(&c_slice_arg1.to_owned()).unwrap();
     let ret_value = TestContract1Imp::test_two_vec_arg_15(r_arg, r_arg1);
     ret_value as i32
 }
@@ -1060,6 +1076,14 @@ pub extern "C" fn test_contract1_test_return_struct() -> *mut c_char {
     let ret_value = TestContract1Imp::test_return_struct();
     let json_ret = serde_json::to_string(&Struct_DemoStruct::from(ret_value));
     CString::new(json_ret.unwrap()).unwrap().into_raw()
+}
+#[no_mangle]
+pub extern "C" fn test_contract1_test_arg_struct(arg: *const c_char) {
+    let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
+    let c_slice_arg: &str = c_str_arg.to_str().unwrap();
+    let c_tmp_arg: Struct_DemoStruct = serde_json::from_str(&c_slice_arg.to_owned()).unwrap();
+    let r_arg = c_tmp_arg.into();
+    TestContract1Imp::test_arg_struct(r_arg);
 }
 #[no_mangle]
 pub extern "C" fn test_contract1_test_no_return() {

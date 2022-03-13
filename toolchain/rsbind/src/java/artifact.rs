@@ -373,6 +373,18 @@ impl<'a> TraitGen<'a> {
                         ");"
                     ));
                 }
+                AstType::Struct(origin) => {
+                    let json_cls = java::imported("com.google.gson", "Gson");
+                    method_body.push(toks!(
+                        "String ",
+                        converted.clone(),
+                        " = new ",
+                        json_cls,
+                        "().toJson(",
+                        arg.name.clone(),
+                        ");"
+                    ));
+                }
                 _ => {
                     let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
                     let java = Java::from(java);

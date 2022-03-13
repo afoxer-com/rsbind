@@ -374,9 +374,20 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     }
                 }
             }
-            _ => quote! {
-                let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-            },
+            AstType::Vec(_)
+            | AstType::Struct(_)
+            | AstType::Callback(_)
+            | AstType::String
+            | AstType::Byte(_)
+            | AstType::Int(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_)
+            | AstType::Boolean => {
+                quote! {
+                    let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                }
+            }
         };
 
         println!(

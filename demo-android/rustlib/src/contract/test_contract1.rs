@@ -45,6 +45,7 @@ pub trait DemoTrait {
 
     // Struct
     fn test_return_struct() -> DemoStruct;
+    fn test_arg_struct(arg: DemoStruct);
     fn test_no_return();
 }
 

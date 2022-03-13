@@ -102,6 +102,8 @@ int8_t test_contract1_test_two_arg_callback_20(struct test_contract1_DemoCallbac
 
 char *test_contract1_test_return_struct(void);
 
+void test_contract1_test_arg_struct(const char *arg);
+
 void test_contract1_test_no_return(void);
 
 void demo_free_rust(uint8_t *ptr, uint32_t length);

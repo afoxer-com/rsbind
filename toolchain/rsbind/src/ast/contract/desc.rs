@@ -17,7 +17,7 @@ pub(crate) struct MethodDesc {
 pub(crate) struct TraitDesc {
     pub name: String,
     pub ty: String,
-    pub mod_name: String,  //TODO change to path
+    pub mod_name: String,
     pub mod_path: String,
     pub crate_name: String,
     pub is_callback: bool,

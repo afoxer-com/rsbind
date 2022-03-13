@@ -1,3 +1,4 @@
+use std::fmt::format;
 use std::path::Path;
 
 use crate::ast::contract::desc::*;
@@ -78,7 +79,7 @@ impl FileGenStrategy for CFileGenStrategy {
             .map(|field| Ident::new(&field.name, Span::call_site()))
             .collect::<Vec<Ident>>();
         let arg_names = names.clone();
-        let orgin_arg_names = names.clone();
+        let origin_arg_names = names.clone();
         let tys = struct_desc
             .fields
             .iter()
@@ -93,7 +94,13 @@ impl FileGenStrategy for CFileGenStrategy {
 
             impl From<#origin_struct_name> for #struct_name {
                 fn from(origin: #origin_struct_name) -> Self {
-                    #struct_name{#(#orgin_arg_names: origin.#arg_names),*}
+                    #struct_name{#(#origin_arg_names: origin.#arg_names),*}
+                }
+            }
+
+            impl From<#struct_name> for #origin_struct_name {
+                fn from(origin: #struct_name) -> Self {
+                    #origin_struct_name{#(#origin_arg_names: origin.#arg_names),*}
                 }
             }
         })
@@ -222,7 +229,7 @@ impl FileGenStrategy for CFileGenStrategy {
             }
             AstType::Vec(_) => {
                 let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                let c_slice_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
                 quote! {
                     let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
                     let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
@@ -233,6 +240,18 @@ impl FileGenStrategy for CFileGenStrategy {
                 println!("callback in argument found, {}", &origin);
                 self.callback_strategy
                     .arg_convert(arg, trait_desc, callbacks)
+            }
+            AstType::Struct(origin) => {
+                let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
+                let tmp_struct = Ident::new(&format!("c_tmp_{}", &arg.name), Span::call_site());
+                let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
+                quote! {
+                    let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
+                    let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
+                    let #tmp_struct: #struct_name = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
+                    let #rust_arg_name = #tmp_struct.into();
+                }
             }
             _ => {
                 return Err(

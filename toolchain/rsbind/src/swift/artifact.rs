@@ -261,7 +261,7 @@ impl<'a> TraitGen<'a> {
                         ".count))"
                     ))
                 }
-                AstType::Vec(_) => {
+                AstType::Vec(_) | AstType::Struct(_) => {
                     let encoder_name = format!("{}_encoder", &arg.name);
                     method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
                     method_body.push(toks!(
@@ -281,7 +281,6 @@ impl<'a> TraitGen<'a> {
                         ", encoding: .utf8)!"
                     ))
                 }
-                AstType::Struct(_) => {}
                 AstType::Callback(_) => {
                     // Store the callback to global callback map.
                     self.fill_callback_index(arg, method_body)?;
@@ -669,16 +668,18 @@ impl<'a> TraitGen<'a> {
             _ => {
                 println!("quote method call for {}", method_name);
                 method_body.push(toks!("let result = ", method_name, "("));
-                for (index, item) in method.args.clone().into_iter().enumerate() {
-                    let converted = format!("s_{}", &item.name);
-                    if index == method.args.len() - 1 {
-                        method_body.append(toks!(converted));
-                    } else {
-                        method_body.append(toks!(converted, ", "));
-                    }
-                }
             }
         }
+
+        for (index, item) in method.args.clone().into_iter().enumerate() {
+            let converted = format!("s_{}", &item.name);
+            if index == method.args.len() - 1 {
+                method_body.append(toks!(converted));
+            } else {
+                method_body.append(toks!(converted, ", "));
+            }
+        }
+
         method_body.append(")");
         Ok(())
     }

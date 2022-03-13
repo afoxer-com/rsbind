@@ -42,7 +42,9 @@ class demo_ios_ExampleTests: XCTestCase {
         XCTAssertEqual(DemoTrait.test_arg_vec_u32_12(arg: [100]), 12)
         XCTAssertEqual(DemoTrait.test_arg_vec_bool_13(arg_true: [true]), 13)
         XCTAssertEqual(DemoTrait.test_two_vec_arg_15(arg: [100], arg1: [101]), 15)
-        assertStruct(demoStruct: DemoTrait.test_return_struct())
+        let demoStruct = DemoTrait.test_return_struct()
+        assertStruct(demoStruct: demoStruct)
+        DemoTrait.test_arg_struct(arg: demoStruct)
     }
     
     func testReturnVec() throws {

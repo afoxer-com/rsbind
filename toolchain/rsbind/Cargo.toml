@@ -1,6 +1,6 @@
 [package]
 name = "rsbind"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["sidney.wang <sidney.wang@foxmail.com>"]
 edition = "2021"
 readme = "README.md"

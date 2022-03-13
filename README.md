@@ -43,7 +43,7 @@ impl YourContract for YourImplemetation {
         format!("Your test_simple result is {}_{}", arg1, arg2)
     }
 
-    fn test_callback(arg: Box<Callback>) {
+    fn test_callback(arg: Box<dyn Callback>) {
         arg.on_callback(123i64, "hello callback".to_owned());
     }
 

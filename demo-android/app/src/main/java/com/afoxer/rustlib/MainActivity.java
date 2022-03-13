@@ -9,143 +9,145 @@ import com.afoxer.xxx.ffi.*;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";
+    private static DemoTrait demoTrait;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        demoTrait = RustLib.newDemoTrait();
 
-        DemoTrait.init();
-        DemoTrait.test_arg_callback_16(new DemoCallback() {
+        demoTrait.init();
+        demoTrait.testArgCallback16(new DemoCallback() {
             @Override
-            public byte test_u8_1(byte arg, byte arg2) {
-                Log.e(TAG, "test_u8_1 -> arg: " + arg + " arg2: " + arg2);
+            public byte testU81(byte arg, byte arg2) {
+                Log.e(TAG, "testU81 -> arg: " + arg + " arg2: " + arg2);
                 return 1;
             }
 
             @Override
-            public byte test_i8_2(byte arg, byte arg2) {
-                Log.e(TAG, "test_i8_2 -> arg: " + arg + " arg2: " + arg2);
+            public byte testI82(byte arg, byte arg2) {
+                Log.e(TAG, "testI82 -> arg: " + arg + " arg2: " + arg2);
                 return 2;
             }
 
             @Override
-            public int test_i16_3(int arg, int arg2) {
-                Log.e(TAG, "test_i16_3 -> arg: " + arg + " arg2: " + arg2);
+            public int testI163(int arg, int arg2) {
+                Log.e(TAG, "testI163 -> arg: " + arg + " arg2: " + arg2);
                 return 3;
             }
 
             @Override
-            public int test_u16_4(int arg, int arg2) {
-                Log.e(TAG, "test_u16_4 -> arg: " + arg + " arg2: " + arg2);
+            public int testU164(int arg, int arg2) {
+                Log.e(TAG, "testU164 -> arg: " + arg + " arg2: " + arg2);
                 return 4;
             }
 
             @Override
-            public int test_i32_5(int arg, int arg2) {
-                Log.e(TAG, "test_i32_5 -> arg: " + arg + " arg2: " + arg2);
+            public int testI325(int arg, int arg2) {
+                Log.e(TAG, "testI325 -> arg: " + arg + " arg2: " + arg2);
                 return 5;
             }
 
             @Override
-            public int test_u32_6(int arg, int arg2) {
-                Log.e(TAG, "test_u32_6 -> arg: " + arg + " arg2: " + arg2);
+            public int testU326(int arg, int arg2) {
+                Log.e(TAG, "testU326 -> arg: " + arg + " arg2: " + arg2);
                 return 6;
             }
 
             @Override
-            public boolean test_bool_false(boolean arg_true, boolean arg_false) {
-                Log.e(TAG, "test_bool_false -> arg_true: " + arg_true + " arg_false: " + arg_false);
+            public boolean testBoolFalse(boolean argTrue, boolean argFalse) {
+                Log.e(TAG, "testBoolFalse -> argTrue: " + argTrue + " argFalse: " + argFalse);
                 return false;
             }
 
             @Override
-            public float test_f32_30(float arg, float arg2) {
-                Log.e(TAG, "test_f32_30 -> arg_true: " + arg + " arg_false: " + arg2);
+            public float testF3230(float arg, float arg2) {
+                Log.e(TAG, "testF3230 -> argTrue: " + arg + " argFalse: " + arg2);
                 return 30.0f;
             }
 
             @Override
-            public double test_f64_31(double arg, double arg2) {
-                Log.e(TAG, "test_f64_31 -> arg_true: " + arg + " arg_false: " + arg2);
+            public double testF6431(double arg, double arg2) {
+                Log.e(TAG, "testF6431 -> argTrue: " + arg + " argFalse: " + arg2);
                 return 31.0;
             }
 
             @Override
-            public int test_arg_vec_str_18(String[] arg) {
-                Log.e(TAG, "test_arg_vec_str_18 -> arg: " + arg[0]);
+            public int testArgVecStr18(String[] arg) {
+                Log.e(TAG, "testArgVecStr18 -> arg: " + arg[0]);
                 return 18;
             }
 
             @Override
-            public int test_arg_vec_u8_7(byte[] arg) {
-                Log.e(TAG, "test_arg_vec_u8_7 -> arg: " + arg[0]);
+            public int testArgVecU87(byte[] arg) {
+                Log.e(TAG, "testArgVecU87 -> arg: " + arg[0]);
                 return 7;
             }
 
             @Override
-            public int test_arg_vec_i8_8(byte[] arg) {
-                Log.e(TAG, "test_arg_vec_i8_8 -> arg: " + arg[0]);
+            public int testArgVecI88(byte[] arg) {
+                Log.e(TAG, "testArgVecI88 -> arg: " + arg[0]);
                 return 8;
             }
 
             @Override
-            public int test_arg_vec_i16_9(Integer[] arg) {
-                Log.e(TAG, "test_arg_vec_i8_8 -> arg: " + arg[0]);
+            public int testArgVecI169(Integer[] arg) {
+                Log.e(TAG, "testArgVecI88 -> arg: " + arg[0]);
                 return 9;
             }
 
             @Override
-            public int test_arg_vec_u16_10(Integer[] arg) {
-                Log.e(TAG, "test_arg_vec_u16_10 -> arg: " + arg[0]);
+            public int testArgVecU1610(Integer[] arg) {
+                Log.e(TAG, "testArgVecU1610 -> arg: " + arg[0]);
                 return 10;
             }
 
             @Override
-            public int test_arg_vec_i32_11(Integer[] arg) {
-                Log.e(TAG, "test_arg_vec_i32_11 -> arg: " + arg[0]);
+            public int testArgVecI3211(Integer[] arg) {
+                Log.e(TAG, "testArgVecI3211 -> arg: " + arg[0]);
                 return 11;
             }
 
             @Override
-            public int test_arg_vec_u32_12(Integer[] arg) {
-                Log.e(TAG, "test_arg_vec_u32_12 -> arg: " + arg[0]);
+            public int testArgVecU3212(Integer[] arg) {
+                Log.e(TAG, "testArgVecU3212 -> arg: " + arg[0]);
                 return 12;
             }
 
             @Override
-            public boolean test_arg_vec_bool_true(Boolean[] arg_true) {
-                Log.e(TAG, "test_arg_vec_bool_true -> arg_true: " + arg_true[0]);
+            public boolean testArgVecBoolTrue(Boolean[] argTrue) {
+                Log.e(TAG, "testArgVecBoolTrue -> argTrue: " + argTrue[0]);
                 return true;
             }
 
             @Override
-            public int test_arg_vec_struct_17(DemoStruct[] arg) {
-                Log.e(TAG, "test_arg_vec_struct_17 -> arg: " + arg[0]);
+            public int testArgVecStruct17(DemoStruct[] arg) {
+                Log.e(TAG, "testArgVecStruct17 -> arg: " + arg[0]);
                 return 17;
             }
 
             @Override
-            public int test_two_vec_arg_13(Integer[] arg, Integer[] arg1) {
-                Log.e(TAG, "test_two_vec_arg_13 -> arg: " + arg[0]);
+            public int testTwoVecArg13(Integer[] arg, Integer[] arg1) {
+                Log.e(TAG, "testTwoVecArg13 -> arg: " + arg[0]);
                 return 13;
             }
 
             @Override
-            public int test_arg_struct_14(DemoStruct arg) {
-                Log.e(TAG, "test_arg_struct_14 -> arg: " + arg);
+            public int testArgStruct14(DemoStruct arg) {
+                Log.e(TAG, "testArgStruct14 -> arg: " + arg);
                 return 14;
             }
 
             @Override
-            public int test_two_arg_struct_15(DemoStruct arg, DemoStruct arg1) {
-                Log.e(TAG, "test_two_arg_struct_15 -> arg: " + arg + " arg1: " + arg1);
+            public int testTwoArgStruct15(DemoStruct arg, DemoStruct arg1) {
+                Log.e(TAG, "testTwoArgStruct15 -> arg: " + arg + " arg1: " + arg1);
                 return 15;
             }
 
             @Override
-            public void test_no_return() {
-                Log.e(TAG, "test_no_return");
+            public void testNoReturn() {
+                Log.e(TAG, "testNoReturn");
             }
         });
     }

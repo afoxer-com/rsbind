@@ -1,4 +1,5 @@
 use std::path::Path;
+use heck::{ToLowerCamelCase, ToUpperCamelCase};
 
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::TokenStreamExt;
@@ -10,7 +11,7 @@ use crate::bridge::file::*;
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
 
-use super::callback::*;
+use super::bridge_cb::*;
 
 ///
 /// create a new generator for java bridge files.
@@ -87,7 +88,13 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream> {
         let class_names = trait_desc
             .iter()
-            .map(|desc| format!("{}.{}", self.java_namespace, &desc.name).replace('.', "/"))
+            .map(|desc| {
+                if desc.is_callback {
+                    format!("{}.{}", self.java_namespace, &desc.name).replace('.', "/")
+                } else {
+                    format!("{}.Internal{}", self.java_namespace, &desc.name).replace('.', "/")
+                }
+            })
             .collect::<Vec<String>>();
 
         Ok(quote! {
@@ -158,10 +165,10 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         );
         let namespace = self.java_namespace.replace('.', "_");
         let method_name = format!(
-            "Java_{}_{}_native_1{}",
+            "Java_{}_Internal{}_native{}",
             &namespace,
-            trait_desc.name,
-            &method.name.replace('_', "_1")
+            trait_desc.name.clone(),
+            &method.name.to_upper_camel_case().replace('_', "_1")
         );
         let method_name_ident = Ident::new(&method_name, Span::call_site());
         let arg_names = method

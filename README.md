@@ -71,7 +71,8 @@ rsbind path-of-project android/ios/mac/jar/all  ast/bridge/artifact/header/build
 5. It will generate java files packaged in aar or cocoapods lib, then you can integrated them to your android/iOS project and call the functions.
 For android, you can call like as below:
 ```java
-YourContract.test_callback(new Callback(){
+YourContract instance = RustLib.newYourContract();
+instance.test_callback(new Callback(){
        void on_callback(long arg1, String arg2) {
            // do your things.
        }

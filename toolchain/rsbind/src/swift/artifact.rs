@@ -261,6 +261,26 @@ impl<'a> TraitGen<'a> {
                         ".count))"
                     ))
                 }
+                AstType::Vec(AstBaseType::Struct(origin)) => {
+                    let encoder_name = format!("{}_encoder", &arg.name);
+                    method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
+                    method_body.push(toks!(
+                        "let ",
+                        format!("data_{}", &arg.name),
+                        " = try! ",
+                        encoder_name.clone(),
+                        ".encode(",
+                        arg.name.clone(),
+                        ")"
+                    ));
+                    method_body.push(toks!(
+                        "let ",
+                        format!("s_{}", &arg.name),
+                        " = String(data: ",
+                        format!("data_{}", &arg.name),
+                        ", encoding: .utf8)!"
+                    ))
+                }
                 AstType::Vec(_) | AstType::Struct(_) => {
                     let encoder_name = format!("{}_encoder", &arg.name);
                     method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));

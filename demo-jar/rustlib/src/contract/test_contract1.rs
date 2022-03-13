@@ -24,7 +24,7 @@ pub trait DemoTrait {
     fn test_arg_vec_i32_11(arg: Vec<i32>) -> i32;
     fn test_arg_vec_u32_12(arg: Vec<u32>) -> i32;
     fn test_arg_vec_bool_13(arg_true: Vec<bool>) -> i32;
-    // fn test_arg_vec_struct_14(arg: Vec<DemoStruct>) -> i32;
+    fn test_arg_vec_struct_14(arg: Vec<DemoStruct>) -> i32;
     fn test_two_vec_arg_15(arg: Vec<i32>, arg1: Vec<u32>) -> u32;
 
     // Vec return

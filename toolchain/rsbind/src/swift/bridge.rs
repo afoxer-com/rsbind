@@ -227,6 +227,19 @@ impl FileGenStrategy for CFileGenStrategy {
                     }
                 }
             }
+            AstType::Vec(AstBaseType::Struct(origin)) => {
+                let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+                let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
+                let tmp_ident = Ident::new(&format!("c_tmp_{}", &arg.name), Span::call_site());
+                let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
+                let origin_struct_name = Ident::new(&origin, Span::call_site());
+                quote! {
+                    let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
+                    let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
+                    let #tmp_ident: Vec<#struct_name> = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
+                    let #rust_arg_name = #tmp_ident.into_iter().map(|each| #origin_struct_name::from(each)).collect();
+                }
+            }
             AstType::Vec(_) => {
                 let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
                 let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());

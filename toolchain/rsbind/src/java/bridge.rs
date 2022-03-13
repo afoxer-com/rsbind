@@ -278,6 +278,17 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                     }
                 }
             }
+            AstType::Vec(AstBaseType::Struct(origin)) => {
+                let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
+                let tmp_arg_ident = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
+                let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
+                let real_struct_name = Ident::new( &origin, Span::call_site());
+                quote! {
+                    let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
+                    let #tmp_arg_ident: Vec<#struct_name> = serde_json::from_str(&#json_arg_ident).unwrap();
+                    let #rust_arg_name: Vec<#real_struct_name> = #tmp_arg_ident.into_iter().map(|each| #real_struct_name::from(each)).collect();
+                }
+            }
             AstType::Vec(_) => {
                 let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
                 quote! {

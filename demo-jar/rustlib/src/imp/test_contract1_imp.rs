@@ -92,6 +92,10 @@ impl DemoTrait for TestContract1Imp {
         assert_eq(arg_true.get(0).unwrap(), &true, "test_arg_vec_bool_13");
         13
     }
+    fn test_arg_vec_struct_14(arg: Vec<DemoStruct>) -> i32 {
+        assert_struct(arg.get(0).unwrap(), "test_arg_vec_struct_14");
+        14
+    }
 
     fn test_two_vec_arg_15(arg: Vec<i32>, arg1: Vec<u32>) -> u32 {
         let v1 = arg.get(0).unwrap();

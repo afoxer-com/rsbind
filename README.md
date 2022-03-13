@@ -125,13 +125,10 @@ supported types in Callback:
 
 ## Note:
 These is not supported yet:
-- Vec < Struct >
-- Struct in trait paramters.
 - Callback in return type.
 
 In Callback:
 - Return String.
-- TODO: add callback support for return types.
 
 Will support it in near future.
 

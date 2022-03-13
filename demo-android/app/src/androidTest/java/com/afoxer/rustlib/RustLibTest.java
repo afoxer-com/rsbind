@@ -72,6 +72,8 @@ public class RustLibTest {
         DemoStruct demoStruct = DemoTrait.test_return_struct();
         assertStruct(demoStruct);
         DemoTrait.test_arg_struct(demoStruct);
+        int result = DemoTrait.test_arg_vec_struct_14(new DemoStruct[]{demoStruct});
+        Assert.assertEquals(result, 14);
     }
 
     @Test

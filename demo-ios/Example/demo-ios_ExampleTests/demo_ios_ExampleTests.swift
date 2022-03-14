@@ -24,48 +24,48 @@ class demo_ios_ExampleTests: XCTestCase {
     func testBase() throws {
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
-        XCTAssertEqual(demoTrait.test_u8_1(arg: 100, arg2: 101), 1)
-        XCTAssertEqual(demoTrait.test_i8_2(arg: 100, arg2: 101), 2)
-        XCTAssertEqual(demoTrait.test_i16_3(arg: 100, arg2: 101), 3)
-        XCTAssertEqual(demoTrait.test_u16_4(arg: 100, arg2: 101), 4)
-        XCTAssertEqual(demoTrait.test_i32_5(arg: 100, arg2: 101), 5)
-        XCTAssertEqual(demoTrait.test_u32_6(arg: 100, arg2: 101), 6)
-        XCTAssertEqual(demoTrait.test_f32_30(arg: 100.0, arg2: 101.0), 30)
-        XCTAssertEqual(demoTrait.test_f64_31(arg: 100.0, arg2: 101.0), 31)
-        XCTAssertEqual(demoTrait.test_bool_false(arg_true: true, arg2_false: false), false)
-        XCTAssertEqual(demoTrait.test_str(arg: "Hello world"), "Hello world")
-        XCTAssertEqual(demoTrait.test_arg_vec_str_7(arg: ["Hello world"]), 7)
-        XCTAssertEqual(demoTrait.test_arg_vec_u8_true(arg: [100]), true)
-        XCTAssertEqual(demoTrait.test_arg_vec_i8_6(arg: [100]), 6)
-        XCTAssertEqual(demoTrait.test_arg_vec_i16_9(arg: [100]), 9)
-        XCTAssertEqual(demoTrait.test_arg_vec_u16_10(arg: [100]), 10)
-        XCTAssertEqual(demoTrait.test_arg_vec_i32_11(arg: [100]), 11)
-        XCTAssertEqual(demoTrait.test_arg_vec_u32_12(arg: [100]), 12)
-        XCTAssertEqual(demoTrait.test_arg_vec_bool_13(arg_true: [true]), 13)
-        XCTAssertEqual(demoTrait.test_two_vec_arg_15(arg: [100], arg1: [101]), 15)
-        let demoStruct = demoTrait.test_return_struct()
+        XCTAssertEqual(demoTrait.testU81(arg: 100, arg2: 101), 1)
+        XCTAssertEqual(demoTrait.testI82(arg: 100, arg2: 101), 2)
+        XCTAssertEqual(demoTrait.testI163(arg: 100, arg2: 101), 3)
+        XCTAssertEqual(demoTrait.testU164(arg: 100, arg2: 101), 4)
+        XCTAssertEqual(demoTrait.testI325(arg: 100, arg2: 101), 5)
+        XCTAssertEqual(demoTrait.testU326(arg: 100, arg2: 101), 6)
+        XCTAssertEqual(demoTrait.testF3230(arg: 100.0, arg2: 101.0), 30)
+        XCTAssertEqual(demoTrait.testF6431(arg: 100.0, arg2: 101.0), 31)
+        XCTAssertEqual(demoTrait.testBoolFalse(arg_true: true, arg2_false: false), false)
+        XCTAssertEqual(demoTrait.testStr(arg: "Hello world"), "Hello world")
+        XCTAssertEqual(demoTrait.testArgVecStr7(arg: ["Hello world"]), 7)
+        XCTAssertEqual(demoTrait.testArgVecU8True(arg: [100]), true)
+        XCTAssertEqual(demoTrait.testArgVecI86(arg: [100]), 6)
+        XCTAssertEqual(demoTrait.testArgVecI169(arg: [100]), 9)
+        XCTAssertEqual(demoTrait.testArgVecU1610(arg: [100]), 10)
+        XCTAssertEqual(demoTrait.testArgVecI3211(arg: [100]), 11)
+        XCTAssertEqual(demoTrait.testArgVecU3212(arg: [100]), 12)
+        XCTAssertEqual(demoTrait.testArgVecBool13(arg_true: [true]), 13)
+        XCTAssertEqual(demoTrait.testTwoVecArg15(arg: [100], arg1: [101]), 15)
+        let demoStruct = demoTrait.testReturnStruct()
         assertStruct(demoStruct: demoStruct)
-        demoTrait.test_arg_struct(arg: demoStruct)
-        XCTAssertEqual(demoTrait.test_arg_vec_struct_14(arg: [demoStruct]), 14)
+        demoTrait.testArgStruct(arg: demoStruct)
+        XCTAssertEqual(demoTrait.testArgVecStruct14(arg: [demoStruct]), 14)
     }
     
     func testReturnVec() throws {
-        XCTAssertEqual(demoTrait.test_return_vec_str(), ["Hello world"])
-        XCTAssertEqual(demoTrait.test_return_vec_u8(), [100])
-        XCTAssertEqual(demoTrait.test_return_vec_i8(), [100])
-        XCTAssertEqual(demoTrait.test_return_vec_i16(), [100])
-        XCTAssertEqual(demoTrait.test_return_vec_u16(), [100])
-        XCTAssertEqual(demoTrait.test_return_vec_i32(), [100])
-        XCTAssertEqual(demoTrait.test_return_vec_u32(), [100])
-        XCTAssertEqual(demoTrait.test_return_vec_bool_true(), [true])
-        XCTAssertEqual(demoTrait.test_two_vec_u8(input: [100]), [100])
-        let demoStruct = demoTrait.test_return_vec_struct()
+        XCTAssertEqual(demoTrait.testReturnVecStr(), ["Hello world"])
+        XCTAssertEqual(demoTrait.testReturnVecU8(), [100])
+        XCTAssertEqual(demoTrait.testReturnVecI8(), [100])
+        XCTAssertEqual(demoTrait.testReturnVecI16(), [100])
+        XCTAssertEqual(demoTrait.testReturnVecU16(), [100])
+        XCTAssertEqual(demoTrait.testReturnVecI32(), [100])
+        XCTAssertEqual(demoTrait.testReturnVecU32(), [100])
+        XCTAssertEqual(demoTrait.testReturnVecBoolTrue(), [true])
+        XCTAssertEqual(demoTrait.testTwoVecU8(input: [100]), [100])
+        let demoStruct = demoTrait.testReturnVecStruct()
         assertStruct(demoStruct: demoStruct[0])
     }
     
     func testCallback() throws {
-        XCTAssertEqual(demoTrait.test_arg_callback_16(arg: createCallback(demoTest: self)), 16)
-        XCTAssertEqual(demoTrait.test_two_arg_callback_20(arg: createCallback(demoTest: self), arg1: createCallback(demoTest: self)), 20)
+        XCTAssertEqual(demoTrait.testArgCallback16(arg: createCallback(demoTest: self)), 16)
+        XCTAssertEqual(demoTrait.testTwoArgCallback20(arg: createCallback(demoTest: self), arg1: createCallback(demoTest: self)), 20)
     }
 
     func testPerformanceExample() throws {
@@ -90,13 +90,13 @@ class demo_ios_ExampleTests: XCTestCase {
 
     private func createCallback(demoTest: demo_ios_ExampleTests) -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
-            func test_f32_30(arg: Float, arg2: Float) -> Float {
+            func testF3230(arg: Float, arg2: Float) -> Float {
                 XCTAssertEqual(arg, 100.0)
                 XCTAssertEqual(arg2, 101.0)
                 return 30.0
             }
             
-            func test_f64_31(arg: Double, arg2: Double) -> Double {
+            func testF6431(arg: Double, arg2: Double) -> Double {
                 XCTAssertEqual(arg, 100.0)
                 XCTAssertEqual(arg2, 101.0)
                 return 31.0
@@ -108,111 +108,111 @@ class demo_ios_ExampleTests: XCTestCase {
                 self.demoTest = demoTest
             }
             
-            func test_u8_1(arg: Int8, arg2: Int8) -> Int8 {
+            func testU81(arg: Int8, arg2: Int8) -> Int8 {
                 XCTAssertEqual(arg, 100)
                 XCTAssertEqual(arg2, 101)
                 return 1
             }
             
-            func test_i8_2(arg: Int8, arg2: Int8) -> Int8 {
+            func testI82(arg: Int8, arg2: Int8) -> Int8 {
                 XCTAssertEqual(arg, 100)
                 XCTAssertEqual(arg2, 101)
                 return 2
             }
             
-            func test_i16_3(arg: Int32, arg2: Int32) -> Int32 {
+            func testI163(arg: Int32, arg2: Int32) -> Int32 {
                 XCTAssertEqual(arg, 100)
                 XCTAssertEqual(arg2, 101)
                 return 3
             }
             
-            func test_u16_4(arg: Int32, arg2: Int32) -> Int32 {
+            func testU164(arg: Int32, arg2: Int32) -> Int32 {
                 XCTAssertEqual(arg, 100)
                 XCTAssertEqual(arg2, 101)
                 return 4
             }
             
-            func test_i32_5(arg: Int32, arg2: Int32) -> Int32 {
+            func testI325(arg: Int32, arg2: Int32) -> Int32 {
                 XCTAssertEqual(arg, 100)
                 XCTAssertEqual(arg2, 101)
                 return 5
             }
             
-            func test_u32_6(arg: Int32, arg2: Int32) -> Int32 {
+            func testU326(arg: Int32, arg2: Int32) -> Int32 {
                 XCTAssertEqual(arg, 100)
                 XCTAssertEqual(arg2, 101)
                 return 6
             }
             
-            func test_bool_false(arg_true: Bool, arg_false: Bool) -> Bool {
+            func testBoolFalse(arg_true: Bool, arg_false: Bool) -> Bool {
                 XCTAssertEqual(arg_true, true)
                 XCTAssertEqual(arg_false, false)
                 return false
             }
             
-            func test_arg_vec_str_18(arg: [String]) -> Int32 {
+            func testArgVecStr18(arg: [String]) -> Int32 {
                 XCTAssertEqual(arg, ["Hello world"])
                 return 18
             }
             
-            func test_arg_vec_u8_7(arg: [Int8]) -> Int32 {
+            func testArgVecU87(arg: [Int8]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 return 7
             }
             
-            func test_arg_vec_i8_8(arg: [Int8]) -> Int32 {
+            func testArgVecI88(arg: [Int8]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 return 8
             }
             
-            func test_arg_vec_i16_9(arg: [Int32]) -> Int32 {
+            func testArgVecI169(arg: [Int32]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 return 9
             }
             
-            func test_arg_vec_u16_10(arg: [Int32]) -> Int32 {
+            func testArgVecU1610(arg: [Int32]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 return 10
             }
             
-            func test_arg_vec_i32_11(arg: [Int32]) -> Int32 {
+            func testArgVecI3211(arg: [Int32]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 return 11
             }
             
-            func test_arg_vec_u32_12(arg: [Int32]) -> Int32 {
+            func testArgVecU3212(arg: [Int32]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 return 12
             }
             
-            func test_arg_vec_bool_true(arg_true: [Bool]) -> Bool {
+            func testArgVecBoolTrue(arg_true: [Bool]) -> Bool {
                 XCTAssertEqual(arg_true, [true])
                 return true
             }
             
-            func test_arg_vec_struct_17(arg: [DemoStruct]) -> Int32 {
+            func testArgVecStruct17(arg: [DemoStruct]) -> Int32 {
                 demoTest.assertStruct(demoStruct: arg[0])
                 return 17
             }
             
-            func test_two_vec_arg_13(arg: [Int32], arg1: [Int32]) -> Int32 {
+            func testTwoVecArg13(arg: [Int32], arg1: [Int32]) -> Int32 {
                 XCTAssertEqual(arg, [100])
                 XCTAssertEqual(arg1, [101])
                 return 13
             }
             
-            func test_arg_struct_14(arg: DemoStruct) -> Int32 {
+            func testArgStruct14(arg: DemoStruct) -> Int32 {
                 demoTest.assertStruct(demoStruct: arg)
                 return 14
             }
             
-            func test_two_arg_struct_15(arg: DemoStruct, arg1: DemoStruct) -> Int32 {
+            func testTwoArgStruct15(arg: DemoStruct, arg1: DemoStruct) -> Int32 {
                 demoTest.assertStruct(demoStruct: arg)
                 demoTest.assertStruct(demoStruct: arg1)
                 return 15
             }
             
-            func test_no_return() {
+            func testNoReturn() {
                 
             }
         }

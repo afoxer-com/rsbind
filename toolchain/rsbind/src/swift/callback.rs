@@ -1,8 +1,9 @@
-use rstgen::{IntoTokens, swift};
-use rstgen::swift::{Method, Modifier, Protocol, Swift};
 use crate::ast::contract::desc::TraitDesc;
 use crate::errors::*;
-use crate::swift::types::{SwiftType, to_swift_file};
+use crate::swift::types::{to_swift_file, SwiftType};
+use heck::ToLowerCamelCase;
+use rstgen::swift::{Method, Modifier, Protocol, Swift};
+use rstgen::{swift, IntoTokens};
 
 pub(crate) struct CallbackGen<'a> {
     pub desc: &'a TraitDesc,
@@ -14,7 +15,7 @@ impl<'a> CallbackGen<'a> {
         protocol.modifiers.push(Modifier::Public);
 
         for method in self.desc.methods.iter() {
-            let mut m = Method::new(method.name.clone());
+            let mut m = Method::new(method.name.to_lower_camel_case());
             m.modifiers = vec![];
             m.returns = Some(Swift::from(SwiftType::new(method.return_type.clone())));
             for arg in method.args.iter() {

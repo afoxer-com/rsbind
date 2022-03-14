@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
+use heck::ToLowerCamelCase;
 
 use rstgen::swift::{self, *};
 use rstgen::{Custom, Formatter, IntoTokens, Tokens};
@@ -45,7 +46,7 @@ impl<'a> WrapperGen<'a> {
     }
 
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
-        let mut m = Method::new(method.name.clone());
+        let mut m = Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Public];
         m.returns(SwiftMapping::map_sig_type(&method.return_type));
 
@@ -67,10 +68,10 @@ impl<'a> WrapperGen<'a> {
     ) -> Result<()> {
         match method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!(inner_cls_name, ".", method.name.clone(), "("));
+                method_body.push(toks!(inner_cls_name, ".", method.name.to_lower_camel_case(), "("));
             }
             _ => {
-                method_body.push(toks!("return ",inner_cls_name, ".", method.name.clone(), "("));
+                method_body.push(toks!("return ",inner_cls_name, ".", method.name.to_lower_camel_case(), "("));
             }
         }
 

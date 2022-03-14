@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
+use heck::ToLowerCamelCase;
 
 use rstgen::swift::{self, *};
 use rstgen::{Custom, Formatter, IntoTokens, Tokens};
@@ -39,7 +40,7 @@ impl<'a> ProtocolGen<'a> {
     }
 
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
-        let mut m = Method::new(method.name.clone());
+        let mut m = Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![];
         m.returns(SwiftMapping::map_sig_type(&method.return_type));
 

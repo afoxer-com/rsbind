@@ -25,7 +25,7 @@ pub trait YourContract {
 }
 
 pub trait Callback {
-    fn on_callback(arg1: i64, arg2: String);
+    fn on_callback(&self, arg1: i64, arg2: String);
 }
 
 pub struct StructSimple {
@@ -72,8 +72,8 @@ rsbind path-of-project android/ios/mac/jar/all  ast/bridge/artifact/header/build
 For android, you can call like as below:
 ```java
 YourContract instance = RustLib.newYourContract();
-instance.test_callback(new Callback(){
-       void on_callback(long arg1, String arg2) {
+instance.testCallback(new Callback(){
+       void onCallback(long arg1, String arg2) {
            // do your things.
        }
 })

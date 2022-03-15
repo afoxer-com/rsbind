@@ -14,7 +14,7 @@ use crate::swift::manager::ManagerGen;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::protocol::ProtocolGen;
 use crate::swift::struct_::StructGen;
-use crate::swift::types::{SwiftType, to_swift_file};
+use crate::swift::types::{to_swift_file, SwiftType};
 use crate::swift::wrapper::WrapperGen;
 
 pub(crate) struct SwiftCodeGen<'a> {
@@ -92,9 +92,7 @@ impl<'a> SwiftCodeGen<'a> {
             }
         }
 
-        let manager_gen = ManagerGen{
-            ast: self.ast
-        };
+        let manager_gen = ManagerGen { ast: self.ast };
         let manager_result = manager_gen.gen()?;
         let path = self.swift_gen_dir.join("RustLib.swift");
         fs::write(path, manager_result)?;
@@ -102,6 +100,3 @@ impl<'a> SwiftCodeGen<'a> {
         Ok(())
     }
 }
-
-
-

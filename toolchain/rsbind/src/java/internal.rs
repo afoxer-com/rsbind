@@ -1,8 +1,8 @@
+use heck::{ToLowerCamelCase, ToUpperCamelCase};
 use proc_macro2::TokenStream;
 use std::fmt::Write;
 use std::fs;
 use std::path::PathBuf;
-use heck::{ToLowerCamelCase, ToUpperCamelCase};
 
 use rstgen::java::{self, *};
 use rstgen::Custom;
@@ -19,8 +19,7 @@ use crate::ast::AstResult;
 use crate::errors::*;
 use crate::java::callback::CallbackGen;
 use crate::java::struct_::StructGen;
-use crate::java::types::{JavaType, to_java_file};
-
+use crate::java::types::{to_java_file, JavaType};
 
 pub(crate) struct InnerTraitGen<'a> {
     pub desc: &'a TraitDesc,
@@ -335,7 +334,11 @@ impl<'a> InnerTraitGen<'a> {
     }
 
     fn fill_cb_method_sig(&self, cb_method: &MethodDesc, callback: &TraitDesc) -> Result<Method> {
-        let method_name = format!("invoke{}{}", &callback.name.to_upper_camel_case(), &cb_method.name.to_upper_camel_case());
+        let method_name = format!(
+            "invoke{}{}",
+            &callback.name.to_upper_camel_case(),
+            &cb_method.name.to_upper_camel_case()
+        );
         let mut m = java::Method::new(method_name);
         m.modifiers = vec![Modifier::Public, Modifier::Static];
 

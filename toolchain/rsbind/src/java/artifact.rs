@@ -17,11 +17,11 @@ use crate::ast::types::AstType;
 use crate::ast::AstResult;
 use crate::errors::*;
 use crate::java::callback::CallbackGen;
-use crate::java::internal::InnerTraitGen;
 use crate::java::interface::InterfaceGen;
+use crate::java::internal::InnerTraitGen;
 use crate::java::manager::ManagerGen;
-use crate::java::wrapper::WrapperGen;
 use crate::java::struct_::StructGen;
+use crate::java::wrapper::WrapperGen;
 
 pub(crate) struct JavaCodeGen<'a> {
     pub java_gen_dir: &'a PathBuf,
@@ -80,7 +80,7 @@ impl<'a> JavaCodeGen<'a> {
 
                     let gen = WrapperGen {
                         desc: each,
-                        pkg: self.namespace.clone()
+                        pkg: self.namespace.clone(),
                     };
                     let str = gen.gen()?;
                     let file_name = format!("Rust{}.java", &each.name);
@@ -89,7 +89,7 @@ impl<'a> JavaCodeGen<'a> {
 
                     let gen = InterfaceGen {
                         desc: each,
-                        pkg: self.namespace.clone()
+                        pkg: self.namespace.clone(),
                     };
 
                     let str = gen.gen()?;
@@ -115,9 +115,9 @@ impl<'a> JavaCodeGen<'a> {
             }
         }
 
-        let manager_gen = ManagerGen{
+        let manager_gen = ManagerGen {
             ast: self.ast,
-            pkg: self.namespace.clone()
+            pkg: self.namespace.clone(),
         };
         let manager_result = manager_gen.gen()?;
         let path = self.java_gen_dir.join("RustLib.java");
@@ -126,5 +126,3 @@ impl<'a> JavaCodeGen<'a> {
         Ok(())
     }
 }
-
-

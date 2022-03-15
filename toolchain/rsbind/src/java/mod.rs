@@ -1,10 +1,10 @@
 pub(crate) mod artifact;
 pub(crate) mod bridge;
 mod bridge_cb;
-mod struct_;
 mod callback;
+mod interface;
 mod internal;
+mod manager;
+mod struct_;
 mod types;
 mod wrapper;
-mod manager;
-mod interface;

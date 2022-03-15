@@ -229,7 +229,8 @@ impl FileGenStrategy for CFileGenStrategy {
             }
             AstType::Vec(AstBaseType::Struct(origin)) => {
                 let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
+                let c_slice_ident =
+                    Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
                 let tmp_ident = Ident::new(&format!("c_tmp_{}", &arg.name), Span::call_site());
                 let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
                 let origin_struct_name = Ident::new(&origin, Span::call_site());
@@ -242,7 +243,8 @@ impl FileGenStrategy for CFileGenStrategy {
             }
             AstType::Vec(_) => {
                 let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
+                let c_slice_ident =
+                    Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
                 quote! {
                     let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
                     let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
@@ -256,7 +258,8 @@ impl FileGenStrategy for CFileGenStrategy {
             }
             AstType::Struct(origin) => {
                 let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-                let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
+                let c_slice_ident =
+                    Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
                 let tmp_struct = Ident::new(&format!("c_tmp_{}", &arg.name), Span::call_site());
                 let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
                 quote! {

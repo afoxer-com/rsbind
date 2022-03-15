@@ -1,10 +1,10 @@
-use rstgen::{IntoTokens, java, Java, Tokens};
-use rstgen::java::{Argument, Class, Constructor, Interface, Method, Modifier};
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{JavaType, to_java_file};
+use crate::java::types::{to_java_file, JavaType};
 use heck::ToLowerCamelCase;
+use rstgen::java::{Argument, Class, Constructor, Interface, Method, Modifier};
+use rstgen::{java, IntoTokens, Java, Tokens};
 
 pub(crate) struct InterfaceGen<'a> {
     pub desc: &'a TraitDesc,

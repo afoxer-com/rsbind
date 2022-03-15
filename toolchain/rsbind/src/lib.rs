@@ -14,11 +14,11 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate core;
+extern crate heck;
 extern crate serde_json;
 extern crate syn;
 extern crate toml;
 extern crate zip;
-extern crate heck;
 
 use std::fs;
 use std::path::PathBuf;

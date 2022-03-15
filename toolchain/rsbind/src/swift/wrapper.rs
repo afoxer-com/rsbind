@@ -1,6 +1,6 @@
+use heck::ToLowerCamelCase;
 use std::fs;
 use std::path::PathBuf;
-use heck::ToLowerCamelCase;
 
 use rstgen::swift::{self, *};
 use rstgen::{Custom, Formatter, IntoTokens, Tokens};
@@ -12,7 +12,7 @@ use crate::errors::*;
 use crate::swift::callback::CallbackGen;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::struct_::StructGen;
-use crate::swift::types::{SwiftType, to_swift_file};
+use crate::swift::types::{to_swift_file, SwiftType};
 
 pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,
@@ -36,7 +36,7 @@ impl<'a> WrapperGen<'a> {
             println!("generate swift protocol method for {}", &method.name);
             // Method signature
             let mut m = self.fill_method_sig(method)?;
-            let mut body : Tokens<Swift> = Tokens::new();
+            let mut body: Tokens<Swift> = Tokens::new();
             self.fill_call_internal_method(inner_cls.clone(), &mut body, &method);
             m.body = body;
             class.methods.push(m);
@@ -68,10 +68,21 @@ impl<'a> WrapperGen<'a> {
     ) -> Result<()> {
         match method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!(inner_cls_name, ".", method.name.to_lower_camel_case(), "("));
+                method_body.push(toks!(
+                    inner_cls_name,
+                    ".",
+                    method.name.to_lower_camel_case(),
+                    "("
+                ));
             }
             _ => {
-                method_body.push(toks!("return ",inner_cls_name, ".", method.name.to_lower_camel_case(), "("));
+                method_body.push(toks!(
+                    "return ",
+                    inner_cls_name,
+                    ".",
+                    method.name.to_lower_camel_case(),
+                    "("
+                ));
             }
         }
 

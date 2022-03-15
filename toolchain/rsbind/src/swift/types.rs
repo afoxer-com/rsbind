@@ -1,7 +1,7 @@
-use rstgen::{Custom, Formatter, swift, Tokens};
-use rstgen::swift::Swift;
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
+use rstgen::swift::Swift;
+use rstgen::{swift, Custom, Formatter, Tokens};
 
 #[derive(Clone)]
 pub(crate) struct SwiftType {

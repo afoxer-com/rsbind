@@ -1,10 +1,10 @@
-use rstgen::{IntoTokens, java, Java, Tokens};
-use rstgen::java::{Class, Modifier};
-use syn::Item::Mod;
 use crate::ast::contract::desc::TraitDesc;
-use crate::AstResult;
 use crate::errors::*;
 use crate::java::types::to_java_file;
+use crate::AstResult;
+use rstgen::java::{Class, Modifier};
+use rstgen::{java, IntoTokens, Java, Tokens};
+use syn::Item::Mod;
 
 pub(crate) struct ManagerGen<'a> {
     pub ast: &'a AstResult,
@@ -24,9 +24,7 @@ impl<'a> ManagerGen<'a> {
                     method.modifiers = vec![Modifier::Public, Modifier::Static];
                     method.returns = java::local(each.name.clone());
                     let mut method_body: Tokens<Java> = Tokens::new();
-                    method_body.push(toks!(
-                        "return new Rust", each.name.to_string(), "();"
-                    ));
+                    method_body.push(toks!("return new Rust", each.name.to_string(), "();"));
                     method.body = method_body;
                     class.methods.push(method)
                 }

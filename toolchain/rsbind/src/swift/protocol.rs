@@ -1,6 +1,6 @@
+use heck::ToLowerCamelCase;
 use std::fs;
 use std::path::PathBuf;
-use heck::ToLowerCamelCase;
 
 use rstgen::swift::{self, *};
 use rstgen::{Custom, Formatter, IntoTokens, Tokens};
@@ -12,7 +12,7 @@ use crate::errors::*;
 use crate::swift::callback::CallbackGen;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::struct_::StructGen;
-use crate::swift::types::{SwiftType, to_swift_file};
+use crate::swift::types::{to_swift_file, SwiftType};
 
 pub(crate) struct ProtocolGen<'a> {
     pub desc: &'a TraitDesc,

@@ -1,13 +1,13 @@
-use rstgen::{IntoTokens, java, Java, swift, Tokens};
-use rstgen::swift::{Class, Method, Modifier, Swift};
-use syn::Item::Mod;
 use crate::ast::contract::desc::TraitDesc;
-use crate::{AstResult};
 use crate::errors::*;
 use crate::swift::types::to_swift_file;
+use crate::AstResult;
+use rstgen::swift::{Class, Method, Modifier, Swift};
+use rstgen::{java, swift, IntoTokens, Java, Tokens};
+use syn::Item::Mod;
 
 pub(crate) struct ManagerGen<'a> {
-    pub ast: &'a AstResult
+    pub ast: &'a AstResult,
 }
 
 impl<'a> ManagerGen<'a> {
@@ -23,9 +23,7 @@ impl<'a> ManagerGen<'a> {
                     method.modifiers = vec![Modifier::Public, Modifier::Static];
                     method.returns = Some(swift::local(each.name.clone()));
                     let mut method_body: Tokens<Swift> = Tokens::new();
-                    method_body.push(toks!(
-                        "return Rust", each.name.to_string(), "()"
-                    ));
+                    method_body.push(toks!("return Rust", each.name.to_string(), "()"));
                     method.body = method_body;
                     class.methods.push(method)
                 }

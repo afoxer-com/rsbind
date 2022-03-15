@@ -1,8 +1,8 @@
-use rstgen::{IntoTokens, swift};
-use rstgen::swift::{Field, local, Modifier, Swift};
 use crate::ast::contract::desc::StructDesc;
-use crate::swift::types::{SwiftType, to_swift_file};
 use crate::errors::*;
+use crate::swift::types::{to_swift_file, SwiftType};
+use rstgen::swift::{local, Field, Modifier, Swift};
+use rstgen::{swift, IntoTokens};
 
 pub(crate) struct StructGen<'a> {
     pub desc: &'a StructDesc,

@@ -1,10 +1,10 @@
-use heck::ToLowerCamelCase;
-use rstgen::{IntoTokens, java, Java, Tokens};
-use rstgen::java::{Argument, Class, Constructor, Method, Modifier};
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{JavaType, to_java_file};
+use crate::java::types::{to_java_file, JavaType};
+use heck::ToLowerCamelCase;
+use rstgen::java::{Argument, Class, Constructor, Method, Modifier};
+use rstgen::{java, IntoTokens, Java, Tokens};
 
 pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,
@@ -59,15 +59,20 @@ impl<'a> WrapperGen<'a> {
         Ok(m)
     }
 
-    fn fill_outer_method_body (
+    fn fill_outer_method_body(
         &self,
         inner_cls_name: String,
-        method_body: & mut Tokens<Java>,
+        method_body: &mut Tokens<Java>,
         method: &MethodDesc,
     ) -> Result<()> {
         match method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!(inner_cls_name, ".", method.name.to_lower_camel_case(), "("));
+                method_body.push(toks!(
+                    inner_cls_name,
+                    ".",
+                    method.name.to_lower_camel_case(),
+                    "("
+                ));
             }
             _ => {
                 method_body.push(toks!(

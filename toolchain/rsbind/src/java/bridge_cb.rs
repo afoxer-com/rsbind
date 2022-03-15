@@ -27,7 +27,8 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
             Span::call_site(),
         );
-        let class_name = format!("{}.Internal{}", &self.java_namespace, &trait_desc.name).replace('.', "/");
+        let class_name =
+            format!("{}.Internal{}", &self.java_namespace, &trait_desc.name).replace('.', "/");
         let struct_name = &format!("{}_struct", arg.name);
         let struct_ident = Ident::new(struct_name, Span::call_site());
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
@@ -334,7 +335,11 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
             // methods calls on impl
             let method_name = Ident::new(&method.name, Span::call_site());
-            let java_method_name = format!("invoke{}{}", &callback_desc.name.to_upper_camel_case(), &method.name.to_upper_camel_case());
+            let java_method_name = format!(
+                "invoke{}{}",
+                &callback_desc.name.to_upper_camel_case(),
+                &method.name.to_upper_camel_case()
+            );
 
             methods_result = quote! {
                 #methods_result

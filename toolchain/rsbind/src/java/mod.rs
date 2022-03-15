@@ -5,6 +5,7 @@ mod callback;
 mod interface;
 mod internal;
 mod manager;
+mod method_cb;
 mod struct_;
 mod types;
 mod wrapper;

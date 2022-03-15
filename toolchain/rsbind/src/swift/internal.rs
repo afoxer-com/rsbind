@@ -1,6 +1,6 @@
+use heck::ToLowerCamelCase;
 use std::fs;
 use std::path::PathBuf;
-use heck::ToLowerCamelCase;
 
 use rstgen::swift::{self, *};
 use rstgen::{Custom, Formatter, IntoTokens, Tokens};
@@ -12,7 +12,7 @@ use crate::errors::*;
 use crate::swift::callback::CallbackGen;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::struct_::StructGen;
-use crate::swift::types::{SwiftType, to_swift_file};
+use crate::swift::types::{to_swift_file, SwiftType};
 
 pub(crate) struct TraitGen<'a> {
     pub desc: &'a TraitDesc,
@@ -211,7 +211,7 @@ impl<'a> TraitGen<'a> {
                     for cb_method in cb.methods.iter() {
                         self.fill_cb_closure_method_sig(cb_method, arg, method_body)?;
 
-                        method_body.push(toks!(
+                        method_body.nested(toks!(
                             "let ",
                             format!("{}_callback", &arg.name),
                             " = globalCallbacks[index] as! ",
@@ -316,7 +316,7 @@ impl<'a> TraitGen<'a> {
             closure,
             " = {"
         ));
-        method_body.push(toks!(arg_params, " in\n"));
+        method_body.nested(toks!(arg_params, " in\n"));
         Ok(())
     }
 
@@ -325,14 +325,15 @@ impl<'a> TraitGen<'a> {
         cb_arg: &ArgDesc,
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
+        let mut fn_body = toks!();
         let cb_arg_str = SwiftType {
             ast_type: cb_arg.ty.clone(),
         }
-            .to_str();
+        .to_str();
         match cb_arg.ty.clone() {
             AstType::Void => {}
             AstType::Byte(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Int8(",
@@ -341,7 +342,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::Int(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Int32(",
@@ -350,7 +351,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::Long(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Int64(",
@@ -359,7 +360,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::Float(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Float(",
@@ -368,7 +369,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::Double(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Double(",
@@ -377,7 +378,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::Boolean => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " : Bool = ",
@@ -386,7 +387,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::String => {
-                method_body.push(toks!(
+                method_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = String(cString: ",
@@ -397,7 +398,8 @@ impl<'a> TraitGen<'a> {
             AstType::Callback(_) => {
                 panic!("Don't support callback argument in callback");
             }
-            AstType::Vec(AstBaseType::Byte(_)) => method_body.push(toks!(
+            AstType::Vec(AstBaseType::Byte(_)) => {
+                fn_body.nested(toks!(
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = Array<Int8>(UnsafeBufferPointer(start: ",
@@ -405,33 +407,47 @@ impl<'a> TraitGen<'a> {
                 ".ptr, count: Int(",
                 cb_arg.name.clone(),
                 ".len)))"
-            )),
+            ));
+            }
             AstType::Vec(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_tmp_{}", &cb_arg.name),
                     " = String(cString:",
                     cb_arg.name.clone(),
-                    "!)\n",
+                    "!)"
+                ));
+                fn_body.nested(toks!(
                     "var ",
                     format!("c_option_{}", &cb_arg.name),
                     " : ",
                     cb_arg_str.clone(),
-                    "?\n",
-                    "autoreleasepool {\n",
-                    "let ",
-                    format!("c_tmp_json_{}", &cb_arg.name),
-                    " = ",
-                    format!("c_tmp_{}", &cb_arg.name),
-                    ".data(using: .utf8)!\n",
-                    "let decoder = JSONDecoder()\n",
-                    format!("c_option_{}", &cb_arg.name),
-                    " = try! decoder.decode(",
-                    cb_arg_str,
-                    ".self, from: ",
-                    format!("c_tmp_json_{}", &cb_arg.name),
-                    ")\n",
-                    "}\n",
+                    "?"
+                ));
+                fn_body.nested(toks!("autoreleasepool {"));
+                fn_body.nested({
+                    let mut body = toks!();
+                    body.nested(toks!(
+                        "let ",
+                        format!("c_tmp_json_{}", &cb_arg.name),
+                        " = ",
+                        format!("c_tmp_{}", &cb_arg.name),
+                        ".data(using: .utf8)!"
+                    ));
+                    body.nested(toks!("let decoder = JSONDecoder()"));
+                    body.nested(toks!(
+                        format!("c_option_{}", &cb_arg.name),
+                        " = try! decoder.decode(",
+                        cb_arg_str,
+                        ".self, from: ",
+                        format!("c_tmp_json_{}", &cb_arg.name),
+                        ")"
+                    ));
+
+                    body
+                });
+                fn_body.nested(toks!("}"));
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = ",
@@ -440,31 +456,43 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             AstType::Struct(_) => {
-                method_body.push(toks!(
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_tmp_{}", &cb_arg.name),
                     " = String(cString:",
                     cb_arg.name.clone(),
-                    "!)\n",
+                    "!)"
+                ));
+                fn_body.nested(toks!(
                     "var ",
                     format!("c_option_{}", &cb_arg.name),
                     " : ",
                     cb_arg_str.clone(),
-                    "?\n",
-                    "autoreleasepool {\n",
-                    "let ",
-                    format!("c_tmp_json_{}", &cb_arg.name),
-                    " = ",
-                    format!("c_tmp_{}", &cb_arg.name),
-                    ".data(using: .utf8)!\n",
-                    "let decoder = JSONDecoder()\n",
-                    format!("c_option_{}", &cb_arg.name),
-                    " = try! decoder.decode(",
-                    cb_arg_str,
-                    ".self, from: ",
-                    format!("c_tmp_json_{}", &cb_arg.name),
-                    ")\n",
-                    "}\n",
+                    "?"
+                ));
+                fn_body.nested(toks!("autoreleasepool {"));
+                fn_body.nested({
+                    let mut body = toks!();
+                    body.nested(toks!(
+                        "let ",
+                        format!("c_tmp_json_{}", &cb_arg.name),
+                        " = ",
+                        format!("c_tmp_{}", &cb_arg.name),
+                        ".data(using: .utf8)!"
+                    ));
+                    body.nested(toks!("let decoder = JSONDecoder()"));
+                    body.nested(toks!(
+                        format!("c_option_{}", &cb_arg.name),
+                        " = try! decoder.decode(",
+                        cb_arg_str,
+                        ".self, from: ",
+                        format!("c_tmp_json_{}", &cb_arg.name),
+                        ")"
+                    ));
+                    body
+                });
+                fn_body.nested(toks!("}"));
+                fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = ",
@@ -473,6 +501,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
         }
+        method_body.push(fn_body);
         Ok(())
     }
 
@@ -494,7 +523,7 @@ impl<'a> TraitGen<'a> {
 
         match cb_method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!(
+                method_body.nested(toks!(
                     format!("{}_callback", &arg.name),
                     ".",
                     cb_method.name.to_lower_camel_case(),
@@ -502,7 +531,7 @@ impl<'a> TraitGen<'a> {
                 ));
             }
             _ => {
-                method_body.push(toks!(
+                method_body.nested(toks!(
                     "let result = ",
                     format!("{}_callback", &arg.name),
                     ".",
@@ -523,25 +552,25 @@ impl<'a> TraitGen<'a> {
         match cb_method.return_type.clone() {
             AstType::Void => {}
             AstType::Byte(_) => {
-                method_body.push(toks!("return Int8(result)"));
+                method_body.nested(toks!("return Int8(result)"));
             }
             AstType::Int(_) => {
-                method_body.push(toks!("return Int32(result)"));
+                method_body.nested(toks!("return Int32(result)"));
             }
             AstType::Long(_) => {
-                method_body.push(toks!("return Int64(result)"));
+                method_body.nested(toks!("return Int64(result)"));
             }
             AstType::Float(_) => {
-                method_body.push(toks!("return Float(result)"));
+                method_body.nested(toks!("return Float(result)"));
             }
             AstType::Double(_) => {
-                method_body.push(toks!("return Double(result)"));
+                method_body.nested(toks!("return Double(result)"));
             }
             AstType::Boolean => {
-                method_body.push(toks!("return result ? 1 : 0"));
+                method_body.nested(toks!("return result ? 1 : 0"));
             }
             AstType::String => {
-                method_body.push(toks!("return result"));
+                method_body.nested(toks!("return result"));
             }
             AstType::Vec(_) => {
                 panic!("Don't support Vec in callback return.");
@@ -562,14 +591,10 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
         let free_fn_name = format!("{}_callback_free", &arg.name);
-        method_body.push(toks!(
-            "let ",
-            free_fn_name,
-            " : @convention(c)(Int64) -> () = {\n",
-            "(index) in\n",
-            "globalCallbacks.removeValue(forKey: index)\n",
-            "}\n"
-        ));
+        method_body.push(toks!("let ",free_fn_name," : @convention(c)(Int64) -> () = {"));
+        method_body.nested(toks!("(index) in"));
+        method_body.nested(toks!("globalCallbacks.removeValue(forKey: index)"));
+        method_body.push(toks!("}"));
         Ok(())
     }
 
@@ -634,39 +659,39 @@ impl<'a> TraitGen<'a> {
             }
             AstType::Vec(_) => {
                 let return_ty = SwiftType::new(method.return_type.clone());
+                method_body.push(toks!("let ret_str = String(cString:result!)"));
+                method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
                 method_body.push(toks!(
-                    "let ret_str = String(cString:result!)\n",
-                    format!("{}_free_str(result!)\n", &crate_name),
                     "var s_tmp_result:",
                     Swift::from(return_ty.clone()),
-                    "?\n",
-                    "autoreleasepool {\n",
-                    "let ret_str_json = ret_str.data(using: .utf8)!\n",
-                    "let decoder = JSONDecoder()\n",
+                    "?"
+                ));
+                method_body.push(toks!("autoreleasepool {"));
+                method_body.nested(toks!("let ret_str_json = ret_str.data(using: .utf8)!"));
+                method_body.nested(toks!("let decoder = JSONDecoder()"));
+                method_body.nested(toks!(
                     "s_tmp_result = try! decoder.decode(",
                     Swift::from(return_ty),
-                    ".self, from: ret_str_json)\n",
-                    "}\n",
-                    "let s_result = s_tmp_result!"
+                    ".self, from: ret_str_json)"
                 ));
+                method_body.push(toks!("}"));
+                method_body.push(toks!("let s_result = s_tmp_result!"));
             }
             AstType::Callback(_) => {}
             AstType::Struct(struct_name) => {
-                method_body.push(toks!(
-                    "let ret_str = String(cString:result!)\n",
-                    format!("{}_free_str(result!)\n", &crate_name),
-                    "var s_tmp_result: ",
-                    struct_name.clone(),
-                    "?\n",
-                    "autoreleasepool {\n",
-                    "let ret_str_json = ret_str.data(using: .utf8)!\n",
-                    "let decoder = JSONDecoder()\n",
+                method_body.push(toks!("let ret_str = String(cString:result!)"));
+                method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
+                method_body.push(toks!("var s_tmp_result: ", struct_name.clone(), "?"));
+                method_body.push(toks!("autoreleasepool {"));
+                method_body.nested(toks!("let ret_str_json = ret_str.data(using: .utf8)!"));
+                method_body.nested(toks!("let decoder = JSONDecoder()"));
+                method_body.nested(toks!(
                     "s_tmp_result = try! decoder.decode(",
                     struct_name,
-                    ".self, from: ret_str_json)\n",
-                    "}\n",
-                    "let s_result = s_tmp_result!\n"
+                    ".self, from: ret_str_json)"
                 ));
+                method_body.push(toks!("}"));
+                method_body.push(toks!("let s_result = s_tmp_result!"));
             }
         }
 

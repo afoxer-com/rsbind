@@ -360,7 +360,7 @@ impl<'a> ArgCbGen<'a> {
                 method_body.nested(toks!("return result ? 1 : 0"));
             }
             AstType::String => {
-                method_body.nested(toks!("return result"));
+                method_body.nested(toks!("return result.withCString { $0 }"));
             }
             AstType::Vec(_) => {
                 panic!("Don't support Vec in callback return.");

@@ -215,6 +215,11 @@ class demo_ios_ExampleTests: XCTestCase {
             func testNoReturn() {
                 
             }
+            
+            func testStr(arg : String) -> String {
+                XCTAssertEqual(arg, "Hello world")
+                return "Hello world"
+            }
         }
         
         return AssertDemoCallback(demoTest: demoTest)

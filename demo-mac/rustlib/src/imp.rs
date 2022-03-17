@@ -201,6 +201,7 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     error!("We call handle_callback test_f64_31");
     assert(arg.test_f64_31(100.0, 101.0) > 30.0, "test_f64_31");
     error!("We call handle_callback test_arg_vec_str_18");
+    assert_eq(&arg.test_str("Hello world".to_string()), &"Hello world".to_string(), "test_str");
     assert_eq(
         &arg.test_arg_vec_str_18(vec!["Hello world".to_string()]),
         &18i32,

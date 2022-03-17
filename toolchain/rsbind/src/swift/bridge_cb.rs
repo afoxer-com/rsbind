@@ -163,7 +163,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                     },
                     AstType::String => quote! {
                         let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
-                        let s_result_str: &str = s_result_str.to_str().unwrap();
+                        let s_result_str: &str = s_result_c_str.to_str().unwrap();
                         let s_result: String = s_result_str.to_owned();
                     },
                     _ => quote! {

@@ -62,7 +62,7 @@ pub trait DemoCallback: Sync {
     fn test_f64_31(&self, arg: f64, arg2: f64) -> f64;
 
     // String
-    // fn test_str(&self, arg: String) -> String;
+    fn test_str(&self, arg: String) -> String;
 
     // Vec argument
     fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32;

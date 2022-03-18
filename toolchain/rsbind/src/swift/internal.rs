@@ -164,9 +164,11 @@ impl<'a> TraitGen<'a> {
                     ))
                 }
                 AstType::Vec(AstBaseType::Struct(origin)) => {
+                    method_body.push(toks!("var ", format!("s_{}", &arg.name), ": String?"));
+                    method_body.push(toks!("autoreleasepool {"));
                     let encoder_name = format!("{}_encoder", &arg.name);
-                    method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                    method_body.push(toks!(
+                    method_body.nested(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
+                    method_body.nested(toks!(
                         "let ",
                         format!("data_{}", &arg.name),
                         " = try! ",
@@ -175,18 +177,20 @@ impl<'a> TraitGen<'a> {
                         arg.name.clone(),
                         ")"
                     ));
-                    method_body.push(toks!(
-                        "let ",
+                    method_body.nested(toks!(
                         format!("s_{}", &arg.name),
                         " = String(data: ",
                         format!("data_{}", &arg.name),
                         ", encoding: .utf8)!"
-                    ))
+                    ));
+                    method_body.push(toks!("}"));
                 }
                 AstType::Vec(_) | AstType::Struct(_) => {
+                    method_body.push(toks!("var ", format!("s_{}", &arg.name), ": String?"));
+                    method_body.push(toks!("autoreleasepool {"));
                     let encoder_name = format!("{}_encoder", &arg.name);
-                    method_body.push(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                    method_body.push(toks!(
+                    method_body.nested(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
+                    method_body.nested(toks!(
                         "let ",
                         format!("data_{}", &arg.name),
                         " = try! ",
@@ -195,13 +199,13 @@ impl<'a> TraitGen<'a> {
                         arg.name.clone(),
                         ")"
                     ));
-                    method_body.push(toks!(
-                        "let ",
+                    method_body.nested(toks!(
                         format!("s_{}", &arg.name),
                         " = String(data: ",
                         format!("data_{}", &arg.name),
                         ", encoding: .utf8)!"
-                    ))
+                    ));
+                    method_body.push(toks!("}"));
                 }
                 AstType::Callback(_) => {
                     let callback = self

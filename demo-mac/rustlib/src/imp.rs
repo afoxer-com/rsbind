@@ -3,6 +3,7 @@ use contract::DemoStruct;
 use contract::DemoTrait;
 
 use log::Level;
+use std::{thread, time};
 
 pub struct TestContract1Imp {}
 
@@ -195,7 +196,6 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     assert_eq(&arg.test_u32_6(100, 101), &6, "handle_callback");
     error!("We call handle_callback test_bool_false");
     assert_eq(&arg.test_bool_false(true, false), &false, "handle_callback");
-    // assert_eq(arg.test_str("Hello world".to_string()), "Hello world".to_string());
     error!("We call handle_callback test_f32_30");
     assert(arg.test_f32_30(100.0, 101.0) > 29.0, "test_f32_30");
     error!("We call handle_callback test_f64_31");

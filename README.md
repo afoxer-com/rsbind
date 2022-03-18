@@ -128,9 +128,6 @@ supported types in Callback:
 These is not supported yet:
 - Callback in return type.
 
-In Callback:
-- Return String.
-
 Will support it in near future.
 
 It is different to define a callback and a normal trait.

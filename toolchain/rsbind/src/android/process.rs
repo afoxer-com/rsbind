@@ -107,17 +107,8 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
 
     fn build_bridge_prj(&self) -> Result<()> {
         println!("building android bridge project");
-
         let _ndk = ndk_build::ndk::Ndk::from_env()?;
-
-        let mut phone_archs = self.config().phone_archs();
-        let mut phone64_archs = self.config().phone64_archs();
-        let mut x86_archs = self.config().x86_archs();
-
-        let mut archs = vec![];
-        archs.append(&mut phone_archs);
-        archs.append(&mut phone64_archs);
-        archs.append(&mut x86_archs);
+        let mut archs = self.config().archs();
 
         let config = BuildConfig {
             lib_name: self.lib_name(),

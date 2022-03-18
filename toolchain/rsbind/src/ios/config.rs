@@ -1,5 +1,4 @@
-const PHONE_ARCHS: [&str; 2] = ["aarch64-apple-ios", "armv7-apple-ios"];
-const SIMULATOR_ARCHS: [&str; 2] = ["i386-apple-ios", "x86_64-apple-ios"];
+const ARCHS: [&str; 4] = ["aarch64-apple-ios", "armv7-apple-ios", "i386-apple-ios", "x86_64-apple-ios"];
 
 ///
 /// iOS Configuration struct
@@ -7,24 +6,15 @@ const SIMULATOR_ARCHS: [&str; 2] = ["i386-apple-ios", "x86_64-apple-ios"];
 #[derive(Clone, Deserialize, Debug)]
 pub struct Ios {
     pub rustc_param: Option<String>,
-    pub arch_phone: Option<Vec<String>>,
-    pub arch_simu: Option<Vec<String>>,
+    pub arch: Option<Vec<String>>,
     pub release: Option<bool>,
     pub features_def: Option<Vec<String>>,
 }
 
 impl Default for Ios {
     fn default() -> Self {
-        let arch_phone = Some(
-            PHONE_ARCHS
-                .iter()
-                .copied()
-                .map(|item| item.to_owned())
-                .collect(),
-        );
-
-        let arch_simu = Some(
-            SIMULATOR_ARCHS
+        let arch = Some(
+            ARCHS
                 .iter()
                 .copied()
                 .map(|item| item.to_owned())
@@ -33,8 +23,7 @@ impl Default for Ios {
 
         Self {
             rustc_param: None,
-            arch_phone,
-            arch_simu,
+            arch,
             release: Some(true),
             features_def: None,
         }
@@ -61,23 +50,10 @@ impl Ios {
         self.release.unwrap_or(true)
     }
 
-    pub fn iphoneos_archs(&self) -> Vec<String> {
-        let default_phone_archs = PHONE_ARCHS.iter().copied().map(|a| a.to_owned()).collect();
+    pub fn archs(&self) -> Vec<String> {
+        let default_phone_archs = ARCHS.iter().copied().map(|a| a.to_owned()).collect();
 
-        match self.arch_phone {
-            Some(ref arch) => arch.clone(),
-            None => default_phone_archs,
-        }
-    }
-
-    pub fn simulator_archs(&self) -> Vec<String> {
-        let default_phone_archs = SIMULATOR_ARCHS
-            .iter()
-            .copied()
-            .map(|a| a.to_owned())
-            .collect();
-
-        match self.arch_simu {
+        match self.arch {
             Some(ref arch) => arch.clone(),
             None => default_phone_archs,
         }

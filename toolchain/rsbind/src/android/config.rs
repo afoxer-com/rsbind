@@ -13,8 +13,6 @@ pub struct Android {
     pub ndk_stand_alone: Option<String>,
     pub rustc_param: Option<String>,
     pub arch: Option<Vec<String>>,
-    pub arch_64: Option<Vec<String>>,
-    pub arch_x86: Option<Vec<String>>,
     pub release: Option<bool>,
     pub namespace: Option<String>,
     pub so_name: Option<String>,
@@ -32,28 +30,10 @@ impl Default for Android {
                 .collect(),
         );
 
-        let arch_64 = Some(
-            PHONE64_ARCHS
-                .iter()
-                .copied()
-                .map(|item| item.to_owned())
-                .collect(),
-        );
-
-        let arch_x86 = Some(
-            X86_ARCHS
-                .iter()
-                .copied()
-                .map(|item| item.to_owned())
-                .collect(),
-        );
-
         Self {
             ndk_stand_alone: None,
             rustc_param: None,
             arch,
-            arch_64,
-            arch_x86,
             release: Some(true),
             namespace: Some(NAMESPACE.to_owned()),
             so_name: Some(SO_NAME.to_owned()),
@@ -82,34 +62,12 @@ impl Android {
         self.release.unwrap_or(true)
     }
 
-    pub fn phone_archs(&self) -> Vec<String> {
+    pub fn archs(&self) -> Vec<String> {
         let default_phone_archs = PHONE_ARCHS.iter().copied().map(|a| a.to_owned()).collect();
 
         match self.arch {
             Some(ref arch) => arch.to_owned(),
             None => default_phone_archs,
-        }
-    }
-
-    pub fn phone64_archs(&self) -> Vec<String> {
-        let default_phone64_archs = PHONE64_ARCHS
-            .iter()
-            .copied()
-            .map(|a| a.to_owned())
-            .collect();
-
-        match self.arch_64 {
-            Some(ref arch) => arch.to_owned(),
-            None => default_phone64_archs,
-        }
-    }
-
-    pub fn x86_archs(&self) -> Vec<String> {
-        let default_x86_archs = X86_ARCHS.iter().copied().map(|a| a.to_owned()).collect();
-
-        match self.arch_x86 {
-            Some(ref arch) => arch.to_owned(),
-            None => default_x86_archs,
         }
     }
 

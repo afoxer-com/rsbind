@@ -1,4 +1,4 @@
-[![Build](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
+[![Test](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
 [![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.
@@ -85,9 +85,7 @@ You can create a file named Rsbind.toml to add some configuration.
 ```toml
 [android]
 rustc_param = ""
-arch = ["armv7-linux-androideabi"]
-arch_64 = ["aarch64-linux-android"]
-arch_x86 = ["i686-linux-android"]
+arch = ["armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android"]
 release = true
 namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
@@ -96,8 +94,7 @@ features_def = ["xxxx=[]"]
 
 [ios]
 rustc_param = ""
-arch_phone = ["armv7-apple-ios"]
-arch_simu = ["i386-apple-ios", "x86_64-apple-ios"]
+arch = ["armv7-apple-ios", "i386-apple-ios", "x86_64-apple-ios"]
 release = true
 features_def = []
 

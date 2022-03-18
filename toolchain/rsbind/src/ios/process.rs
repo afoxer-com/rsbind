@@ -143,11 +143,11 @@ impl<'a> BuildProcess for IosProcess<'a> {
             debug_release,
             self.lib_name()
         );
-        let iphoneos_archs = self.config().iphoneos_archs();
-        for iphoneos_arch in iphoneos_archs.iter() {
+        let archs = self.config().archs();
+        for arch in archs.iter() {
             let tmp = format!(
                 "cargo rustc --target {}  --lib {} --target-dir {} {}",
-                iphoneos_arch,
+                arch,
                 self.config().release_str(),
                 "target",
                 &self.config().rustc_param()
@@ -156,26 +156,7 @@ impl<'a> BuildProcess for IosProcess<'a> {
             lipo_cmd = format!(
                 "{} target/{}/{}/{}",
                 &lipo_cmd,
-                iphoneos_arch,
-                debug_release,
-                self.lib_name()
-            );
-        }
-
-        let simulator_archs = self.config().simulator_archs();
-        for simulator_arch in simulator_archs.iter() {
-            let tmp = format!(
-                "cargo rustc --target {}  --lib {} --target-dir {} {}",
-                simulator_arch,
-                self.config().release_str(),
-                "target",
-                &self.config().rustc_param()
-            );
-            build_cmds = format!("{} && {}", &build_cmds, &tmp);
-            lipo_cmd = format!(
-                "{} target/{}/{}/{}",
-                &lipo_cmd,
-                simulator_arch,
+                arch,
                 debug_release,
                 self.lib_name()
             );

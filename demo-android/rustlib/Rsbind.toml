@@ -1,8 +1,6 @@
 [android]
 rustc_param = ""
-arch = ["armv7-linux-androideabi"]
-arch_64 = ["aarch64-linux-android"]
-arch_x86 = ["i686-linux-android", "x86_64-linux-android"]
+arch = ["armv7-linux-androideabi", "aarch64-linux-android", "i686-linux-android", "x86_64-linux-android"]
 release = true
 namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
@@ -11,8 +9,7 @@ so_name = "demo"
 
 [ios]
 rustc_param = ""
-arch_phone = ["aarch64-apple-ios"]
-arch_simu = ["x86_64-apple-ios"]
+arch = ["aarch64-apple-ios", "x86_64-apple-ios"]
 release = true
 features_def = []
 

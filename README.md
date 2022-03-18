@@ -1,4 +1,4 @@
-[![Test](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
+[![Build](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg?branch=master)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
 [![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
 # What's this?
 - This Repository provide tools to bind rust interface with other language and export library artifact directly.

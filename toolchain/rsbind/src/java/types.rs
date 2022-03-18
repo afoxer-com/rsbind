@@ -62,6 +62,7 @@ impl From<JavaType> for Java<'static> {
         match item.ast_type {
             AstType::Boolean => java::BOOLEAN,
             AstType::Byte(_) => java::BYTE,
+            AstType::Short(_) => java::SHORT,
             AstType::Int(_) => java::INTEGER,
             AstType::Long(_) => java::LONG,
             AstType::Float(_) => java::FLOAT,

@@ -22,8 +22,8 @@ public class RustLibTest {
     public void testRustLibBase() {
         Assertions.assertEquals(demoTrait.testU81((byte) 100, (byte) 101), 1);
         Assertions.assertEquals(demoTrait.testI82((byte) 100, (byte) 101), 2);
-        Assertions.assertEquals(demoTrait.testI163(100, 101), 3);
-        Assertions.assertEquals(demoTrait.testU164(100, 101), 4);
+        Assertions.assertEquals(demoTrait.testI163((short) 100, (short) 101), (short)3);
+        Assertions.assertEquals(demoTrait.testU164((short) 100, (short) 101), (short)4);
         Assertions.assertEquals(demoTrait.testI325(100, 101), 5);
         Assertions.assertEquals(demoTrait.testU326(100, 101), 6);
         Assertions.assertTrue(demoTrait.testF3230(100.0f, 101.0f) > 29.0);
@@ -41,9 +41,9 @@ public class RustLibTest {
     public void testRustLibArray() {
         Assertions.assertEquals(demoTrait.testArgVecStr7(new String[]{"Hello world"}), 7);
         Assertions.assertEquals(demoTrait.testArgVecU8True(new byte[]{(byte) 100}), true);
-        Assertions.assertEquals(demoTrait.testArgVecI169(new Integer[]{100}), 9);
+        Assertions.assertEquals(demoTrait.testArgVecI169(new Short[]{(short)100}), 9);
 
-        Assertions.assertEquals(demoTrait.testArgVecU1610(new Integer[]{100}), 10);
+        Assertions.assertEquals(demoTrait.testArgVecU1610(new Short[]{100}), 10);
         Assertions.assertEquals(demoTrait.testArgVecI3211(new Integer[]{100}), 11);
         Assertions.assertEquals(demoTrait.testArgVecU3212(new Integer[]{100}), 12);
 
@@ -56,8 +56,8 @@ public class RustLibTest {
         Assertions.assertArrayEquals(demoTrait.testReturnVecStr(), new String[]{"Hello world"});
         Assertions.assertArrayEquals(demoTrait.testReturnVecU8(), new byte[]{100});
         Assertions.assertArrayEquals(demoTrait.testReturnVecI8(), new byte[]{100});
-        Assertions.assertArrayEquals(demoTrait.testReturnVecI16(), new Integer[]{100});
-        Assertions.assertArrayEquals(demoTrait.testReturnVecU16(), new Integer[]{100});
+        Assertions.assertArrayEquals(demoTrait.testReturnVecI16(), new Short[]{100});
+        Assertions.assertArrayEquals(demoTrait.testReturnVecU16(), new Short[]{100});
         Assertions.assertArrayEquals(demoTrait.testReturnVecI32(), new Integer[]{100});
         Assertions.assertArrayEquals(demoTrait.testReturnVecU32(), new Integer[]{100});
         Assertions.assertArrayEquals(demoTrait.testReturnVecBoolTrue(), new Boolean[]{true});
@@ -98,14 +98,14 @@ public class RustLibTest {
             }
 
             @Override
-            public int testI163(int arg, int arg2) {
+            public short testI163(short arg, short arg2) {
                 Assertions.assertEquals(arg, 100);
                 Assertions.assertEquals(arg2, 101);
                 return 3;
             }
 
             @Override
-            public int testU164(int arg, int arg2) {
+            public short testU164(short arg, short arg2) {
                 Assertions.assertEquals(arg, 100);
                 Assertions.assertEquals(arg2, 101);
                 return 4;
@@ -165,14 +165,14 @@ public class RustLibTest {
             }
 
             @Override
-            public int testArgVecI169(Integer[] arg) {
-                Assertions.assertArrayEquals(arg, new Integer[]{100});
+            public int testArgVecI169(Short[] arg) {
+                Assertions.assertArrayEquals(arg, new Short[]{100});
                 return 9;
             }
 
             @Override
-            public int testArgVecU1610(Integer[] arg) {
-                Assertions.assertArrayEquals(arg, new Integer[]{100});
+            public int testArgVecU1610(Short[] arg) {
+                Assertions.assertArrayEquals(arg, new Short[]{100});
                 return 10;
             }
 

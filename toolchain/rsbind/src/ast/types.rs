@@ -7,6 +7,7 @@ use std::convert::From;
 pub(crate) enum AstBaseType {
     Void,
     Byte(String),
+    Short(String),
     Int(String),
     Long(String),
     Float(String),
@@ -22,7 +23,8 @@ impl<'a> AstBaseType {
         let origin = ident.to_string();
         match ident {
             "u8" | "i8" => AstBaseType::Byte(origin),
-            "u16" | "u32" | "i16" | "i32" | "isize" | "usize" => AstBaseType::Int(origin),
+            "u16" | "i16" => AstBaseType::Short(origin),
+            "u32" | "i32" | "isize" | "usize" => AstBaseType::Int(origin),
             "f32" => AstBaseType::Float(origin),
             "f64" => AstBaseType::Double(origin),
             "u64" | "i64" => AstBaseType::Long(origin),
@@ -48,6 +50,7 @@ impl<'a> AstBaseType {
             AstBaseType::String => "String".to_owned(),
             AstBaseType::Callback(origin) => origin.clone(),
             AstBaseType::Struct(origin) => origin.clone(),
+            AstBaseType::Short(origin) => origin.clone()
         }
     }
 }
@@ -57,6 +60,7 @@ pub(crate) enum AstType {
     Void,
     Byte(String),
     Int(String),
+    Short(String),
     Long(String),
     Float(String),
     Double(String),
@@ -75,7 +79,8 @@ impl<'a> AstType {
         let origin = ident.to_string();
         match ident {
             "u8" | "i8" => AstType::Byte(origin),
-            "u16" | "u32" | "i16" | "i32" | "isize" | "usize" => AstType::Int(origin),
+            "u16" | "i16" => AstType::Short(origin),
+            "u32" | "i32" | "isize" | "usize" => AstType::Int(origin),
             "f32" => AstType::Float(origin),
             "f64" => AstType::Double(origin),
             "u64" | "i64" => AstType::Long(origin),
@@ -93,6 +98,7 @@ impl<'a> AstType {
         match &self {
             AstType::Void => "".to_owned(),
             AstType::Byte(origin) => origin.clone(),
+            AstType::Short(origin) => origin.clone(),
             AstType::Int(origin) => origin.clone(),
             AstType::Long(origin) => origin.clone(),
             AstType::Float(origin) => origin.clone(),
@@ -111,6 +117,7 @@ impl From<AstBaseType> for AstType {
         match base_ty {
             AstBaseType::Void => AstType::Void,
             AstBaseType::Byte(origin) => AstType::Byte(origin),
+            AstBaseType::Short(origin) => AstType::Short(origin),
             AstBaseType::Int(origin) => AstType::Int(origin),
             AstBaseType::Long(origin) => AstType::Long(origin),
             AstBaseType::Float(origin) => AstType::Float(origin),
@@ -128,6 +135,7 @@ impl AstType {
         match self {
             AstType::Void => "V".to_owned(),
             AstType::Byte(_) => "B".to_owned(),
+            AstType::Short(_) => "S".to_owned(),
             AstType::Int(_) => "I".to_owned(),
             AstType::Long(_) => "J".to_owned(),
             AstType::Float(_) => "F".to_owned(),

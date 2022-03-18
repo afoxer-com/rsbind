@@ -40,14 +40,20 @@ impl<'a> TraitGen<'a> {
 
             let mut byte_count = 0;
             for arg in method.args.iter() {
-                if let AstType::Vec(AstBaseType::Byte(_)) = arg.ty.clone() {
-                    byte_count += 1;
-                    method_body.push(toks!(
-                        arg.name.clone(),
-                        ".withUnsafeBufferPointer { ",
-                        arg.name.clone(),
-                        "_buffer in"
-                    ));
+                match arg.ty.clone() {
+                    AstType::Vec(AstBaseType::Byte(_))
+                    | AstType::Vec(AstBaseType::Short(_))
+                    | AstType::Vec(AstBaseType::Int(_))
+                    | AstType::Vec(AstBaseType::Long(_)) => {
+                        byte_count += 1;
+                        method_body.push(toks!(
+                            arg.name.clone(),
+                            ".withUnsafeBufferPointer { ",
+                            arg.name.clone(),
+                            "_buffer in"
+                        ));
+                    }
+                    _ => {}
                 }
             }
 
@@ -120,6 +126,13 @@ impl<'a> TraitGen<'a> {
                     arg.name.clone(),
                     ")"
                 )),
+                AstType::Short(_) => method_body.push(toks!(
+                    "let ",
+                    s_arg_name.clone(),
+                    " = Int16(",
+                    arg.name.clone(),
+                    ")"
+                )),
                 AstType::Int(_) => method_body.push(toks!(
                     "let ",
                     s_arg_name.clone(),
@@ -151,19 +164,34 @@ impl<'a> TraitGen<'a> {
                 AstType::String => {
                     method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
                 }
-                AstType::Vec(AstBaseType::Byte(_)) => {
+                AstType::Vec(AstBaseType::Byte(_))
+                | AstType::Vec(AstBaseType::Short(_))
+                | AstType::Vec(AstBaseType::Int(_))
+                | AstType::Vec(AstBaseType::Long(_)) => {
                     let arg_buffer_name = format!("{}_buffer", &arg.name);
+                    let transfer_ty = match arg.ty.clone() {
+                        AstType::Vec(AstBaseType::Byte(_)) => "CInt8Array",
+                        AstType::Vec(AstBaseType::Short(_)) => "CInt16Array",
+                        AstType::Vec(AstBaseType::Int(_)) => "CInt32Array",
+                        AstType::Vec(AstBaseType::Long(_)) => "CInt64Array",
+                        _ => {
+                            panic!("wrong type in vec")
+                        }
+                    };
+
                     method_body.push(toks!(
                         "let ",
                         s_arg_name.clone(),
-                        " = CInt8Array(ptr: ",
+                        " = ",
+                        transfer_ty.to_string(),
+                        "(ptr: ",
                         arg_buffer_name.clone(),
                         ".baseAddress, len: Int32(",
                         arg_buffer_name.clone(),
                         ".count))"
                     ))
                 }
-                AstType::Vec(AstBaseType::Struct(origin)) => {
+                AstType::Vec(AstBaseType::Struct(_)) => {
                     method_body.push(toks!("var ", format!("s_{}", &arg.name), ": String?"));
                     method_body.push(toks!("autoreleasepool {"));
                     let encoder_name = format!("{}_encoder", &arg.name);
@@ -287,6 +315,9 @@ impl<'a> TraitGen<'a> {
             AstType::Void => {}
             AstType::Byte(_) => {
                 method_body.push(toks!("let s_result = Int8(result)"));
+            }
+            AstType::Short(_) => {
+                method_body.push(toks!("let s_result = Int16(result)"));
             }
             AstType::Int(_) => {
                 method_body.push(toks!("let s_result = Int32(result)"));

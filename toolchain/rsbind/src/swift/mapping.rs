@@ -10,6 +10,7 @@ impl<'a> SwiftMapping {
         match &ty {
             AstType::Void => swift::local("()"),
             AstType::Byte(_) => swift::BYTE,     // Int8
+            AstType::Short(_) => swift::SHORT,   // Int8
             AstType::Int(_) => swift::INTEGER,   // Int32
             AstType::Long(_) => swift::LONG,     // Int64
             AstType::Float(_) => swift::FLOAT,   // Float
@@ -28,6 +29,7 @@ impl<'a> SwiftMapping {
         match &ty {
             AstType::Void => "()",
             AstType::Byte(_) => "Int8",
+            AstType::Short(_) => "Int16",
             AstType::Int(_) => "Int32",
             AstType::Long(_) => "Int64",
             AstType::Float(_) => "Float",
@@ -35,6 +37,9 @@ impl<'a> SwiftMapping {
             AstType::Boolean => "Int32",
             AstType::String => "UnsafePointer<Int8>?",
             AstType::Vec(AstBaseType::Byte(_)) => "CInt8Array",
+            AstType::Vec(AstBaseType::Short(_)) => "CInt16Array",
+            AstType::Vec(AstBaseType::Int(_)) => "CInt32Array",
+            AstType::Vec(AstBaseType::Long(_)) => "CInt64Array",
             AstType::Vec(_) => "UnsafePointer<Int8>?",
             AstType::Callback(origin) => origin,
             AstType::Struct(_) => "UnsafePointer<Int8>?",
@@ -50,6 +55,7 @@ impl<'a> RustMapping {
         match &ty {
             AstType::Void => quote!(()),
             AstType::Byte(_) => quote!(i8),
+            AstType::Short(_) => quote!(i16),
             AstType::Int(_) => quote!(i32),
             AstType::Long(_) => quote!(i64),
             AstType::Float(_) => quote!(f32),
@@ -57,6 +63,9 @@ impl<'a> RustMapping {
             AstType::Boolean => quote!(i32),
             AstType::String => quote!(*const c_char),
             AstType::Vec(AstBaseType::Byte(_)) => quote!(CInt8Array),
+            AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),
+            AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
+            AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
             AstType::Vec(_) => quote!(*const c_char),
             AstType::Callback(_) => quote!(()), // not expected to call here!
             AstType::Struct(_) => quote!(*const c_char),
@@ -66,6 +75,7 @@ impl<'a> RustMapping {
         match &ty {
             AstType::Void => quote!(()),
             AstType::Byte(_) => quote!(i8),
+            AstType::Short(_) => quote!(i16),
             AstType::Int(_) => quote!(i32),
             AstType::Long(_) => quote!(i64),
             AstType::Float(_) => quote!(f32),

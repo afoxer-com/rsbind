@@ -90,6 +90,28 @@ class demo_ios_ExampleTests: XCTestCase {
 
     private func createCallback(demoTest: demo_ios_ExampleTests) -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
+            func testI163(arg: Int16, arg2: Int16) -> Int16 {
+                XCTAssertEqual(arg, 100)
+                XCTAssertEqual(arg2, 101)
+                return 3
+            }
+            
+            func testU164(arg: Int16, arg2: Int16) -> Int16 {
+                XCTAssertEqual(arg, 100)
+                XCTAssertEqual(arg2, 101)
+                return 4
+            }
+            
+            func testArgVecI169(arg: [Int16]) -> Int32 {
+                XCTAssertEqual(arg[0], 100)
+                return 9
+            }
+            
+            func testArgVecU1610(arg: [Int16]) -> Int32 {
+                XCTAssertEqual(arg[0], 100)
+                return 10
+            }
+            
             func testF3230(arg: Float, arg2: Float) -> Float {
                 XCTAssertEqual(arg, 100.0)
                 XCTAssertEqual(arg2, 101.0)

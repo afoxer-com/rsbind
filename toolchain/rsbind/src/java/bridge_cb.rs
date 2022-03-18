@@ -150,6 +150,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         JValue::Byte(#cb_arg_name),
                     },
 
+                    AstType::Short(_) => quote! {
+                        JValue::Short(#cb_arg_name),
+                    },
+
                     AstType::Boolean | AstType::Int(_) => quote! {
                         JValue::Int(#cb_arg_name),
                     },
@@ -261,7 +265,18 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                         let s_result = r_result.unwrap() as #origin_return_ty_ident;
                     }
                 }
+                AstType::Short(origin) => {
+                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+                    quote! {
+                        let mut r_result = None;
+                        match result.unwrap() {
+                            JValue::Short(value) => r_result = Some(value),
+                            _ => assert!(false)
+                        }
 
+                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                    }
+                }
                 AstType::Int(origin) => {
                     let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
                     quote! {
@@ -412,6 +427,7 @@ impl JavaCallbackStrategy {
         let mut tokens = TokenStream::new();
         match ast_type.clone() {
             AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
+            AstType::Short(_) => tokens.append(Ident::new("i16", Span::call_site())),
             AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),

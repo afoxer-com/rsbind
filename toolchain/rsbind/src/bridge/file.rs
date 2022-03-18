@@ -363,8 +363,11 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             AstType::Void => quote! {
                 #imp_ident::#imp_fun_name(#rust_args_repeat);
             },
-            AstType::Vec(AstBaseType::Byte(origin)) => {
-                if origin.contains("i8") {
+            AstType::Vec(AstBaseType::Byte(origin))
+            | AstType::Vec(AstBaseType::Short(origin))
+            | AstType::Vec(AstBaseType::Int(origin))
+            | AstType::Vec(AstBaseType::Long(origin)) => {
+                if origin.starts_with("i") {
                     quote! {
                         let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
                     }
@@ -379,6 +382,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             | AstType::Callback(_)
             | AstType::String
             | AstType::Byte(_)
+            | AstType::Short(_)
             | AstType::Int(_)
             | AstType::Long(_)
             | AstType::Float(_)

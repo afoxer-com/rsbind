@@ -32,13 +32,13 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public int testI163(int arg, int arg2) {
+            public short testI163(short arg, short arg2) {
                 Log.e(TAG, "testI163 -> arg: " + arg + " arg2: " + arg2);
                 return 3;
             }
 
             @Override
-            public int testU164(int arg, int arg2) {
+            public short testU164(short arg, short arg2) {
                 Log.e(TAG, "testU164 -> arg: " + arg + " arg2: " + arg2);
                 return 4;
             }
@@ -92,13 +92,13 @@ public class MainActivity extends Activity {
             }
 
             @Override
-            public int testArgVecI169(Integer[] arg) {
+            public int testArgVecI169(Short[] arg) {
                 Log.e(TAG, "testArgVecI88 -> arg: " + arg[0]);
                 return 9;
             }
 
             @Override
-            public int testArgVecU1610(Integer[] arg) {
+            public int testArgVecU1610(Short[] arg) {
                 Log.e(TAG, "testArgVecU1610 -> arg: " + arg[0]);
                 return 10;
             }

@@ -68,6 +68,42 @@ impl CallbackGenStrategy for CCallbackStrategy {
                                 };
                             }
                         }
+                        AstType::Vec(AstBaseType::Short(_)) => {
+                            let cb_tmp_arg_name =
+                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
+                            quote! {
+                                let #cb_arg_name = unsafe {
+                                    CInt16Array {
+                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i16),
+                                        len: #cb_origin_arg_name.len() as i32
+                                    }
+                                };
+                            }
+                        }
+                        AstType::Vec(AstBaseType::Int(_)) => {
+                            let cb_tmp_arg_name =
+                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
+                            quote! {
+                                let #cb_arg_name = unsafe {
+                                    CInt32Array {
+                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i32),
+                                        len: #cb_origin_arg_name.len() as i32
+                                    }
+                                };
+                            }
+                        }
+                        AstType::Vec(AstBaseType::Long(_)) => {
+                            let cb_tmp_arg_name =
+                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
+                            quote! {
+                                let #cb_arg_name = unsafe {
+                                    CInt64Array {
+                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i64),
+                                        len: #cb_origin_arg_name.len() as i32
+                                    }
+                                };
+                            }
+                        }
                         AstType::Vec(AstBaseType::Struct(struct_name)) => {
                             let cb_tmp_arg_name =
                                 Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());

@@ -27,8 +27,8 @@ public class RustLibTest {
     public void testRustLibBase() {
         Assert.assertEquals(demoTrait.testU81((byte) 100, (byte) 101), 1);
         Assert.assertEquals(demoTrait.testI82((byte) 100, (byte) 101), 2);
-        Assert.assertEquals(demoTrait.testI163(100, 101), 3);
-        Assert.assertEquals(demoTrait.testU164(100, 101), 4);
+        Assert.assertEquals(demoTrait.testI163((short) 100, (short) 101), (short)3);
+        Assert.assertEquals(demoTrait.testU164((short) 100, (short) 101), (short)4);
         Assert.assertEquals(demoTrait.testI325(100, 101), 5);
         Assert.assertEquals(demoTrait.testU326(100, 101), 6);
         Assert.assertTrue(demoTrait.testF3230(100.0f, 101.0f) > 29.0);
@@ -46,9 +46,9 @@ public class RustLibTest {
     public void testRustLibArray() {
         Assert.assertEquals(demoTrait.testArgVecStr7(new String[]{"Hello world"}), 7);
         Assert.assertEquals(demoTrait.testArgVecU8True(new byte[]{(byte) 100}), true);
-        Assert.assertEquals(demoTrait.testArgVecI169(new Integer[]{100}), 9);
+        Assert.assertEquals(demoTrait.testArgVecI169(new Short[]{(short)100}), 9);
 
-        Assert.assertEquals(demoTrait.testArgVecU1610(new Integer[]{100}), 10);
+        Assert.assertEquals(demoTrait.testArgVecU1610(new Short[]{100}), 10);
         Assert.assertEquals(demoTrait.testArgVecI3211(new Integer[]{100}), 11);
         Assert.assertEquals(demoTrait.testArgVecU3212(new Integer[]{100}), 12);
 
@@ -61,14 +61,15 @@ public class RustLibTest {
         Assert.assertArrayEquals(demoTrait.testReturnVecStr(), new String[]{"Hello world"});
         Assert.assertArrayEquals(demoTrait.testReturnVecU8(), new byte[]{100});
         Assert.assertArrayEquals(demoTrait.testReturnVecI8(), new byte[]{100});
-        Assert.assertArrayEquals(demoTrait.testReturnVecI16(), new Integer[]{100});
-        Assert.assertArrayEquals(demoTrait.testReturnVecU16(), new Integer[]{100});
+        Assert.assertArrayEquals(demoTrait.testReturnVecI16(), new Short[]{100});
+        Assert.assertArrayEquals(demoTrait.testReturnVecU16(), new Short[]{100});
         Assert.assertArrayEquals(demoTrait.testReturnVecI32(), new Integer[]{100});
         Assert.assertArrayEquals(demoTrait.testReturnVecU32(), new Integer[]{100});
         Assert.assertArrayEquals(demoTrait.testReturnVecBoolTrue(), new Boolean[]{true});
         Assert.assertArrayEquals(demoTrait.testTwoVecU8(new byte[]{(byte)100}), new byte[]{100});
     }
 
+    @Test
     public void testRustLibStruct() {
         DemoStruct demoStruct = demoTrait.testReturnStruct();
         assertStruct(demoStruct);
@@ -102,14 +103,14 @@ public class RustLibTest {
             }
 
             @Override
-            public int testI163(int arg, int arg2) {
+            public short testI163(short arg, short arg2) {
                 Assert.assertEquals(arg, 100);
                 Assert.assertEquals(arg2, 101);
                 return 3;
             }
 
             @Override
-            public int testU164(int arg, int arg2) {
+            public short testU164(short arg, short arg2) {
                 Assert.assertEquals(arg, 100);
                 Assert.assertEquals(arg2, 101);
                 return 4;
@@ -138,9 +139,8 @@ public class RustLibTest {
 
             @Override
             public float testF3230(float arg, float arg2) {
-                Log.e("MainActivity", "arg = " + arg + ", arg2 = " + arg2);
-                Assert.assertTrue("we assert arg > 99.0", arg > 99.0f);
-                Assert.assertTrue("we assert arg2 > 100.0", arg2 > 100.0f);
+                Assert.assertTrue("we Assertions arg > 99.0", arg > 99.0f);
+                Assert.assertTrue("we Assertions arg2 > 100.0", arg2 > 100.0f);
                 return 30.0f;
             }
 
@@ -170,14 +170,14 @@ public class RustLibTest {
             }
 
             @Override
-            public int testArgVecI169(Integer[] arg) {
-                Assert.assertArrayEquals(arg, new Integer[]{100});
+            public int testArgVecI169(Short[] arg) {
+                Assert.assertArrayEquals(arg, new Short[]{100});
                 return 9;
             }
 
             @Override
-            public int testArgVecU1610(Integer[] arg) {
-                Assert.assertArrayEquals(arg, new Integer[]{100});
+            public int testArgVecU1610(Short[] arg) {
+                Assert.assertArrayEquals(arg, new Short[]{100});
                 return 10;
             }
 

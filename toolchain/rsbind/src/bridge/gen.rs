@@ -142,8 +142,20 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
             }
 
             #[repr(C)]
-            pub struct CUInt8Array {
-                pub ptr: * const u8,
+            pub struct CInt16Array {
+                pub ptr: * const i16,
+                pub len: i32
+            }
+
+            #[repr(C)]
+            pub struct CInt32Array {
+                pub ptr: * const i32,
+                pub len: i32
+            }
+
+            #[repr(C)]
+            pub struct CInt64Array {
+                pub ptr: * const i64,
                 pub len: i32
             }
         };

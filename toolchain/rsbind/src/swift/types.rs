@@ -22,6 +22,7 @@ impl SwiftType {
         return match self.ast_type.clone() {
             AstType::Void => "Void".to_string(),
             AstType::Byte(_) => "Int8".to_string(),
+            AstType::Short(_) => "Int16".to_string(),
             AstType::Int(_) => "Int32".to_string(),
             AstType::Long(_) => "Int64".to_string(),
             AstType::Float(_) => "Float".to_string(),
@@ -51,6 +52,7 @@ impl From<SwiftType> for Swift<'static> {
         match item.ast_type {
             AstType::Void => swift::VOID,
             AstType::Byte(_) => swift::BYTE,
+            AstType::Short(_) => swift::SHORT,
             AstType::Int(_) => swift::INTEGER,
             AstType::Long(_) => swift::LONG,
             AstType::Float(_) => swift::FLOAT,

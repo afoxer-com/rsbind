@@ -28,11 +28,11 @@ class ViewController: UIViewController, DemoCallback {
         2
     }
     
-    func testI163(arg: Int32, arg2: Int32) -> Int32 {
+    func testI163(arg: Int16, arg2: Int16) -> Int16 {
         3
     }
     
-    func testU164(arg: Int32, arg2: Int32) -> Int32 {
+    func testU164(arg: Int16, arg2: Int16) -> Int16 {
         4
     }
     
@@ -60,11 +60,11 @@ class ViewController: UIViewController, DemoCallback {
         8
     }
     
-    func testArgVecI169(arg: [Int32]) -> Int32 {
+    func testArgVecI169(arg: [Int16]) -> Int32 {
         9
     }
     
-    func testArgVecU1610(arg: [Int32]) -> Int32 {
+    func testArgVecU1610(arg: [Int16]) -> Int32 {
         10
     }
     

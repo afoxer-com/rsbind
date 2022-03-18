@@ -241,6 +241,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
 
         let result = match arg.clone().ty {
             AstType::Byte(origin)
+            | AstType::Short(origin)
             | AstType::Int(origin)
             | AstType::Long(origin)
             | AstType::Float(origin)
@@ -405,6 +406,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let mut tokens = TokenStream::new();
         match ast_type.clone() {
             AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
+            AstType::Short(_) => tokens.append(Ident::new("i16", Span::call_site())),
             AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
             AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
             AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),

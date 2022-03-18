@@ -191,8 +191,9 @@ impl FileGenStrategy for CFileGenStrategy {
         );
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
 
-        Ok(match arg.clone().ty {
+        let result = match arg.clone().ty {
             AstType::Byte(origin)
+            | AstType::Short(origin)
             | AstType::Int(origin)
             | AstType::Long(origin)
             | AstType::Float(origin)
@@ -224,6 +225,39 @@ impl FileGenStrategy for CFileGenStrategy {
                 } else {
                     quote! {
                         let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u8), #arg_name_ident.len as usize).to_vec() };
+                    }
+                }
+            }
+            AstType::Vec(AstBaseType::Short(origin)) => {
+                if origin.contains("i16") {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i16), #arg_name_ident.len as usize).to_vec() };
+                    }
+                } else {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u16), #arg_name_ident.len as usize).to_vec() };
+                    }
+                }
+            }
+            AstType::Vec(AstBaseType::Int(origin)) => {
+                if origin.starts_with("i") {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i32), #arg_name_ident.len as usize).to_vec() };
+                    }
+                } else {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u32), #arg_name_ident.len as usize).to_vec() };
+                    }
+                }
+            }
+            AstType::Vec(AstBaseType::Long(origin)) => {
+                if origin.starts_with("i") {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i64), #arg_name_ident.len as usize).to_vec() };
+                    }
+                } else {
+                    quote! {
+                        let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u64), #arg_name_ident.len as usize).to_vec() };
                     }
                 }
             }
@@ -274,7 +308,9 @@ impl FileGenStrategy for CFileGenStrategy {
                     GenerateError(format!("find unsupported type in arg, {:?}", &arg.ty)).into(),
                 );
             }
-        })
+        };
+
+        Ok(result)
     }
 
     fn quote_return_convert(&self, ty: &AstType, ret_name: &str) -> Result<TokenStream> {

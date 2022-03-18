@@ -131,6 +131,15 @@ impl<'a> ArgCbGen<'a> {
                     ")"
                 ));
             }
+            AstType::Short(_) => {
+                fn_body.nested(toks!(
+                    "let ",
+                    format!("c_{}", &cb_arg.name),
+                    " = Int16(",
+                    cb_arg.name.clone(),
+                    ")"
+                ));
+            }
             AstType::Int(_) => {
                 fn_body.nested(toks!(
                     "let ",
@@ -193,6 +202,39 @@ impl<'a> ArgCbGen<'a> {
                     "let ",
                     format!("c_{}", &cb_arg.name),
                     " = Array<Int8>(UnsafeBufferPointer(start: ",
+                    cb_arg.name.clone(),
+                    ".ptr, count: Int(",
+                    cb_arg.name.clone(),
+                    ".len)))"
+                ));
+            }
+            AstType::Vec(AstBaseType::Short(_)) => {
+                fn_body.nested(toks!(
+                    "let ",
+                    format!("c_{}", &cb_arg.name),
+                    " = Array<Int16>(UnsafeBufferPointer(start: ",
+                    cb_arg.name.clone(),
+                    ".ptr, count: Int(",
+                    cb_arg.name.clone(),
+                    ".len)))"
+                ));
+            }
+            AstType::Vec(AstBaseType::Int(_)) => {
+                fn_body.nested(toks!(
+                    "let ",
+                    format!("c_{}", &cb_arg.name),
+                    " = Array<Int32>(UnsafeBufferPointer(start: ",
+                    cb_arg.name.clone(),
+                    ".ptr, count: Int(",
+                    cb_arg.name.clone(),
+                    ".len)))"
+                ));
+            }
+            AstType::Vec(AstBaseType::Long(_)) => {
+                fn_body.nested(toks!(
+                    "let ",
+                    format!("c_{}", &cb_arg.name),
+                    " = Array<Int64>(UnsafeBufferPointer(start: ",
                     cb_arg.name.clone(),
                     ".ptr, count: Int(",
                     cb_arg.name.clone(),
@@ -343,6 +385,9 @@ impl<'a> ArgCbGen<'a> {
             AstType::Void => {}
             AstType::Byte(_) => {
                 method_body.nested(toks!("return Int8(result)"));
+            }
+            AstType::Short(_) => {
+                method_body.nested(toks!("return Int16(result)"));
             }
             AstType::Int(_) => {
                 method_body.nested(toks!("return Int32(result)"));

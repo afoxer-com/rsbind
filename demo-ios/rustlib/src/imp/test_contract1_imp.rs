@@ -44,6 +44,16 @@ impl DemoTrait for TestContract1Imp {
         6
     }
 
+    fn test_i64_7(arg: i64, arg2: i64) -> i64 {
+        assert(arg == 100 && arg2 == 101, "test_i64_7");
+        7
+    }
+
+    fn test_u64_7(arg: u64, arg2: u64) -> u64 {
+        assert(arg == 100 && arg2 == 101, "test_u64_7");
+        7
+    }
+
     fn test_bool_false(arg_true: bool, arg2_false: bool) -> bool {
         assert(arg_true && !arg2_false, "test_bool_false");
         false
@@ -99,6 +109,16 @@ impl DemoTrait for TestContract1Imp {
         12
     }
 
+    fn test_arg_vec_i64_11(arg: Vec<i64>) -> i64 {
+        assert_eq(arg.get(0).unwrap(), &100, "test_arg_vec_i64_11");
+        11
+    }
+
+    fn test_arg_vec_u64_12(arg: Vec<u64>) -> u64 {
+        assert_eq(arg.get(0).unwrap(), &100, "test_arg_vec_u64_12");
+        12
+    }
+
     fn test_arg_vec_bool_13(arg_true: Vec<bool>) -> i32 {
         assert_eq(arg_true.get(0).unwrap(), &true, "test_arg_vec_bool_13");
         13
@@ -144,6 +164,14 @@ impl DemoTrait for TestContract1Imp {
 
     fn test_return_vec_u32() -> Vec<u32> {
         vec![100u32]
+    }
+
+    fn test_return_vec_i64() -> Vec<i64> {
+        vec![100]
+    }
+
+    fn test_return_vec_u64() -> Vec<u64> {
+        vec![100]
     }
 
     fn test_return_vec_bool_true() -> Vec<bool> {
@@ -196,12 +224,12 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     assert_eq(&arg.test_u32_6(100, 101), &6, "handle_callback");
     error!("We call handle_callback test_bool_false");
     assert_eq(&arg.test_bool_false(true, false), &false, "handle_callback");
-    // assert_eq(arg.test_str("Hello world".to_string()), "Hello world".to_string());
     error!("We call handle_callback test_f32_30");
     assert(arg.test_f32_30(100.0, 101.0) > 29.0, "test_f32_30");
     error!("We call handle_callback test_f64_31");
     assert(arg.test_f64_31(100.0, 101.0) > 30.0, "test_f64_31");
     error!("We call handle_callback test_arg_vec_str_18");
+    assert_eq(&arg.test_str("Hello world".to_string()), &"Hello world".to_string(), "test_str");
     assert_eq(
         &arg.test_arg_vec_str_18(vec!["Hello world".to_string()]),
         &18i32,
@@ -233,7 +261,10 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     assert_eq(&r, &15, "handle_callback");
     error!("We call handle_callback test_no_return");
     arg.test_no_return();
-
+    assert_eq(&arg.test_i64_7(100, 101), &7, "assert_eq");
+    assert_eq(&arg.test_u64_7(100, 101), &7, "test_u64_7");
+    assert_eq(&arg.test_arg_vec_i64_11(vec![100]), &11, "test_arg_vec_i64_11");
+    assert_eq(&arg.test_arg_vec_u64_12(vec![100]), &12, "test_arg_vec_u64_12");
     16
 }
 

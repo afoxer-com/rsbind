@@ -97,6 +97,20 @@ pub extern "C" fn test_contract1_test_u32_6(arg: i32, arg2: i32) -> i32 {
     ret_value as i32
 }
 #[no_mangle]
+pub extern "C" fn test_contract1_test_i64_7(arg: i64, arg2: i64) -> i64 {
+    let r_arg = arg as i64;
+    let r_arg2 = arg2 as i64;
+    let ret_value = TestContract1Imp::test_i64_7(r_arg, r_arg2);
+    ret_value as i64
+}
+#[no_mangle]
+pub extern "C" fn test_contract1_test_u64_7(arg: i64, arg2: i64) -> i64 {
+    let r_arg = arg as u64;
+    let r_arg2 = arg2 as u64;
+    let ret_value = TestContract1Imp::test_u64_7(r_arg, r_arg2);
+    ret_value as i64
+}
+#[no_mangle]
 pub extern "C" fn test_contract1_test_bool_false(arg_true: i32, arg2_false: i32) -> i32 {
     let r_arg_true = if arg_true > 0 { true } else { false };
     let r_arg2_false = if arg2_false > 0 { true } else { false };
@@ -184,6 +198,20 @@ pub extern "C" fn test_contract1_test_arg_vec_u32_12(arg: CInt32Array) -> i32 {
     ret_value as i32
 }
 #[no_mangle]
+pub extern "C" fn test_contract1_test_arg_vec_i64_11(arg: CInt64Array) -> i64 {
+    let r_arg =
+        unsafe { std::slice::from_raw_parts(arg.ptr as (*const i64), arg.len as usize).to_vec() };
+    let ret_value = TestContract1Imp::test_arg_vec_i64_11(r_arg);
+    ret_value as i64
+}
+#[no_mangle]
+pub extern "C" fn test_contract1_test_arg_vec_u64_12(arg: CInt64Array) -> i64 {
+    let r_arg =
+        unsafe { std::slice::from_raw_parts(arg.ptr as (*const u64), arg.len as usize).to_vec() };
+    let ret_value = TestContract1Imp::test_arg_vec_u64_12(r_arg);
+    ret_value as i64
+}
+#[no_mangle]
 pub extern "C" fn test_contract1_test_arg_vec_bool_13(arg_true: *const c_char) -> i32 {
     let c_str_arg_true: &CStr = unsafe { CStr::from_ptr(arg_true) };
     let c_slice_arg_true: &str = c_str_arg_true.to_str().unwrap();
@@ -255,6 +283,18 @@ pub extern "C" fn test_contract1_test_return_vec_u32() -> *mut c_char {
     CString::new(json_ret.unwrap()).unwrap().into_raw()
 }
 #[no_mangle]
+pub extern "C" fn test_contract1_test_return_vec_i64() -> *mut c_char {
+    let mut ret_value = TestContract1Imp::test_return_vec_i64();
+    let json_ret = serde_json::to_string(&ret_value);
+    CString::new(json_ret.unwrap()).unwrap().into_raw()
+}
+#[no_mangle]
+pub extern "C" fn test_contract1_test_return_vec_u64() -> *mut c_char {
+    let ret_value = TestContract1Imp::test_return_vec_u64();
+    let json_ret = serde_json::to_string(&ret_value);
+    CString::new(json_ret.unwrap()).unwrap().into_raw()
+}
+#[no_mangle]
 pub extern "C" fn test_contract1_test_return_vec_bool_true() -> *mut c_char {
     let ret_value = TestContract1Imp::test_return_vec_bool_true();
     let json_ret = serde_json::to_string(&ret_value);
@@ -293,6 +333,9 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
         pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
         pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
+        pub test_i64_7: extern "C" fn(i64, i64, i64) -> i64,
+        pub test_u64_7: extern "C" fn(i64, i64, i64) -> i64,
+        pub test_str: extern "C" fn(i64, *const c_char) -> *const c_char,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -300,6 +343,8 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         pub test_arg_vec_u16_10: extern "C" fn(i64, CInt16Array) -> i32,
         pub test_arg_vec_i32_11: extern "C" fn(i64, CInt32Array) -> i32,
         pub test_arg_vec_u32_12: extern "C" fn(i64, CInt32Array) -> i32,
+        pub test_arg_vec_i64_11: extern "C" fn(i64, CInt64Array) -> i64,
+        pub test_arg_vec_u64_12: extern "C" fn(i64, CInt64Array) -> i64,
         pub test_arg_vec_bool_true: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_struct_17: extern "C" fn(i64, *const c_char) -> i32,
         pub test_two_vec_arg_13: extern "C" fn(i64, CInt32Array, CInt32Array) -> i32,
@@ -382,6 +427,32 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
             let s_result = result as f64;
             s_result
         }
+        fn test_i64_7(&self, arg: i64, arg2: i64) -> i64 {
+            let c_arg = arg as i64;
+            let c_arg2 = arg2 as i64;
+            let fn_test_i64_7 = self.test_i64_7;
+            let result = fn_test_i64_7(self.index, c_arg, c_arg2);
+            let s_result = result as i64;
+            s_result
+        }
+        fn test_u64_7(&self, arg: u64, arg2: u64) -> u64 {
+            let c_arg = arg as i64;
+            let c_arg2 = arg2 as i64;
+            let fn_test_u64_7 = self.test_u64_7;
+            let result = fn_test_u64_7(self.index, c_arg, c_arg2);
+            let s_result = result as u64;
+            s_result
+        }
+        fn test_str(&self, arg: String) -> String {
+            let c_arg = CString::new(arg).unwrap().into_raw();
+            let fn_test_str = self.test_str;
+            let result = fn_test_str(self.index, c_arg);
+            unsafe { CString::from_raw(c_arg) };
+            let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
+            let s_result_str: &str = s_result_c_str.to_str().unwrap();
+            let s_result: String = s_result_str.to_owned();
+            s_result
+        }
         fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32 {
             let c_tmp_arg = serde_json::to_string(&arg);
             let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
@@ -461,6 +532,30 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
             let fn_test_arg_vec_u32_12 = self.test_arg_vec_u32_12;
             let result = fn_test_arg_vec_u32_12(self.index, c_arg);
             let s_result = result as i32;
+            s_result
+        }
+        fn test_arg_vec_i64_11(&self, arg: Vec<i64>) -> i64 {
+            let c_arg = unsafe {
+                CInt64Array {
+                    ptr: arg.as_ptr() as (*const i64),
+                    len: arg.len() as i32,
+                }
+            };
+            let fn_test_arg_vec_i64_11 = self.test_arg_vec_i64_11;
+            let result = fn_test_arg_vec_i64_11(self.index, c_arg);
+            let s_result = result as i64;
+            s_result
+        }
+        fn test_arg_vec_u64_12(&self, arg: Vec<u64>) -> u64 {
+            let c_arg = unsafe {
+                CInt64Array {
+                    ptr: arg.as_ptr() as (*const i64),
+                    len: arg.len() as i32,
+                }
+            };
+            let fn_test_arg_vec_u64_12 = self.test_arg_vec_u64_12;
+            let result = fn_test_arg_vec_u64_12(self.index, c_arg);
+            let s_result = result as u64;
             s_result
         }
         fn test_arg_vec_bool_true(&self, arg_true: Vec<bool>) -> bool {
@@ -545,6 +640,9 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         test_bool_false: arg.test_bool_false,
         test_f32_30: arg.test_f32_30,
         test_f64_31: arg.test_f64_31,
+        test_i64_7: arg.test_i64_7,
+        test_u64_7: arg.test_u64_7,
+        test_str: arg.test_str,
         test_arg_vec_str_18: arg.test_arg_vec_str_18,
         test_arg_vec_u8_7: arg.test_arg_vec_u8_7,
         test_arg_vec_i8_8: arg.test_arg_vec_i8_8,
@@ -552,6 +650,8 @@ pub extern "C" fn test_contract1_test_arg_callback_16(
         test_arg_vec_u16_10: arg.test_arg_vec_u16_10,
         test_arg_vec_i32_11: arg.test_arg_vec_i32_11,
         test_arg_vec_u32_12: arg.test_arg_vec_u32_12,
+        test_arg_vec_i64_11: arg.test_arg_vec_i64_11,
+        test_arg_vec_u64_12: arg.test_arg_vec_u64_12,
         test_arg_vec_bool_true: arg.test_arg_vec_bool_true,
         test_arg_vec_struct_17: arg.test_arg_vec_struct_17,
         test_two_vec_arg_13: arg.test_two_vec_arg_13,
@@ -579,6 +679,9 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
         pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
         pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
+        pub test_i64_7: extern "C" fn(i64, i64, i64) -> i64,
+        pub test_u64_7: extern "C" fn(i64, i64, i64) -> i64,
+        pub test_str: extern "C" fn(i64, *const c_char) -> *const c_char,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -586,6 +689,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_arg_vec_u16_10: extern "C" fn(i64, CInt16Array) -> i32,
         pub test_arg_vec_i32_11: extern "C" fn(i64, CInt32Array) -> i32,
         pub test_arg_vec_u32_12: extern "C" fn(i64, CInt32Array) -> i32,
+        pub test_arg_vec_i64_11: extern "C" fn(i64, CInt64Array) -> i64,
+        pub test_arg_vec_u64_12: extern "C" fn(i64, CInt64Array) -> i64,
         pub test_arg_vec_bool_true: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_struct_17: extern "C" fn(i64, *const c_char) -> i32,
         pub test_two_vec_arg_13: extern "C" fn(i64, CInt32Array, CInt32Array) -> i32,
@@ -668,6 +773,32 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             let s_result = result as f64;
             s_result
         }
+        fn test_i64_7(&self, arg: i64, arg2: i64) -> i64 {
+            let c_arg = arg as i64;
+            let c_arg2 = arg2 as i64;
+            let fn_test_i64_7 = self.test_i64_7;
+            let result = fn_test_i64_7(self.index, c_arg, c_arg2);
+            let s_result = result as i64;
+            s_result
+        }
+        fn test_u64_7(&self, arg: u64, arg2: u64) -> u64 {
+            let c_arg = arg as i64;
+            let c_arg2 = arg2 as i64;
+            let fn_test_u64_7 = self.test_u64_7;
+            let result = fn_test_u64_7(self.index, c_arg, c_arg2);
+            let s_result = result as u64;
+            s_result
+        }
+        fn test_str(&self, arg: String) -> String {
+            let c_arg = CString::new(arg).unwrap().into_raw();
+            let fn_test_str = self.test_str;
+            let result = fn_test_str(self.index, c_arg);
+            unsafe { CString::from_raw(c_arg) };
+            let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
+            let s_result_str: &str = s_result_c_str.to_str().unwrap();
+            let s_result: String = s_result_str.to_owned();
+            s_result
+        }
         fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32 {
             let c_tmp_arg = serde_json::to_string(&arg);
             let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
@@ -747,6 +878,30 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             let fn_test_arg_vec_u32_12 = self.test_arg_vec_u32_12;
             let result = fn_test_arg_vec_u32_12(self.index, c_arg);
             let s_result = result as i32;
+            s_result
+        }
+        fn test_arg_vec_i64_11(&self, arg: Vec<i64>) -> i64 {
+            let c_arg = unsafe {
+                CInt64Array {
+                    ptr: arg.as_ptr() as (*const i64),
+                    len: arg.len() as i32,
+                }
+            };
+            let fn_test_arg_vec_i64_11 = self.test_arg_vec_i64_11;
+            let result = fn_test_arg_vec_i64_11(self.index, c_arg);
+            let s_result = result as i64;
+            s_result
+        }
+        fn test_arg_vec_u64_12(&self, arg: Vec<u64>) -> u64 {
+            let c_arg = unsafe {
+                CInt64Array {
+                    ptr: arg.as_ptr() as (*const i64),
+                    len: arg.len() as i32,
+                }
+            };
+            let fn_test_arg_vec_u64_12 = self.test_arg_vec_u64_12;
+            let result = fn_test_arg_vec_u64_12(self.index, c_arg);
+            let s_result = result as u64;
             s_result
         }
         fn test_arg_vec_bool_true(&self, arg_true: Vec<bool>) -> bool {
@@ -831,6 +986,9 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         test_bool_false: arg.test_bool_false,
         test_f32_30: arg.test_f32_30,
         test_f64_31: arg.test_f64_31,
+        test_i64_7: arg.test_i64_7,
+        test_u64_7: arg.test_u64_7,
+        test_str: arg.test_str,
         test_arg_vec_str_18: arg.test_arg_vec_str_18,
         test_arg_vec_u8_7: arg.test_arg_vec_u8_7,
         test_arg_vec_i8_8: arg.test_arg_vec_i8_8,
@@ -838,6 +996,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         test_arg_vec_u16_10: arg.test_arg_vec_u16_10,
         test_arg_vec_i32_11: arg.test_arg_vec_i32_11,
         test_arg_vec_u32_12: arg.test_arg_vec_u32_12,
+        test_arg_vec_i64_11: arg.test_arg_vec_i64_11,
+        test_arg_vec_u64_12: arg.test_arg_vec_u64_12,
         test_arg_vec_bool_true: arg.test_arg_vec_bool_true,
         test_arg_vec_struct_17: arg.test_arg_vec_struct_17,
         test_two_vec_arg_13: arg.test_two_vec_arg_13,
@@ -857,6 +1017,9 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
         pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
         pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
+        pub test_i64_7: extern "C" fn(i64, i64, i64) -> i64,
+        pub test_u64_7: extern "C" fn(i64, i64, i64) -> i64,
+        pub test_str: extern "C" fn(i64, *const c_char) -> *const c_char,
         pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
         pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -864,6 +1027,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         pub test_arg_vec_u16_10: extern "C" fn(i64, CInt16Array) -> i32,
         pub test_arg_vec_i32_11: extern "C" fn(i64, CInt32Array) -> i32,
         pub test_arg_vec_u32_12: extern "C" fn(i64, CInt32Array) -> i32,
+        pub test_arg_vec_i64_11: extern "C" fn(i64, CInt64Array) -> i64,
+        pub test_arg_vec_u64_12: extern "C" fn(i64, CInt64Array) -> i64,
         pub test_arg_vec_bool_true: extern "C" fn(i64, *const c_char) -> i32,
         pub test_arg_vec_struct_17: extern "C" fn(i64, *const c_char) -> i32,
         pub test_two_vec_arg_13: extern "C" fn(i64, CInt32Array, CInt32Array) -> i32,
@@ -946,6 +1111,32 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             let s_result = result as f64;
             s_result
         }
+        fn test_i64_7(&self, arg: i64, arg2: i64) -> i64 {
+            let c_arg = arg as i64;
+            let c_arg2 = arg2 as i64;
+            let fn_test_i64_7 = self.test_i64_7;
+            let result = fn_test_i64_7(self.index, c_arg, c_arg2);
+            let s_result = result as i64;
+            s_result
+        }
+        fn test_u64_7(&self, arg: u64, arg2: u64) -> u64 {
+            let c_arg = arg as i64;
+            let c_arg2 = arg2 as i64;
+            let fn_test_u64_7 = self.test_u64_7;
+            let result = fn_test_u64_7(self.index, c_arg, c_arg2);
+            let s_result = result as u64;
+            s_result
+        }
+        fn test_str(&self, arg: String) -> String {
+            let c_arg = CString::new(arg).unwrap().into_raw();
+            let fn_test_str = self.test_str;
+            let result = fn_test_str(self.index, c_arg);
+            unsafe { CString::from_raw(c_arg) };
+            let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
+            let s_result_str: &str = s_result_c_str.to_str().unwrap();
+            let s_result: String = s_result_str.to_owned();
+            s_result
+        }
         fn test_arg_vec_str_18(&self, arg: Vec<String>) -> i32 {
             let c_tmp_arg = serde_json::to_string(&arg);
             let c_arg = CString::new(c_tmp_arg.unwrap()).unwrap().into_raw();
@@ -1025,6 +1216,30 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
             let fn_test_arg_vec_u32_12 = self.test_arg_vec_u32_12;
             let result = fn_test_arg_vec_u32_12(self.index, c_arg);
             let s_result = result as i32;
+            s_result
+        }
+        fn test_arg_vec_i64_11(&self, arg: Vec<i64>) -> i64 {
+            let c_arg = unsafe {
+                CInt64Array {
+                    ptr: arg.as_ptr() as (*const i64),
+                    len: arg.len() as i32,
+                }
+            };
+            let fn_test_arg_vec_i64_11 = self.test_arg_vec_i64_11;
+            let result = fn_test_arg_vec_i64_11(self.index, c_arg);
+            let s_result = result as i64;
+            s_result
+        }
+        fn test_arg_vec_u64_12(&self, arg: Vec<u64>) -> u64 {
+            let c_arg = unsafe {
+                CInt64Array {
+                    ptr: arg.as_ptr() as (*const i64),
+                    len: arg.len() as i32,
+                }
+            };
+            let fn_test_arg_vec_u64_12 = self.test_arg_vec_u64_12;
+            let result = fn_test_arg_vec_u64_12(self.index, c_arg);
+            let s_result = result as u64;
             s_result
         }
         fn test_arg_vec_bool_true(&self, arg_true: Vec<bool>) -> bool {
@@ -1109,6 +1324,9 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         test_bool_false: arg1.test_bool_false,
         test_f32_30: arg1.test_f32_30,
         test_f64_31: arg1.test_f64_31,
+        test_i64_7: arg1.test_i64_7,
+        test_u64_7: arg1.test_u64_7,
+        test_str: arg1.test_str,
         test_arg_vec_str_18: arg1.test_arg_vec_str_18,
         test_arg_vec_u8_7: arg1.test_arg_vec_u8_7,
         test_arg_vec_i8_8: arg1.test_arg_vec_i8_8,
@@ -1116,6 +1334,8 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
         test_arg_vec_u16_10: arg1.test_arg_vec_u16_10,
         test_arg_vec_i32_11: arg1.test_arg_vec_i32_11,
         test_arg_vec_u32_12: arg1.test_arg_vec_u32_12,
+        test_arg_vec_i64_11: arg1.test_arg_vec_i64_11,
+        test_arg_vec_u64_12: arg1.test_arg_vec_u64_12,
         test_arg_vec_bool_true: arg1.test_arg_vec_bool_true,
         test_arg_vec_struct_17: arg1.test_arg_vec_struct_17,
         test_two_vec_arg_13: arg1.test_two_vec_arg_13,
@@ -1157,6 +1377,9 @@ pub struct test_contract1_DemoCallback_Model {
     pub test_bool_false: extern "C" fn(i64, i32, i32) -> i32,
     pub test_f32_30: extern "C" fn(i64, f32, f32) -> f32,
     pub test_f64_31: extern "C" fn(i64, f64, f64) -> f64,
+    pub test_i64_7: extern "C" fn(i64, i64, i64) -> i64,
+    pub test_u64_7: extern "C" fn(i64, i64, i64) -> i64,
+    pub test_str: extern "C" fn(i64, *const c_char) -> *const c_char,
     pub test_arg_vec_str_18: extern "C" fn(i64, *const c_char) -> i32,
     pub test_arg_vec_u8_7: extern "C" fn(i64, CInt8Array) -> i32,
     pub test_arg_vec_i8_8: extern "C" fn(i64, CInt8Array) -> i32,
@@ -1164,6 +1387,8 @@ pub struct test_contract1_DemoCallback_Model {
     pub test_arg_vec_u16_10: extern "C" fn(i64, CInt16Array) -> i32,
     pub test_arg_vec_i32_11: extern "C" fn(i64, CInt32Array) -> i32,
     pub test_arg_vec_u32_12: extern "C" fn(i64, CInt32Array) -> i32,
+    pub test_arg_vec_i64_11: extern "C" fn(i64, CInt64Array) -> i64,
+    pub test_arg_vec_u64_12: extern "C" fn(i64, CInt64Array) -> i64,
     pub test_arg_vec_bool_true: extern "C" fn(i64, *const c_char) -> i32,
     pub test_arg_vec_struct_17: extern "C" fn(i64, *const c_char) -> i32,
     pub test_two_vec_arg_13: extern "C" fn(i64, CInt32Array, CInt32Array) -> i32,

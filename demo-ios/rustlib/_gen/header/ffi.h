@@ -18,6 +18,11 @@ typedef struct CInt32Array {
   int32_t len;
 } CInt32Array;
 
+typedef struct CInt64Array {
+  const int64_t *ptr;
+  int32_t len;
+} CInt64Array;
+
 typedef struct test_contract1_DemoCallback_Model {
   int8_t (*test_u8_1)(int64_t, int8_t, int8_t);
   int8_t (*test_i8_2)(int64_t, int8_t, int8_t);
@@ -28,6 +33,9 @@ typedef struct test_contract1_DemoCallback_Model {
   int32_t (*test_bool_false)(int64_t, int32_t, int32_t);
   float (*test_f32_30)(int64_t, float, float);
   double (*test_f64_31)(int64_t, double, double);
+  int64_t (*test_i64_7)(int64_t, int64_t, int64_t);
+  int64_t (*test_u64_7)(int64_t, int64_t, int64_t);
+  const char *(*test_str)(int64_t, const char*);
   int32_t (*test_arg_vec_str_18)(int64_t, const char*);
   int32_t (*test_arg_vec_u8_7)(int64_t, struct CInt8Array);
   int32_t (*test_arg_vec_i8_8)(int64_t, struct CInt8Array);
@@ -35,6 +43,8 @@ typedef struct test_contract1_DemoCallback_Model {
   int32_t (*test_arg_vec_u16_10)(int64_t, struct CInt16Array);
   int32_t (*test_arg_vec_i32_11)(int64_t, struct CInt32Array);
   int32_t (*test_arg_vec_u32_12)(int64_t, struct CInt32Array);
+  int64_t (*test_arg_vec_i64_11)(int64_t, struct CInt64Array);
+  int64_t (*test_arg_vec_u64_12)(int64_t, struct CInt64Array);
   int32_t (*test_arg_vec_bool_true)(int64_t, const char*);
   int32_t (*test_arg_vec_struct_17)(int64_t, const char*);
   int32_t (*test_two_vec_arg_13)(int64_t, struct CInt32Array, struct CInt32Array);
@@ -59,6 +69,10 @@ int32_t test_contract1_test_i32_5(int32_t arg, int32_t arg2);
 
 int32_t test_contract1_test_u32_6(int32_t arg, int32_t arg2);
 
+int64_t test_contract1_test_i64_7(int64_t arg, int64_t arg2);
+
+int64_t test_contract1_test_u64_7(int64_t arg, int64_t arg2);
+
 int32_t test_contract1_test_bool_false(int32_t arg_true, int32_t arg2_false);
 
 float test_contract1_test_f32_30(float arg, float arg2);
@@ -81,6 +95,10 @@ int32_t test_contract1_test_arg_vec_i32_11(struct CInt32Array arg);
 
 int32_t test_contract1_test_arg_vec_u32_12(struct CInt32Array arg);
 
+int64_t test_contract1_test_arg_vec_i64_11(struct CInt64Array arg);
+
+int64_t test_contract1_test_arg_vec_u64_12(struct CInt64Array arg);
+
 int32_t test_contract1_test_arg_vec_bool_13(const char *arg_true);
 
 int32_t test_contract1_test_arg_vec_struct_14(const char *arg);
@@ -100,6 +118,10 @@ char *test_contract1_test_return_vec_u16(void);
 char *test_contract1_test_return_vec_i32(void);
 
 char *test_contract1_test_return_vec_u32(void);
+
+char *test_contract1_test_return_vec_i64(void);
+
+char *test_contract1_test_return_vec_u64(void);
 
 char *test_contract1_test_return_vec_bool_true(void);
 

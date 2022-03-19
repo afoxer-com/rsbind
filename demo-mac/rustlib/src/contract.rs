@@ -8,6 +8,8 @@ pub trait DemoTrait {
     fn test_u16_4(arg: u16, arg2: u16) -> u16;
     fn test_i32_5(arg: i32, arg2: i32) -> i32;
     fn test_u32_6(arg: u32, arg2: u32) -> u32;
+    fn test_i64_7(arg: i64, arg2: i64) -> i64;
+    fn test_u64_7(arg: u64, arg2: u64) -> u64;
     fn test_bool_false(arg_true: bool, arg2_false: bool) -> bool;
     fn test_f32_30(arg: f32, arg2: f32) -> f32;
     fn test_f64_31(arg: f64, arg2: f64) -> f64;
@@ -23,6 +25,8 @@ pub trait DemoTrait {
     fn test_arg_vec_u16_10(arg: Vec<u16>) -> i32;
     fn test_arg_vec_i32_11(arg: Vec<i32>) -> i32;
     fn test_arg_vec_u32_12(arg: Vec<u32>) -> i32;
+    fn test_arg_vec_i64_11(arg: Vec<i64>) -> i64;
+    fn test_arg_vec_u64_12(arg: Vec<u64>) -> u64;
     fn test_arg_vec_bool_13(arg_true: Vec<bool>) -> i32;
     fn test_arg_vec_struct_14(arg: Vec<DemoStruct>) -> i32;
     fn test_two_vec_arg_15(arg: Vec<i32>, arg1: Vec<u32>) -> u32;
@@ -35,6 +39,8 @@ pub trait DemoTrait {
     fn test_return_vec_u16() -> Vec<u16>;
     fn test_return_vec_i32() -> Vec<i32>;
     fn test_return_vec_u32() -> Vec<u32>;
+    fn test_return_vec_i64() -> Vec<i64>;
+    fn test_return_vec_u64() -> Vec<u64>;
     fn test_return_vec_bool_true() -> Vec<bool>;
     fn test_two_vec_u8(input: Vec<u8>) -> Vec<u8>;
     fn test_return_vec_struct() -> Vec<DemoStruct>;
@@ -60,6 +66,8 @@ pub trait DemoCallback: Sync {
     fn test_bool_false(&self, arg_true: bool, arg_false: bool) -> bool;
     fn test_f32_30(&self, arg: f32, arg2: f32) -> f32;
     fn test_f64_31(&self, arg: f64, arg2: f64) -> f64;
+    fn test_i64_7(&self, arg: i64, arg2: i64) -> i64;
+    fn test_u64_7(&self, arg: u64, arg2: u64) -> u64;
 
     // String
     fn test_str(&self, arg: String) -> String;
@@ -72,6 +80,8 @@ pub trait DemoCallback: Sync {
     fn test_arg_vec_u16_10(&self, arg: Vec<u16>) -> i32;
     fn test_arg_vec_i32_11(&self, arg: Vec<i32>) -> i32;
     fn test_arg_vec_u32_12(&self, arg: Vec<u32>) -> i32;
+    fn test_arg_vec_i64_11(&self, arg: Vec<i64>) -> i64;
+    fn test_arg_vec_u64_12(&self, arg: Vec<u64>) -> u64;
     fn test_arg_vec_bool_true(&self, arg_true: Vec<bool>) -> bool;
     fn test_arg_vec_struct_17(&self, arg: Vec<DemoStruct>) -> i32;
     fn test_two_vec_arg_13(&self, arg: Vec<i32>, arg1: Vec<u32>) -> u32;

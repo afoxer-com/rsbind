@@ -12,6 +12,26 @@ import rustlib
 class ViewController: UIViewController, DemoCallback {
     private var demoTrait = RustLib.newDemoTrait();
     
+    func testI647(arg: Int64, arg2: Int64) -> Int64 {
+        7
+    }
+    
+    func testU647(arg: Int64, arg2: Int64) -> Int64 {
+        7
+    }
+    
+    func testStr(arg: String) -> String {
+        "Hello world"
+    }
+    
+    func testArgVecI6411(arg: [Int64]) -> Int64 {
+        11
+    }
+    
+    func testArgVecU6412(arg: [Int64]) -> Int64 {
+        12
+    }
+    
     func testF3230(arg: Float, arg2: Float) -> Float {
         30.0
     }

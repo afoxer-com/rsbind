@@ -57,11 +57,8 @@ impl<'a> TraitGen<'a> {
                 }
             }
 
-            // Argument convert
             self.fill_arg_convert(&mut method_body, method)?;
-            // Call native method
             self.fill_call_native_method(&mut method_body, method)?;
-            // Return type convert
             self.fill_return_type_convert(&mut method_body, method)?;
 
             for _i in 0..byte_count {
@@ -89,12 +86,12 @@ impl<'a> TraitGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Internal, Modifier::Static];
-        m.returns(SwiftMapping::map_sig_type(&method.return_type));
+        m.returns(SwiftMapping::map_swift_sig_type(&method.return_type));
 
         let args = method.args.clone();
         for arg in args.iter() {
             let argument =
-                swift::Argument::new(SwiftMapping::map_sig_type(&arg.ty), arg.name.clone());
+                swift::Argument::new(SwiftMapping::map_swift_sig_type(&arg.ty), arg.name.clone());
             m.arguments.push(argument);
         }
 
@@ -119,48 +116,23 @@ impl<'a> TraitGen<'a> {
                     arg.name.clone(),
                     " ? 1 : 0"
                 )),
-                AstType::Byte(_) => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    " = Int8(",
-                    arg.name.clone(),
-                    ")"
-                )),
-                AstType::Short(_) => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    " = Int16(",
-                    arg.name.clone(),
-                    ")"
-                )),
-                AstType::Int(_) => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    " = Int32(",
-                    arg.name.clone(),
-                    ")"
-                )),
-                AstType::Long(_) => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    " = Int64(",
-                    arg.name.clone(),
-                    ")"
-                )),
-                AstType::Float(_) => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    " = Float32(",
-                    arg.name.clone(),
-                    ")"
-                )),
-                AstType::Double(_) => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    " = Float64(",
-                    arg.name.clone(),
-                    ")"
-                )),
+                AstType::Byte(_)
+                | AstType::Short(_)
+                | AstType::Int(_)
+                | AstType::Long(_)
+                | AstType::Float(_)
+                | AstType::Double(_) => {
+                    let ty = SwiftMapping::map_transfer_type(&arg.ty);
+                    method_body.push(toks!(
+                        "let ",
+                        s_arg_name.clone(),
+                        " = ",
+                        ty,
+                        "(",
+                        arg.name.clone(),
+                        ")"
+                    ))
+                }
                 AstType::String => {
                     method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
                 }
@@ -169,16 +141,7 @@ impl<'a> TraitGen<'a> {
                 | AstType::Vec(AstBaseType::Int(_))
                 | AstType::Vec(AstBaseType::Long(_)) => {
                     let arg_buffer_name = format!("{}_buffer", &arg.name);
-                    let transfer_ty = match arg.ty.clone() {
-                        AstType::Vec(AstBaseType::Byte(_)) => "CInt8Array",
-                        AstType::Vec(AstBaseType::Short(_)) => "CInt16Array",
-                        AstType::Vec(AstBaseType::Int(_)) => "CInt32Array",
-                        AstType::Vec(AstBaseType::Long(_)) => "CInt64Array",
-                        _ => {
-                            panic!("wrong type in vec")
-                        }
-                    };
-
+                    let transfer_ty = SwiftMapping::map_transfer_type(&arg.ty);
                     method_body.push(toks!(
                         "let ",
                         s_arg_name.clone(),
@@ -313,23 +276,14 @@ impl<'a> TraitGen<'a> {
         let crate_name = self.desc.crate_name.replace('-', "_");
         match method.return_type.clone() {
             AstType::Void => {}
-            AstType::Byte(_) => {
-                method_body.push(toks!("let s_result = Int8(result)"));
-            }
-            AstType::Short(_) => {
-                method_body.push(toks!("let s_result = Int16(result)"));
-            }
-            AstType::Int(_) => {
-                method_body.push(toks!("let s_result = Int32(result)"));
-            }
-            AstType::Long(_) => {
-                method_body.push(toks!("let s_result = Int64(result)"));
-            }
-            AstType::Float(_) => {
-                method_body.push(toks!("let s_result = Float(result)"));
-            }
-            AstType::Double(_) => {
-                method_body.push(toks!("let s_result = Double(result)"));
+            AstType::Byte(_)
+            | AstType::Short(_)
+            | AstType::Int(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_) => {
+                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
+                method_body.push(toks!("let s_result = ", ty, "(result)"));
             }
             AstType::Boolean => {
                 method_body.push(toks!("let s_result = result > 0 ? true : false"));

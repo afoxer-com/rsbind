@@ -88,14 +88,14 @@ impl<'a> ArgCbGen<'a> {
         let mut arg_params = "(index".to_owned();
         let mut args_str = "(Int64".to_owned();
         for cb_arg in cb_method.args.iter() {
-            let cb_arg_ty = SwiftMapping::map_cb_closure_sig_type(&cb_arg.ty);
+            let cb_arg_ty = SwiftMapping::map_transfer_type(&cb_arg.ty);
             arg_params = format!("{}, {}", &arg_params, &cb_arg.name);
             args_str = format!("{}, {}", &args_str, &cb_arg_ty);
         }
         arg_params = format!("{})", &arg_params);
         args_str = format!("{})", &args_str);
 
-        let cb_return_ty = SwiftMapping::map_cb_closure_sig_type(&cb_method.return_type);
+        let cb_return_ty = SwiftMapping::map_transfer_type(&cb_method.return_type);
         let closure = format!("{} -> {}", &args_str, &cb_return_ty);
         arg_params = format!("{} -> {}", &arg_params, &cb_return_ty);
 
@@ -122,56 +122,19 @@ impl<'a> ArgCbGen<'a> {
         .to_str();
         match cb_arg.ty.clone() {
             AstType::Void => {}
-            AstType::Byte(_) => {
+            AstType::Byte(_)
+            | AstType::Short(_)
+            | AstType::Int(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_) => {
+                let ty = SwiftMapping::map_swift_sig_type(&cb_arg.ty);
                 fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
-                    " = Int8(",
-                    cb_arg.name.clone(),
-                    ")"
-                ));
-            }
-            AstType::Short(_) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Int16(",
-                    cb_arg.name.clone(),
-                    ")"
-                ));
-            }
-            AstType::Int(_) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Int32(",
-                    cb_arg.name.clone(),
-                    ")"
-                ));
-            }
-            AstType::Long(_) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Int64(",
-                    cb_arg.name.clone(),
-                    ")"
-                ));
-            }
-            AstType::Float(_) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Float(",
-                    cb_arg.name.clone(),
-                    ")"
-                ));
-            }
-            AstType::Double(_) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Double(",
+                    " = ",
+                    ty,
+                    "(",
                     cb_arg.name.clone(),
                     ")"
                 ));
@@ -197,44 +160,17 @@ impl<'a> ArgCbGen<'a> {
             AstType::Callback(_) => {
                 panic!("Don't support callback argument in callback");
             }
-            AstType::Vec(AstBaseType::Byte(_)) => {
+            AstType::Vec(AstBaseType::Byte(_))
+            | AstType::Vec(AstBaseType::Short(_))
+            | AstType::Vec(AstBaseType::Int(_))
+            | AstType::Vec(AstBaseType::Long(_)) => {
+                let ty = SwiftMapping::map_swift_sig_type(&cb_arg.ty);
                 fn_body.nested(toks!(
                     "let ",
                     format!("c_{}", &cb_arg.name),
-                    " = Array<Int8>(UnsafeBufferPointer(start: ",
-                    cb_arg.name.clone(),
-                    ".ptr, count: Int(",
-                    cb_arg.name.clone(),
-                    ".len)))"
-                ));
-            }
-            AstType::Vec(AstBaseType::Short(_)) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Array<Int16>(UnsafeBufferPointer(start: ",
-                    cb_arg.name.clone(),
-                    ".ptr, count: Int(",
-                    cb_arg.name.clone(),
-                    ".len)))"
-                ));
-            }
-            AstType::Vec(AstBaseType::Int(_)) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Array<Int32>(UnsafeBufferPointer(start: ",
-                    cb_arg.name.clone(),
-                    ".ptr, count: Int(",
-                    cb_arg.name.clone(),
-                    ".len)))"
-                ));
-            }
-            AstType::Vec(AstBaseType::Long(_)) => {
-                fn_body.nested(toks!(
-                    "let ",
-                    format!("c_{}", &cb_arg.name),
-                    " = Array<Int64>(UnsafeBufferPointer(start: ",
+                    " = ",
+                    ty,
+                    "(UnsafeBufferPointer(start: ",
                     cb_arg.name.clone(),
                     ".ptr, count: Int(",
                     cb_arg.name.clone(),
@@ -383,23 +319,14 @@ impl<'a> ArgCbGen<'a> {
     ) -> Result<()> {
         match cb_method.return_type.clone() {
             AstType::Void => {}
-            AstType::Byte(_) => {
-                method_body.nested(toks!("return Int8(result)"));
-            }
-            AstType::Short(_) => {
-                method_body.nested(toks!("return Int16(result)"));
-            }
-            AstType::Int(_) => {
-                method_body.nested(toks!("return Int32(result)"));
-            }
-            AstType::Long(_) => {
-                method_body.nested(toks!("return Int64(result)"));
-            }
-            AstType::Float(_) => {
-                method_body.nested(toks!("return Float(result)"));
-            }
-            AstType::Double(_) => {
-                method_body.nested(toks!("return Double(result)"));
+            AstType::Byte(_)
+            | AstType::Short(_)
+            | AstType::Int(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_) => {
+                let ty = SwiftMapping::map_transfer_type(&cb_method.return_type);
+                method_body.nested(toks!("return ", ty, "(result)"));
             }
             AstType::Boolean => {
                 method_body.nested(toks!("return result ? 1 : 0"));

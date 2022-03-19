@@ -6,11 +6,12 @@ use rstgen::swift::Swift;
 pub(crate) struct SwiftMapping {}
 
 impl<'a> SwiftMapping {
-    pub(crate) fn map_sig_type(ty: &'a AstType) -> Swift<'static> {
+    /// Get the swift method signature argument types.
+    pub(crate) fn map_swift_sig_type(ty: &'a AstType) -> Swift<'static> {
         match &ty {
             AstType::Void => swift::local("()"),
             AstType::Byte(_) => swift::BYTE,     // Int8
-            AstType::Short(_) => swift::SHORT,   // Int8
+            AstType::Short(_) => swift::SHORT,   // Int16
             AstType::Int(_) => swift::INTEGER,   // Int32
             AstType::Long(_) => swift::LONG,     // Int64
             AstType::Float(_) => swift::FLOAT,   // Float
@@ -18,14 +19,15 @@ impl<'a> SwiftMapping {
             AstType::Boolean => swift::BOOLEAN,  // Bool
             AstType::String => swift::local("String"),
             AstType::Vec(base) => Swift::Array {
-                inner: Box::new(SwiftMapping::map_sig_type(&base.clone().into())),
+                inner: Box::new(SwiftMapping::map_swift_sig_type(&base.clone().into())),
             },
             AstType::Callback(origin) => swift::local(origin.clone()),
             AstType::Struct(origin) => swift::local(origin.clone()),
         }
     }
 
-    pub(crate) fn map_cb_closure_sig_type(ty: &'a AstType) -> String {
+    /// Get the swift argument types for transferring to C.
+    pub(crate) fn map_transfer_type(ty: &'a AstType) -> String {
         match &ty {
             AstType::Void => "()",
             AstType::Byte(_) => "Int8",

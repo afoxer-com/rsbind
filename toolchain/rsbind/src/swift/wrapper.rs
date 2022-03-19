@@ -48,12 +48,12 @@ impl<'a> WrapperGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Public];
-        m.returns(SwiftMapping::map_sig_type(&method.return_type));
+        m.returns(SwiftMapping::map_swift_sig_type(&method.return_type));
 
         let args = method.args.clone();
         for arg in args.iter() {
             let argument =
-                swift::Argument::new(SwiftMapping::map_sig_type(&arg.ty), arg.name.clone());
+                swift::Argument::new(SwiftMapping::map_swift_sig_type(&arg.ty), arg.name.clone());
             m.arguments.push(argument);
         }
 

@@ -141,7 +141,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
                             }
                         }
                         _ => {
-                            let arg_ty_ident = RustMapping::map_sig_arg_type(&cb_arg.ty);
+                            let arg_ty_ident = RustMapping::map_arg_transfer_type(&cb_arg.ty);
                             quote! {
                                 let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
                             }
@@ -186,6 +186,10 @@ impl CallbackGenStrategy for CCallbackStrategy {
 
                 let ret_ty_tokens = match method.return_type {
                     AstType::Void => quote!(()),
+                    AstType::Vec(ref base) => {
+                        let ident = Ident::new(&base.origin(), Span::call_site());
+                        quote!(Vec<#ident>)
+                    }
                     _ => {
                         let ident = Ident::new(&method.return_type.origin(), Span::call_site());
                         quote!(#ident)
@@ -202,6 +206,15 @@ impl CallbackGenStrategy for CCallbackStrategy {
                         let s_result_str: &str = s_result_c_str.to_str().unwrap();
                         let s_result: String = s_result_str.to_owned();
                     },
+                    AstType::Vec(AstBaseType::Byte(ref origin))
+                    | AstType::Vec(AstBaseType::Short(ref origin))
+                    | AstType::Vec(AstBaseType::Int(ref origin))
+                    | AstType::Vec(AstBaseType::Long(ref origin)) => {
+                        let origin_ident = Ident::new(origin, Span::call_site());
+                        quote! {
+                            let s_result = unsafe { Vec::from_raw_parts(result.ptr as (* mut #origin_ident), result.len as usize, result.len as usize) };
+                        }
+                    }
                     _ => quote! {
                         let s_result = result as #ret_ty_tokens;
                     },
@@ -293,12 +306,12 @@ impl CCallbackStrategy {
         let mut callback_methods = TokenStream::new();
         for method in trait_desc.methods.iter() {
             let callback_method_ident = Ident::new(&method.name, Span::call_site());
-            let ret_ty_tokens = RustMapping::map_sig_arg_type(&method.return_type);
+            let ret_ty_tokens = RustMapping::map_arg_transfer_type(&method.return_type);
             let arg_types = method
                 .args
                 .iter()
                 .filter(|arg| !matches!(arg.ty, AstType::Void))
-                .map(|arg| RustMapping::map_sig_arg_type(&arg.ty))
+                .map(|arg| RustMapping::map_arg_transfer_type(&arg.ty))
                 .collect::<Vec<TokenStream>>();
 
             callback_methods = quote! {

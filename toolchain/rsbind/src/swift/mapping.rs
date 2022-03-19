@@ -53,7 +53,7 @@ impl<'a> SwiftMapping {
 pub(crate) struct RustMapping {}
 
 impl<'a> RustMapping {
-    pub(crate) fn map_sig_arg_type(ty: &'a AstType) -> TokenStream {
+    pub(crate) fn map_arg_transfer_type(ty: &'a AstType) -> TokenStream {
         match &ty {
             AstType::Void => quote!(()),
             AstType::Byte(_) => quote!(i8),
@@ -73,7 +73,7 @@ impl<'a> RustMapping {
             AstType::Struct(_) => quote!(*const c_char),
         }
     }
-    pub(crate) fn map_sig_return_type(ty: &'a AstType) -> TokenStream {
+    pub(crate) fn map_return_transfer_type(ty: &'a AstType) -> TokenStream {
         match &ty {
             AstType::Void => quote!(()),
             AstType::Byte(_) => quote!(i8),
@@ -84,6 +84,10 @@ impl<'a> RustMapping {
             AstType::Double(_) => quote!(f64),
             AstType::Boolean => quote!(i32),
             AstType::String => quote!(*mut c_char),
+            AstType::Vec(AstBaseType::Byte(_)) => quote!(CInt8Array),
+            AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),
+            AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
+            AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
             AstType::Vec(_) => quote!(*mut c_char),
             AstType::Callback(_) => quote!(()), // not expected to call here!
             AstType::Struct(_) => quote!(*mut c_char),

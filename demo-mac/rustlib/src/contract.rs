@@ -86,6 +86,21 @@ pub trait DemoCallback: Sync {
     fn test_arg_vec_struct_17(&self, arg: Vec<DemoStruct>) -> i32;
     fn test_two_vec_arg_13(&self, arg: Vec<i32>, arg1: Vec<u32>) -> u32;
 
+    // Vec return
+    // fn test_return_vec_str(&self) -> Vec<String>;
+    fn test_return_vec_u8(&self) -> Vec<u8>;
+    // fn test_return_vec_i8(&self) -> Vec<i8>;
+    // fn test_return_vec_i16(&self) -> Vec<i16>;
+    // fn test_return_vec_u16(&self) -> Vec<u16>;
+    // fn test_return_vec_i32(&self) -> Vec<i32>;
+    // fn test_return_vec_u32(&self) -> Vec<u32>;
+    // fn test_return_vec_i64(&self) -> Vec<i64>;
+    // fn test_return_vec_u64(&self) -> Vec<u64>;
+    // fn test_return_vec_bool_true(&self) -> Vec<bool>;
+    // fn test_two_vec_u8(&self, input: Vec<u8>) -> Vec<u8>;
+    // fn test_return_vec_struct(&self) -> Vec<DemoStruct>;
+
+    // Struct
     fn test_arg_struct_14(&self, arg: DemoStruct) -> i32;
     fn test_two_arg_struct_15(&self, arg: DemoStruct, arg1: DemoStruct) -> u32;
     fn test_no_return(&self);

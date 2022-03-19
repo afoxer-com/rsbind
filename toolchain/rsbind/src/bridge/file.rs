@@ -367,15 +367,15 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             | AstType::Vec(AstBaseType::Short(origin))
             | AstType::Vec(AstBaseType::Int(origin))
             | AstType::Vec(AstBaseType::Long(origin)) => {
-                if origin.starts_with("i") {
+                // if origin.starts_with("i") {
                     quote! {
                         let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
                     }
-                } else {
-                    quote! {
-                        let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-                    }
-                }
+                // } else {
+                //     quote! {
+                //         let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                //     }
+                // }
             }
             AstType::Vec(_)
             | AstType::Struct(_)

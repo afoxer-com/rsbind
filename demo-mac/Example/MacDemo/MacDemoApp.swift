@@ -62,6 +62,10 @@ struct MacDemoApp: App {
     
     private func createCallback() -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
+            func testReturnVecU8() -> [Int8] {
+                [100]
+            }
+            
             func testI647(arg: Int64, arg2: Int64) -> Int64 {
                 return 7
             }

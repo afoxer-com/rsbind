@@ -334,9 +334,19 @@ impl<'a> ArgCbGen<'a> {
             AstType::String => {
                 method_body.nested(toks!("return result.withCString { $0 }"));
             }
-            AstType::Vec(_) => {
-                panic!("Don't support Vec in callback return.");
+            AstType::Vec(AstBaseType::Byte(ref origin)) => {
+                method_body.nested(toks!("return CInt8Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
             }
+            AstType::Vec(AstBaseType::Short(ref origin)) => {
+                method_body.nested(toks!("return CInt16Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
+            }
+            AstType::Vec(AstBaseType::Int(ref origin)) => {
+                method_body.nested(toks!("return CInt32Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
+            }
+            AstType::Vec(AstBaseType::Long(ref origin)) => {
+                    method_body.nested(toks!("return CInt64Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
+            }
+            AstType::Vec(_) => {}
             AstType::Callback(_) => {
                 panic!("Don't support Callback in callback return.");
             }

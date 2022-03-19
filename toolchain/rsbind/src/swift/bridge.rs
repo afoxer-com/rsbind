@@ -147,11 +147,11 @@ impl FileGenStrategy for CFileGenStrategy {
                     let callback_ident = Ident::new(callback_str, Span::call_site());
                     quote!(#callback_ident)
                 }
-                _ => RustMapping::map_sig_arg_type(&arg.ty),
+                _ => RustMapping::map_arg_transfer_type(&arg.ty),
             })
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = RustMapping::map_sig_return_type(&method.return_type);
+        let ret_ty_tokens = RustMapping::map_return_transfer_type(&method.return_type);
         let sig_define = if arg_names.is_empty() {
             match method.return_type {
                 AstType::Void => quote! {
@@ -328,14 +328,40 @@ impl FileGenStrategy for CFileGenStrategy {
                 let struct_ident =
                     Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
                 quote! {
-                    let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                    let json_ret = serde_json::to_string(&ret_value);
+                    let #ret_name_ident = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
+                    let json_ret = serde_json::to_string(&#ret_name_ident);
                     CString::new(json_ret.unwrap()).unwrap().into_raw()
+                }
+            }
+            AstType::Vec(AstBaseType::Byte(ref origin))
+            | AstType::Vec(AstBaseType::Short(ref origin))
+            | AstType::Vec(AstBaseType::Int(ref origin))
+            | AstType::Vec(AstBaseType::Long(ref origin)) => {
+                let array_ty = RustMapping::map_return_transfer_type(&ty);
+                let inner_ty = match ty.clone() {
+                    AstType::Vec(base) => {
+                        RustMapping::map_return_transfer_type(&AstType::from(base))
+                    }
+                    _ => quote!()
+                };
+                let ptr_name = Ident::new(&format!("ptr_{}", &ret_name), Span::call_site());
+                let len_name = Ident::new(&format!("len_{}", &ret_name), Span::call_site());
+                quote! {
+                    #ret_name_ident.shrink_to_fit();
+                    let #ptr_name = #ret_name_ident.as_ptr();
+                    let #len_name = #ret_name_ident.len();
+                    unsafe {
+                        std::mem::forget(#ret_name_ident);
+                        #array_ty {
+                            ptr: #ptr_name as (*const #inner_ty),
+                            len: #len_name as i32,
+                        }
+                    }
                 }
             }
             AstType::Vec(_) => {
                 quote! {
-                    let json_ret = serde_json::to_string(&ret_value);
+                    let json_ret = serde_json::to_string(&#ret_name_ident);
                     CString::new(json_ret.unwrap()).unwrap().into_raw()
                 }
             }
@@ -343,12 +369,12 @@ impl FileGenStrategy for CFileGenStrategy {
                 let struct_copy_name =
                     Ident::new(&format!("Struct_{}", &origin), Span::call_site());
                 quote! {
-                    let json_ret = serde_json::to_string(&#struct_copy_name::from(ret_value));
+                    let json_ret = serde_json::to_string(&#struct_copy_name::from(#ret_name_ident));
                     CString::new(json_ret.unwrap()).unwrap().into_raw()
                 }
             }
             _ => {
-                let ty_ident = RustMapping::map_sig_return_type(ty);
+                let ty_ident = RustMapping::map_return_transfer_type(ty);
                 quote! {
                     #ret_name_ident as #ty_ident
                 }

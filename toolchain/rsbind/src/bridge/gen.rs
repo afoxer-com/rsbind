@@ -103,7 +103,7 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
             use std::os::raw::c_char;
 
             #[no_mangle]
-            pub extern "C" fn #free_fun_ident(ptr: *mut u8, length: u32) {
+            pub extern "C" fn #free_fun_ident(ptr: *mut i8, length: u32) {
                 let catch_result = catch_unwind(AssertUnwindSafe(|| {
                     let len: usize = length as usize;
                     unsafe {

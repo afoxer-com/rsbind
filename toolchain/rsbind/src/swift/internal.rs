@@ -292,6 +292,32 @@ impl<'a> TraitGen<'a> {
                 method_body.push(toks!("let s_result = String(cString:result!)"));
                 method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
             }
+            AstType::Vec(AstBaseType::Byte(ref origin)) => {
+                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
+                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
+                method_body.push(toks!(format!("{}_free_rust", &crate_name), "(UnsafeMutablePointer(mutating: result.ptr), UInt32(result.len))"));
+            }
+            | AstType::Vec(AstBaseType::Short(ref origin)) => {
+                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
+                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
+                method_body.push(toks!("let tmp_result = UnsafeMutablePointer(mutating: result.ptr).withMemoryRebound(to: Int8.self, capacity: 2 * Int(result.len)) {"));
+                method_body.nested(toks!(format!("{}_free_rust", &crate_name), "($0, UInt32(2 * result.len))"));
+                method_body.push(toks!("}"));
+            }
+            | AstType::Vec(AstBaseType::Int(ref origin)) => {
+                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
+                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
+                method_body.push(toks!("let tmp_result = UnsafeMutablePointer(mutating: result.ptr).withMemoryRebound(to: Int8.self, capacity: 4 * Int(result.len)) {"));
+                method_body.nested(toks!(format!("{}_free_rust", &crate_name), "($0, UInt32(4 * result.len))"));
+                method_body.push(toks!("}"));
+            }
+            | AstType::Vec(AstBaseType::Long(ref origin)) => {
+                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
+                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
+                method_body.push(toks!("let tmp_result = UnsafeMutablePointer(mutating: result.ptr).withMemoryRebound(to: Int8.self, capacity: 8 * Int(result.len)) {"));
+                method_body.nested(toks!(format!("{}_free_rust", &crate_name), "($0, UInt32(8 * result.len))"));
+                method_body.push(toks!("}"));
+            }
             AstType::Vec(_) => {
                 let return_ty = SwiftType::new(method.return_type.clone());
                 method_body.push(toks!("let ret_str = String(cString:result!)"));

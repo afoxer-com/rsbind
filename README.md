@@ -119,7 +119,7 @@ so_name = "demo"
 
 supported types in Callback:
 - Parameters: Basic types, Vec, Struct
-- Return: Basic types.
+- Return: Basic types, Vec.
 
 ## Note:
 These is not supported yet:

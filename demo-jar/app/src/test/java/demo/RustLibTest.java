@@ -15,7 +15,7 @@ public class RustLibTest {
     @BeforeAll
     static void setup() {
         demoTrait = RustLib.newDemoTrait();
-        demoTrait.init();
+        demoTrait.setup();
     }
 
     @Test
@@ -147,6 +147,25 @@ public class RustLibTest {
             }
 
             @Override
+            public long testI647(long arg, long arg2) {
+                Assertions.assertEquals(arg, 100);
+                Assertions.assertEquals(arg2, 101);
+                return 7;            }
+
+            @Override
+            public long testU647(long arg, long arg2) {
+                Assertions.assertEquals(arg, 100);
+                Assertions.assertEquals(arg2, 101);
+                return 7;
+            }
+
+            @Override
+            public String testStr(String arg) {
+                Assertions.assertEquals(arg, "Hello world");
+                return "Hello world";
+            }
+
+            @Override
             public int testArgVecStr18(String[] arg) {
                 Assertions.assertArrayEquals(arg, new String[]{"Hello world"});
                 return 18;
@@ -189,6 +208,17 @@ public class RustLibTest {
             }
 
             @Override
+            public long testArgVecI6411(Long[] arg) {
+                Assertions.assertArrayEquals(arg, new Long[]{100L});
+                return 11;
+            }
+
+            @Override
+            public long testArgVecU6412(Long[] arg) {
+                Assertions.assertArrayEquals(arg, new Long[]{100L});
+                return 12;            }
+
+            @Override
             public boolean testArgVecBoolTrue(Boolean[] argTrue) {
                 Assertions.assertArrayEquals(argTrue, new Boolean[]{true});
                 return true;
@@ -205,6 +235,51 @@ public class RustLibTest {
                 Assertions.assertArrayEquals(arg, new Integer[]{100});
                 Assertions.assertArrayEquals(arg1, new Integer[]{101});
                 return 13;
+            }
+
+            @Override
+            public byte[] testReturnVecU8() {
+                return new byte[]{100};
+            }
+
+            @Override
+            public byte[] testReturnVecI8() {
+                return new byte[]{100};
+            }
+
+            @Override
+            public Short[] testReturnVecI16() {
+                return new Short[]{100};
+            }
+
+            @Override
+            public Short[] testReturnVecU16() {
+                return new Short[]{100};
+            }
+
+            @Override
+            public Integer[] testReturnVecI32() {
+                return new Integer[]{100};
+            }
+
+            @Override
+            public Integer[] testReturnVecU32() {
+                return new Integer[]{100};
+            }
+
+            @Override
+            public Long[] testReturnVecI64() {
+                return new Long[]{100L};
+            }
+
+            @Override
+            public Long[] testReturnVecU64() {
+                return new Long[]{100L};
+            }
+
+            @Override
+            public byte[] testTwoVecU8(byte[] input) {
+                return new byte[]{100};
             }
 
             @Override

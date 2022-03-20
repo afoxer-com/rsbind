@@ -196,6 +196,12 @@ impl<'a, 'b> CBMethodGen<'a> {
             AstType::Boolean => {
                 cb_body.push(toks!("return result ? 1 : 0;"));
             }
+            AstType::Vec(AstBaseType::Byte(_)) => {
+                cb_body.push(toks!("return result;"));
+            }
+            AstType::Vec(_) => {
+                cb_body.push(toks!("return new Gson().toJson(result);"));
+            }
             AstType::Void => (),
             _ => {
                 cb_body.push(toks!("return result;"));

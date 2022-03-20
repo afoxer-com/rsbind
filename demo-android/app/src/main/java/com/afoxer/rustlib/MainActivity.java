@@ -17,7 +17,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         demoTrait = RustLib.newDemoTrait();
 
-        demoTrait.init();
+        demoTrait.setup();
         demoTrait.testArgCallback16(new DemoCallback() {
             @Override
             public byte testU81(byte arg, byte arg2) {
@@ -74,6 +74,23 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public long testI647(long arg, long arg2) {
+                Log.e(TAG, "testI647 -> arg: " + arg + " arg2: " + arg2);
+                return 7;
+            }
+
+            @Override
+            public long testU647(long arg, long arg2) {
+                Log.e(TAG, "testU647 -> arg: " + arg + " arg2: " + arg2);
+                return 7;            }
+
+            @Override
+            public String testStr(String arg) {
+                Log.e(TAG, "testStr -> arg: " + arg);
+                return "Hello world";
+            }
+
+            @Override
             public int testArgVecStr18(String[] arg) {
                 Log.e(TAG, "testArgVecStr18 -> arg: " + arg[0]);
                 return 18;
@@ -116,6 +133,17 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public long testArgVecI6411(Long[] arg) {
+                Log.e(TAG, "testArgVecI6411 -> arg: " + arg[0]);
+                return 11;            }
+
+            @Override
+            public long testArgVecU6412(Long[] arg) {
+                Log.e(TAG, "testArgVecU6412 -> arg: " + arg[0]);
+                return 12;
+            }
+
+            @Override
             public boolean testArgVecBoolTrue(Boolean[] argTrue) {
                 Log.e(TAG, "testArgVecBoolTrue -> argTrue: " + argTrue[0]);
                 return true;
@@ -131,6 +159,60 @@ public class MainActivity extends Activity {
             public int testTwoVecArg13(Integer[] arg, Integer[] arg1) {
                 Log.e(TAG, "testTwoVecArg13 -> arg: " + arg[0]);
                 return 13;
+            }
+
+            @Override
+            public byte[] testReturnVecU8() {
+                Log.e(TAG, "testReturnVecU8");
+                return new byte[]{100};
+            }
+
+            @Override
+            public byte[] testReturnVecI8() {
+                Log.e(TAG, "testReturnVecI8");
+                return new byte[]{100};
+            }
+
+            @Override
+            public Short[] testReturnVecI16() {
+                Log.e(TAG, "testReturnVecI16");
+                return new Short[]{100};
+            }
+
+            @Override
+            public Short[] testReturnVecU16() {
+                Log.e(TAG, "testReturnVecU16");
+                return new Short[]{100};
+            }
+
+            @Override
+            public Integer[] testReturnVecI32() {
+                Log.e(TAG, "testReturnVecI32");
+                return new Integer[]{100};
+            }
+
+            @Override
+            public Integer[] testReturnVecU32() {
+                Log.e(TAG, "testReturnVecU32");
+                return new Integer[]{100};
+            }
+
+            @Override
+            public Long[] testReturnVecI64() {
+                Log.e(TAG, "testReturnVecI64");
+                return new Long[]{100L};
+            }
+
+            @Override
+            public Long[] testReturnVecU64() {
+                Log.e(TAG, "testReturnVecU64");
+                return new Long[]{100L};
+            }
+
+            @Override
+            public byte[] testTwoVecU8(byte[] input) {
+                Log.e(TAG, "testReturnVecU64 input = " + input[0]);
+                return new byte[]{100};
             }
 
             @Override

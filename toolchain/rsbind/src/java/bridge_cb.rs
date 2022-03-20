@@ -231,6 +231,10 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             );
             let ret_ty_tokens = match method.return_type {
                 AstType::Void => quote!(()),
+                AstType::Vec(ref base) => {
+                    let origin_ident = Ident::new(&base.origin(), Span::call_site());
+                    quote!(Vec<#origin_ident>)
+                }
                 _ => {
                     let ident = Ident::new(&method.return_type.origin(), Span::call_site());
                     quote!(#ident)
@@ -333,7 +337,56 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                             _ => assert!(false)
                         }
 
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                        let jstr = JString::from(r_result.unwrap());
+                        let s_result = env.get_string(jstr).unwrap().to_string_lossy().to_string();
+                    }
+                }
+                AstType::Vec(AstBaseType::Byte(ref origin)) => {
+                    let origin_ident = Ident::new(origin, Span::call_site());
+                    let mut tokens = TokenStream::new();
+                    let buffer_get = quote! {
+                        let mut r_result = None;
+                        match result.unwrap() {
+                            JValue::Object(value) => r_result = Some(value),
+                            _ => assert!(false)
+                        }
+
+                        let jarray_result = r_result.unwrap().into_inner() as jbyteArray;
+                        let jarray_count = env.get_array_length(jarray_result).unwrap();
+                        let mut array_buffer: Vec<i8> = Vec::with_capacity(jarray_count as usize);
+                        env.get_byte_array_region(jarray_result, 0, array_buffer.as_mut_slice());
+                    };
+
+                    if origin.starts_with("u") {
+                        tokens = quote! {
+                            #buffer_get
+
+                            let mut array_buffer = std::mem::ManuallyDrop::new(array_buffer);
+                            let array_buffer_p = array_buffer.as_mut_ptr();
+                            let array_buffer_len = array_buffer.len();
+                            let array_buffer_cap = array_buffer.capacity();
+                            let s_result = unsafe { Vec::from_raw_parts(array_buffer_p as *mut u8, array_buffer_len, array_buffer_cap) };
+                        };
+                    } else {
+                        tokens = quote! {
+                            #buffer_get
+                            let s_result = array_buffer;
+                        };
+                    }
+                    tokens
+                }
+                AstType::Vec(ref base) => {
+                    let origin_return_ty_ident = Ident::new("String", Span::call_site());
+                    quote! {
+                        let mut r_result = None;
+                        match result.unwrap() {
+                            JValue::Object(value) => r_result = Some(value),
+                            _ => assert!(false)
+                        }
+
+                        let jstr_result = JString::from(r_result.unwrap());
+                        let rstr_result = env.get_string(jstr_result).unwrap().to_string_lossy().to_string();
+                        let s_result = serde_json::from_str(&rstr_result).unwrap();
                     }
                 }
                 _ => {

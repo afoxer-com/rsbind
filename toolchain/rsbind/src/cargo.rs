@@ -2,8 +2,8 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 
 #[derive(Clone, Deserialize, Debug)]
 pub struct Manifest {

@@ -1,8 +1,6 @@
 const NAMESPACE: &str = "com.afoxer.xxx.ffi";
 
-const PHONE_ARCHS: [&str; 2] = ["armv7-linux-androideabi", "arm-linux-androideabi"];
-const PHONE64_ARCHS: [&str; 1] = ["aarch64-linux-android"];
-const X86_ARCHS: [&str; 1] = ["i686-linux-android"];
+const PHONE_ARCHS: [&str; 4] = ["armv7-linux-androideabi", "arm-linux-androideabi", "aarch64-linux-android", "i686-linux-android"];
 const SO_NAME: &str = "ffi";
 
 ///

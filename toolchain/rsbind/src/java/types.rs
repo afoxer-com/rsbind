@@ -1,7 +1,9 @@
+use std::fmt::Write;
+
+use rstgen::{Custom, Formatter, java, Java, Tokens};
+
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
-use rstgen::{java, Custom, Formatter, Java, Tokens};
-use std::fmt::Write;
 
 #[derive(Clone)]
 pub(crate) struct JavaType {

@@ -1,4 +1,9 @@
-const ARCHS: [&str; 4] = ["aarch64-apple-ios", "armv7-apple-ios", "i386-apple-ios", "x86_64-apple-ios"];
+const ARCHS: [&str; 4] = [
+    "aarch64-apple-ios",
+    "armv7-apple-ios",
+    "i386-apple-ios",
+    "x86_64-apple-ios",
+];
 
 ///
 /// iOS Configuration struct
@@ -13,13 +18,7 @@ pub struct Ios {
 
 impl Default for Ios {
     fn default() -> Self {
-        let arch = Some(
-            ARCHS
-                .iter()
-                .copied()
-                .map(|item| item.to_owned())
-                .collect(),
-        );
+        let arch = Some(ARCHS.iter().copied().map(|item| item.to_owned()).collect());
 
         Self {
             rustc_param: None,

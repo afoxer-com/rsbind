@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::fmt::format;
 use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
@@ -12,15 +10,12 @@ use crate::ast::AstResult;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
 use crate::bridges::BridgeGen::JavaGen;
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 use crate::jar::arch::Arch;
 use crate::jar::config::Jar;
 use crate::java::artifact::JavaCodeGen;
-use crate::ndk_tool::{build, BuildConfig};
 use crate::unzip;
-
-const MAGIC_NUM: &str = "*521%";
 
 pub(crate) struct JarProcess<'a> {
     origin_prj_path: &'a Path,
@@ -186,7 +181,7 @@ impl<'a> BuildProcess for JarProcess<'a> {
             .join("main")
             .join("resources")
             .join("natives")
-            .join(Arch::from_env().to_string());
+            .join(Arch::from_env().as_string());
 
         if !lib_artifact.exists() {
             std::fs::create_dir_all(&lib_artifact)?;

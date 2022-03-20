@@ -1,11 +1,14 @@
 pub(crate) mod artifact;
+mod artifact_j2r;
+mod artifact_r2j;
 pub(crate) mod bridge;
 mod bridge_cb;
+mod bridge_j2r;
+mod bridge_r2j;
 mod callback;
 mod interface;
 mod internal;
 mod manager;
-mod method_cb;
 mod struct_;
 mod types;
 mod wrapper;

@@ -7,8 +7,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 
 pub(crate) const TMP_ARG_PREFIX: &str = "r";
 
@@ -38,6 +38,7 @@ pub(crate) trait FileGenStrategy {
     fn gen_sdk_file(&self, mod_names: &[String]) -> Result<TokenStream>;
     fn quote_common_use_part(&self) -> Result<TokenStream>;
     fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream>;
+    fn quote_for_all_cb(&self, callbacks: &[&TraitDesc]) -> Result<TokenStream>;
     fn quote_callback_structures(&self, callback: &TraitDesc) -> Result<TokenStream>;
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream>;
     fn quote_method_sig(
@@ -54,7 +55,13 @@ pub(crate) trait FileGenStrategy {
         args: &ArgDesc,
         callbacks: &[&TraitDesc],
     ) -> Result<TokenStream>;
-    fn quote_return_convert(&self, return_ty: &AstType, ret_name: &str) -> Result<TokenStream>;
+    fn quote_return_convert(
+        &self,
+        trait_desc: &TraitDesc,
+        callbacks: &[&TraitDesc],
+        return_ty: &AstType,
+        ret_name: &str,
+    ) -> Result<TokenStream>;
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream>;
 }
 
@@ -64,7 +71,14 @@ pub(crate) trait CallbackGenStrategy {
         arg: &ArgDesc,
         trait_desc: &TraitDesc,
         callbacks: &[&TraitDesc],
-    ) -> TokenStream;
+    ) -> Result<TokenStream>;
+
+    fn return_convert(
+        &self,
+        ret_ty: &AstType,
+        trait_desc: &TraitDesc,
+        callbacks: &[&TraitDesc],
+    ) -> Result<TokenStream>;
 }
 
 impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
@@ -132,6 +146,9 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             .collect::<Vec<&TraitDesc>>();
 
         println!("callbacks is {:?}", &callbacks);
+
+        let tokens = self.strategy.quote_for_all_cb(&callbacks);
+        results.push(GenResult { result: tokens });
 
         for struct_desc in self.struct_descs.iter() {
             let tokens = self.strategy.quote_for_structures(struct_desc);
@@ -312,9 +329,12 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
 
         let call_imp = self.quote_imp_call(&imp.name, method)?;
 
-        let return_handle = self
-            .strategy
-            .quote_return_convert(&method.return_type, "ret_value")?;
+        let return_handle = self.strategy.quote_return_convert(
+            trait_desc,
+            callbacks,
+            &method.return_type,
+            "ret_value",
+        )?;
 
         // combine all the parts
         let result = quote! {
@@ -363,19 +383,13 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             AstType::Void => quote! {
                 #imp_ident::#imp_fun_name(#rust_args_repeat);
             },
-            AstType::Vec(AstBaseType::Byte(origin))
-            | AstType::Vec(AstBaseType::Short(origin))
-            | AstType::Vec(AstBaseType::Int(origin))
-            | AstType::Vec(AstBaseType::Long(origin)) => {
-                // if origin.starts_with("i") {
-                    quote! {
-                        let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-                    }
-                // } else {
-                //     quote! {
-                //         let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-                //     }
-                // }
+            AstType::Vec(AstBaseType::Byte(_))
+            | AstType::Vec(AstBaseType::Short(_))
+            | AstType::Vec(AstBaseType::Int(_))
+            | AstType::Vec(AstBaseType::Long(_)) => {
+                quote! {
+                    let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                }
             }
             AstType::Vec(_)
             | AstType::Struct(_)

@@ -42,7 +42,7 @@ impl Arch {
         }
     }
 
-    pub(crate) fn to_string(&self) -> String {
+    pub(crate) fn as_string(&self) -> String {
         match self {
             Arch::Unknown => "unknown",
             Arch::Linux32 => "linux_32",

@@ -7,8 +7,8 @@ use std::path::{Path, PathBuf};
 
 use syn;
 
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 
 use super::desc::*;
 

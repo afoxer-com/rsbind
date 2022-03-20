@@ -1,8 +1,9 @@
+use rstgen::{IntoTokens, java, Java};
+use rstgen::java::{Class, Field, Modifier};
+
 use crate::ast::contract::desc::StructDesc;
 use crate::errors::*;
-use crate::java::types::{to_java_file, JavaType};
-use rstgen::java::{Class, Field, Modifier};
-use rstgen::{java, IntoTokens, Java};
+use crate::java::types::{JavaType, to_java_file};
 
 pub(crate) struct StructGen<'a> {
     pub desc: &'a StructDesc,

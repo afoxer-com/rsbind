@@ -1,12 +1,17 @@
 mod arg_cb;
 pub(crate) mod artifact;
+mod artifact_c2s;
+mod artifact_s2c;
 pub(crate) mod bridge;
+mod bridge_c2r;
 pub(crate) mod bridge_cb;
+mod bridge_r2c;
 mod callback;
 mod internal;
 mod manager;
 mod mapping;
 mod protocol;
+mod return_cb;
 mod struct_;
 mod types;
 mod wrapper;

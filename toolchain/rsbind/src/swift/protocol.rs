@@ -1,18 +1,10 @@
 use heck::ToLowerCamelCase;
-use std::fs;
-use std::path::PathBuf;
-
+use rstgen::{IntoTokens};
 use rstgen::swift::{self, *};
-use rstgen::{Custom, Formatter, IntoTokens, Tokens};
-
-use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
-use crate::ast::types::{AstBaseType, AstType};
-use crate::ast::AstResult;
+use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::errors::*;
-use crate::swift::callback::CallbackGen;
 use crate::swift::mapping::SwiftMapping;
-use crate::swift::struct_::StructGen;
-use crate::swift::types::{to_swift_file, SwiftType};
+use crate::swift::types::{to_swift_file};
 
 pub(crate) struct ProtocolGen<'a> {
     pub desc: &'a TraitDesc,
@@ -30,7 +22,7 @@ impl<'a> ProtocolGen<'a> {
         for method in self.desc.methods.iter() {
             println!("generate swift protocol method for {}", &method.name);
             // Method signature
-            let mut m = self.fill_method_sig(method)?;
+            let m = self.fill_method_sig(method)?;
             class.methods.push(m);
         }
 

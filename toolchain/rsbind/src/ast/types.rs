@@ -50,7 +50,7 @@ impl<'a> AstBaseType {
             AstBaseType::String => "String".to_owned(),
             AstBaseType::Callback(origin) => origin.clone(),
             AstBaseType::Struct(origin) => origin.clone(),
-            AstBaseType::Short(origin) => origin.clone()
+            AstBaseType::Short(origin) => origin.clone(),
         }
     }
 }

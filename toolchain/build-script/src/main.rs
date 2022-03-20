@@ -1,6 +1,7 @@
-use build_script::dirzip::compress_dir;
 use std::fs;
 use std::path::Path;
+
+use build_script::dirzip::compress_dir;
 
 fn main() {
     println!("begin zip tempalate...");

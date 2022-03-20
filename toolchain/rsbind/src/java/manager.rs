@@ -1,14 +1,14 @@
-use crate::ast::contract::desc::TraitDesc;
+use rstgen::{IntoTokens, java, Java, Tokens};
+use rstgen::java::{Class, Modifier};
+use crate::AstResult;
 use crate::errors::*;
 use crate::java::types::to_java_file;
-use crate::AstResult;
-use rstgen::java::{Class, Modifier};
-use rstgen::{java, IntoTokens, Java, Tokens};
-use syn::Item::Mod;
 
 pub(crate) struct ManagerGen<'a> {
     pub ast: &'a AstResult,
     pub pkg: String,
+    pub so_name: String,
+    pub ext_libs: String,
 }
 
 impl<'a> ManagerGen<'a> {
@@ -31,6 +31,36 @@ impl<'a> ManagerGen<'a> {
             }
         }
 
+        self.fill_global_block(&mut class)?;
+
         to_java_file(self.pkg.as_ref(), class.into_tokens())
+    }
+
+    fn fill_global_block(&'a self, class: &mut Class<'a>) -> Result<()> {
+        let mut body = Tokens::new();
+        body.push("static {");
+        body.nested({
+            let mut load_lib_tokens = Tokens::new();
+            load_lib_tokens.push(toks!(
+                "com.afoxer.rsbind.Common.loadLibrary(\"",
+                self.so_name.clone(),
+                "\");"
+            ));
+            let ext_libs = self.ext_libs.split(',').collect::<Vec<&str>>();
+            for ext_lib in ext_libs.iter() {
+                if !ext_lib.to_owned().is_empty() {
+                    load_lib_tokens.push(toks!(
+                        "com.afoxer.rsbind.Common.loadLibrary(\"",
+                        ext_lib.to_owned(),
+                        "\");"
+                    ));
+                }
+            }
+            load_lib_tokens
+        });
+        body.push("}");
+
+        class.body = body;
+        Ok(())
     }
 }

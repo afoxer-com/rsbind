@@ -1,6 +1,5 @@
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, Literal, Span, TokenStream};
-use quote::TokenStreamExt;
 
 use crate::ast::contract::desc::*;
 use crate::ast::types::*;
@@ -15,9 +14,9 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
     fn arg_convert(
         &self,
         arg: &ArgDesc,
-        trait_desc: &TraitDesc,
+        _trait_desc: &TraitDesc,
         callbacks: &[&TraitDesc],
-    ) -> TokenStream {
+    ) -> Result<TokenStream> {
         println!(
             "[bridge] 🔆  begin quote callback argument in method convert => {}.{}",
             &arg.name,
@@ -27,8 +26,6 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
             Span::call_site(),
         );
-        let class_name =
-            format!("{}.Internal{}", &self.java_namespace, &trait_desc.name).replace('.', "/");
         let struct_name = &format!("{}_struct", arg.name);
         let struct_ident = Ident::new(struct_name, Span::call_site());
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
@@ -50,6 +47,9 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
         let _callback_methods = TokenStream::new();
         let callback_desc = callback_desc.unwrap();
+        let class_name =
+            format!("{}.Internal{}", &self.java_namespace, &callback_desc.name).replace('.', "/");
+
         let mut methods_result = TokenStream::new();
         for method in callback_desc.methods.iter() {
             println!(
@@ -62,90 +62,16 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             let mut cb_arg_array = quote!(JValue::Long(self.index),);
             for cb_arg in method.args.iter() {
                 let cb_arg_name = Ident::new(&format!("j_{}", cb_arg.name), Span::call_site());
-                let cb_origin_arg_name = Ident::new(&cb_arg.name, Span::call_site());
                 method_java_sig = format!("{}{}", &method_java_sig, cb_arg.ty.to_java_sig());
 
-                let args_convert_each = match cb_arg.ty.clone() {
-                    AstType::Boolean => {
-                        quote! {
-                            let #cb_arg_name = if #cb_origin_arg_name {1} else {0};
-                        }
-                    }
-                    AstType::String => {
-                        quote! {
-                            let #cb_arg_name = env.new_string(#cb_origin_arg_name).unwrap().into();
-                        }
-                    }
-                    AstType::Vec(ref base_ty) => {
-                        let cb_tmp_arg_name =
-                            Ident::new(&format!("j_tmp_{}", cb_arg.name), Span::call_site());
-                        match base_ty {
-                            AstBaseType::Struct(struct_name) => {
-                                let struct_ident = Ident::new(
-                                    &format!("Struct_{}", &struct_name),
-                                    Span::call_site(),
-                                );
-                                let cb_tmp_vec_arg_name = Ident::new(
-                                    &format!("j_tmp_vec_{}", cb_arg.name),
-                                    Span::call_site(),
-                                );
-                                quote! {
-                                    let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                                    let #cb_tmp_arg_name = serde_json::to_string(&#cb_tmp_vec_arg_name);
-                                    let #cb_arg_name = env.new_string(#cb_tmp_arg_name.unwrap()).unwrap().into();
-                                }
-                            }
-                            AstBaseType::Byte(origin) => {
-                                if origin.contains("i8") {
-                                    let tmp_arg_name = Ident::new(
-                                        &format!("tmp_{}", &cb_arg.name),
-                                        Span::call_site(),
-                                    );
-                                    let tmp_converted_arg_name = Ident::new(
-                                        &format!("tmp_converted_{}", &cb_arg.name),
-                                        Span::call_site(),
-                                    );
-                                    vec![1u8].as_slice();
-                                    quote! {
-                                        let #tmp_arg_name = #cb_origin_arg_name.as_slice();
-                                        let #tmp_converted_arg_name = unsafe { std::mem::transmute::<&[i8], &[u8]>(#tmp_arg_name) };
-                                        let #cb_arg_name = env.byte_array_from_slice(#tmp_converted_arg_name).unwrap();
-                                    }
-                                } else {
-                                    quote! {
-                                        let #cb_arg_name = env.byte_array_from_slice(#cb_origin_arg_name.as_slice()).unwrap();
-                                    }
-                                }
-                            }
-                            _ => {
-                                quote! {
-                                    let #cb_tmp_arg_name = serde_json::to_string(&#cb_origin_arg_name);
-                                    let #cb_arg_name = env.new_string(#cb_tmp_arg_name.unwrap()).unwrap().into();
-                                }
-                            }
-                        }
-                    }
-                    AstType::Struct(struct_name) => {
-                        let struct_copy_name =
-                            Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
-                        let cb_tmp_arg_name =
-                            Ident::new(&format!("r_tmp_{}", cb_arg.name), Span::call_site());
-                        quote! {
-                            let #cb_tmp_arg_name = serde_json::to_string(&#struct_copy_name::from(#cb_origin_arg_name));
-                            let #cb_arg_name = env.new_string(#cb_tmp_arg_name.unwrap()).unwrap().into();
-                        }
-                    }
-                    _ => {
-                        let arg_ty_ident = self
-                            .ty_to_tokens(&cb_arg.ty, TypeDirection::Argument)
-                            .unwrap();
-                        quote! {
-                            let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
-                        }
-                    }
+                let args_convert_each = crate::java::bridge_r2j::arg_convert(cb_arg)?;
+
+                args_convert = quote! {
+                    #args_convert
+                    #args_convert_each
                 };
 
-                let cb_arg_array_each = match cb_arg.ty {
+                let cb_arg_array_each = match cb_arg.ty.clone() {
                     AstType::Byte(_) => quote! {
                         JValue::Byte(#cb_arg_name),
                     },
@@ -189,13 +115,9 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                     },
                 };
 
-                args_convert = quote! {
-                    #args_convert
-                    #args_convert_each
-                };
-
                 cb_arg_array = quote! {#cb_arg_array #cb_arg_array_each};
             }
+
             method_java_sig = format!("{}){}", &method_java_sig, method.return_type.to_java_sig());
             let method_java_sig_literal = Literal::string(&method_java_sig);
 
@@ -245,156 +167,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
                 &callback_desc.name, &method.name
             );
 
-            let return_convert = match method.return_type.clone() {
-                AstType::Void => quote!(),
-                AstType::Boolean => quote! {
-                    let mut r_result = None;
-                    match result.unwrap() {
-                        JValue::Int(value) => r_result = Some(value),
-                        _ => assert!(false)
-                    }
-
-                    let s_result = if r_result.unwrap() > 0 {true} else {false};
-                },
-
-                AstType::Byte(origin) => {
-                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Byte(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
-                    }
-                }
-                AstType::Short(origin) => {
-                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Short(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
-                    }
-                }
-                AstType::Int(origin) => {
-                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Int(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
-                    }
-                }
-                AstType::Long(origin) => {
-                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Long(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
-                    }
-                }
-                AstType::Float(origin) => {
-                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Float(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
-                    }
-                }
-                AstType::Double(origin) => {
-                    let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Double(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-                        let s_result = r_result.unwrap() as #origin_return_ty_ident;
-                    }
-                }
-                AstType::String => {
-                    let origin_return_ty_ident = Ident::new("String", Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Object(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let jstr = JString::from(r_result.unwrap());
-                        let s_result = env.get_string(jstr).unwrap().to_string_lossy().to_string();
-                    }
-                }
-                AstType::Vec(AstBaseType::Byte(ref origin)) => {
-                    let origin_ident = Ident::new(origin, Span::call_site());
-                    let mut tokens = TokenStream::new();
-                    let buffer_get = quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Object(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let jarray_result = r_result.unwrap().into_inner() as jbyteArray;
-                        let jarray_count = env.get_array_length(jarray_result).unwrap();
-                        let mut array_buffer: Vec<i8> = Vec::with_capacity(jarray_count as usize);
-                        env.get_byte_array_region(jarray_result, 0, array_buffer.as_mut_slice());
-                    };
-
-                    if origin.starts_with("u") {
-                        tokens = quote! {
-                            #buffer_get
-
-                            let mut array_buffer = std::mem::ManuallyDrop::new(array_buffer);
-                            let array_buffer_p = array_buffer.as_mut_ptr();
-                            let array_buffer_len = array_buffer.len();
-                            let array_buffer_cap = array_buffer.capacity();
-                            let s_result = unsafe { Vec::from_raw_parts(array_buffer_p as *mut u8, array_buffer_len, array_buffer_cap) };
-                        };
-                    } else {
-                        tokens = quote! {
-                            #buffer_get
-                            let s_result = array_buffer;
-                        };
-                    }
-                    tokens
-                }
-                AstType::Vec(ref base) => {
-                    let origin_return_ty_ident = Ident::new("String", Span::call_site());
-                    quote! {
-                        let mut r_result = None;
-                        match result.unwrap() {
-                            JValue::Object(value) => r_result = Some(value),
-                            _ => assert!(false)
-                        }
-
-                        let jstr_result = JString::from(r_result.unwrap());
-                        let rstr_result = env.get_string(jstr_result).unwrap().to_string_lossy().to_string();
-                        let s_result = serde_json::from_str(&rstr_result).unwrap();
-                    }
-                }
-                _ => {
-                    quote! {
-                        let s_result = result as #ret_ty_tokens;
-                    }
-                }
-            };
+            let return_convert = crate::java::bridge_r2j::return_convert(method)?;
 
             let return_result_ident = match method.return_type {
                 AstType::Void => quote!(),
@@ -403,11 +176,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
             // methods calls on impl
             let method_name = Ident::new(&method.name, Span::call_site());
-            let java_method_name = format!(
-                "invoke{}{}",
-                &callback_desc.name.to_upper_camel_case(),
-                &method.name.to_upper_camel_case()
-            );
+            let java_method_name = format!("r2j{}", &method.name.to_upper_camel_case());
 
             methods_result = quote! {
                 #methods_result
@@ -456,7 +225,7 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
 
                     let _method_result = env.call_static_method(
                         #class_name,
-                        "free_callback",
+                        "r2jFreeCallback",
                         "(J)V",
                         &[JValue::Long(self.index as jlong)],
                     );
@@ -471,37 +240,26 @@ impl CallbackGenStrategy for JavaCallbackStrategy {
             &arg.name,
             &arg.ty.origin()
         );
-        result
+        Ok(result)
     }
-}
 
-impl JavaCallbackStrategy {
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
-        let mut tokens = TokenStream::new();
-        match ast_type.clone() {
-            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Short(_) => tokens.append(Ident::new("i16", Span::call_site())),
-            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
-            AstType::Boolean => tokens.append(Ident::new("u8", Span::call_site())),
-            AstType::String => match direction {
-                TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
-                TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
-            },
-            AstType::Vec(_base) => match direction {
-                TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
-                TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
-            },
-            AstType::Struct(_) => match direction {
-                TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
-                TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
-            },
-            AstType::Callback(_) => tokens.append(Ident::new("i64", Span::call_site())),
-            _ => (),
-        };
+    fn return_convert(
+        &self,
+        ret_ty: &AstType,
+        _trait_desc: &TraitDesc,
+        _callbacks: &[&TraitDesc],
+    ) -> Result<TokenStream> {
+        let callback_ident = Ident::new(&ret_ty.origin(), Span::call_site());
+        Ok(quote! {
+            let callback_index = { *CALLBACK_INDEX.read().unwrap() };
+            if callback_index == i64::MAX {
+                *CALLBACK_INDEX.write().unwrap() = 0;
+            } else {
+                *CALLBACK_INDEX.write().unwrap() = callback_index + 1;
+            }
+            (*CALLBACK_HASHMAP.write().unwrap()).insert(callback_index, CallbackEnum::#callback_ident(ret_value));
 
-        Ok(tokens)
+            callback_index
+        })
     }
 }

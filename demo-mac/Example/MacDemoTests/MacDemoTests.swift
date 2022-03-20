@@ -11,14 +11,20 @@ import rustlib
 
 class demo_ios_ExampleTests: XCTestCase {
     private var demoTrait: DemoTrait = RustLib.newDemoTrait()
+    private var demoCallback: DemoCallback?
     
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
         demoTrait.setup()
+        demoCallback = demoTrait.testReturnCallback()
     }
 
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
+    }
+    
+    func testReturnCallback() throws {
+
     }
 
     func testBase() throws {
@@ -47,6 +53,27 @@ class demo_ios_ExampleTests: XCTestCase {
         assertStruct(demoStruct: demoStruct)
         demoTrait.testArgStruct(arg: demoStruct)
         XCTAssertEqual(demoTrait.testArgVecStruct14(arg: [demoStruct]), 14)
+        
+        
+        XCTAssertEqual(demoCallback?.testU81(arg: 100, arg2: 101), 1)
+        XCTAssertEqual(demoCallback?.testI82(arg: 100, arg2: 101), 2)
+        XCTAssertEqual(demoCallback?.testI163(arg: 100, arg2: 101), 3)
+        XCTAssertEqual(demoCallback?.testU164(arg: 100, arg2: 101), 4)
+        XCTAssertEqual(demoCallback?.testI325(arg: 100, arg2: 101), 5)
+        XCTAssertEqual(demoCallback?.testU326(arg: 100, arg2: 101), 6)
+        XCTAssertEqual(demoCallback?.testF3230(arg: 100.0, arg2: 101.0), 30)
+        XCTAssertEqual(demoCallback?.testF6431(arg: 100.0, arg2: 101.0), 31)
+        XCTAssertEqual(demoCallback?.testBoolFalse(arg_true: true, arg_false: false), false)
+        XCTAssertEqual(demoCallback?.testStr(arg: "Hello world"), "Hello world")
+        XCTAssertEqual(demoCallback?.testArgVecStr18(arg: ["Hello world"]), 18)
+        XCTAssertEqual(demoCallback?.testArgVecU87(arg: [100]), 7)
+        XCTAssertEqual(demoCallback?.testArgVecI88(arg: [100]), 8)
+        XCTAssertEqual(demoCallback?.testArgVecI169(arg: [100]), 9)
+        XCTAssertEqual(demoCallback?.testArgVecU1610(arg: [100]), 10)
+        XCTAssertEqual(demoCallback?.testArgVecI3211(arg: [100]), 11)
+        XCTAssertEqual(demoCallback?.testArgVecU3212(arg: [100]), 12)
+        XCTAssertEqual(demoCallback?.testArgVecBoolTrue(arg_true: [true]), true)
+        XCTAssertEqual(demoCallback?.testTwoVecArg13(arg: [100], arg1: [101]), 13)
     }
     
     func testReturnVec() throws {
@@ -61,6 +88,14 @@ class demo_ios_ExampleTests: XCTestCase {
         XCTAssertEqual(demoTrait.testTwoVecU8(input: [100]), [100])
         let demoStruct = demoTrait.testReturnVecStruct()
         assertStruct(demoStruct: demoStruct[0])
+        
+        XCTAssertEqual(demoCallback?.testReturnVecU8(), [100])
+        XCTAssertEqual(demoCallback?.testReturnVecI8(), [100])
+        XCTAssertEqual(demoCallback?.testReturnVecI16(), [100])
+        XCTAssertEqual(demoCallback?.testReturnVecU16(), [100])
+        XCTAssertEqual(demoCallback?.testReturnVecI32(), [100])
+        XCTAssertEqual(demoCallback?.testReturnVecU32(), [100])
+        XCTAssertEqual(demoCallback?.testTwoVecU8(input: [100]), [100])
     }
     
     func testCallback() throws {

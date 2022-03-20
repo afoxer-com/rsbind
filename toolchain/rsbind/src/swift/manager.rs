@@ -1,10 +1,8 @@
-use crate::ast::contract::desc::TraitDesc;
+use rstgen::{IntoTokens, swift, Tokens};
+use rstgen::swift::{Class, Method, Modifier, Swift};
+use crate::AstResult;
 use crate::errors::*;
 use crate::swift::types::to_swift_file;
-use crate::AstResult;
-use rstgen::swift::{Class, Method, Modifier, Swift};
-use rstgen::{java, swift, IntoTokens, Java, Tokens};
-use syn::Item::Mod;
 
 pub(crate) struct ManagerGen<'a> {
     pub ast: &'a AstResult,

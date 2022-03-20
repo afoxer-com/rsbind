@@ -1,18 +1,11 @@
 use heck::ToLowerCamelCase;
-use std::fs;
-use std::path::PathBuf;
-
+use rstgen::{IntoTokens, Tokens};
 use rstgen::swift::{self, *};
-use rstgen::{Custom, Formatter, IntoTokens, Tokens};
-
-use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
-use crate::ast::types::{AstBaseType, AstType};
-use crate::ast::AstResult;
+use crate::ast::contract::desc::{MethodDesc, TraitDesc};
+use crate::ast::types::{AstType};
 use crate::errors::*;
-use crate::swift::callback::CallbackGen;
 use crate::swift::mapping::SwiftMapping;
-use crate::swift::struct_::StructGen;
-use crate::swift::types::{to_swift_file, SwiftType};
+use crate::swift::types::{to_swift_file};
 
 pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,
@@ -23,7 +16,7 @@ impl<'a> WrapperGen<'a> {
     pub fn gen(&self) -> Result<String> {
         let inner_cls = format!("Internal{}", &self.desc.name);
         let wrapper_cls = format!("Rust{}", &self.desc.name);
-        let mut class = Class::new(wrapper_cls.clone());
+        let mut class = Class::new(wrapper_cls);
         class.modifiers = vec![Modifier::Public];
         class.implements.push(swift::local(self.desc.name.clone()));
 
@@ -37,7 +30,7 @@ impl<'a> WrapperGen<'a> {
             // Method signature
             let mut m = self.fill_method_sig(method)?;
             let mut body: Tokens<Swift> = Tokens::new();
-            self.fill_call_internal_method(inner_cls.clone(), &mut body, &method);
+            self.fill_call_internal_method(inner_cls.clone(), &mut body, method)?;
             m.body = body;
             class.methods.push(m);
         }

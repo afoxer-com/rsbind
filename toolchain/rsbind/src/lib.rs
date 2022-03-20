@@ -1,8 +1,10 @@
 #![recursion_limit = "128"]
 extern crate cbindgen;
+extern crate core;
 #[macro_use]
 extern crate error_chain;
 extern crate fs_extra;
+extern crate heck;
 extern crate ndk_build;
 extern crate ndk_tool;
 extern crate proc_macro2;
@@ -13,8 +15,6 @@ extern crate rstgen;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate core;
-extern crate heck;
 extern crate serde_json;
 extern crate syn;
 extern crate toml;

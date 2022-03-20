@@ -14,7 +14,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
         arg: &ArgDesc,
         _trait_desc: &TraitDesc,
         callbacks: &[&TraitDesc],
-    ) -> TokenStream {
+    ) -> Result<TokenStream> {
         let arg_name_ident = Ident::new(&arg.name, Span::call_site());
 
         let struct_name = &format!("{}_struct", arg.name);
@@ -42,111 +42,24 @@ impl CallbackGenStrategy for CCallbackStrategy {
                 // arguments converting in callback
                 let mut args_convert = TokenStream::new();
                 for cb_arg in method.args.iter() {
-                    let cb_arg_name = Ident::new(&format!("c_{}", cb_arg.name), Span::call_site());
-                    let cb_origin_arg_name = Ident::new(&cb_arg.name, Span::call_site());
-                    let args_convert_each = match cb_arg.ty.clone() {
-                        AstType::Boolean => {
-                            quote! {
-                                let #cb_arg_name = if #cb_origin_arg_name {1} else {0};
-                            }
-                        }
-                        AstType::String => {
+                    let args_convert_each = crate::swift::bridge_r2c::arg_convert(cb_arg)
+                        .expect("Argument Convert failed.");
+
+                    match cb_arg.ty.clone() {
+                        AstType::String
+                        | AstType::Vec(AstBaseType::Float(_))
+                        | AstType::Vec(AstBaseType::Double(_))
+                        | AstType::Vec(AstBaseType::Boolean)
+                        | AstType::Vec(AstBaseType::String)
+                        | AstType::Vec(AstBaseType::Struct(_))
+                        | AstType::Struct(_) => {
+                            let cb_arg_name =
+                                Ident::new(&format!("c_{}", cb_arg.name), Span::call_site());
                             strs_to_release.push(cb_arg_name.clone());
-                            quote! {
-                                let #cb_arg_name = CString::new(#cb_origin_arg_name).unwrap().into_raw();
-                            }
                         }
-                        AstType::Vec(AstBaseType::Byte(_)) => {
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            quote! {
-                                let #cb_arg_name = unsafe {
-                                    CInt8Array {
-                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i8),
-                                        len: #cb_origin_arg_name.len() as i32
-                                    }
-                                };
-                            }
-                        }
-                        AstType::Vec(AstBaseType::Short(_)) => {
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            quote! {
-                                let #cb_arg_name = unsafe {
-                                    CInt16Array {
-                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i16),
-                                        len: #cb_origin_arg_name.len() as i32
-                                    }
-                                };
-                            }
-                        }
-                        AstType::Vec(AstBaseType::Int(_)) => {
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            quote! {
-                                let #cb_arg_name = unsafe {
-                                    CInt32Array {
-                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i32),
-                                        len: #cb_origin_arg_name.len() as i32
-                                    }
-                                };
-                            }
-                        }
-                        AstType::Vec(AstBaseType::Long(_)) => {
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            quote! {
-                                let #cb_arg_name = unsafe {
-                                    CInt64Array {
-                                        ptr: #cb_origin_arg_name.as_ptr() as (*const i64),
-                                        len: #cb_origin_arg_name.len() as i32
-                                    }
-                                };
-                            }
-                        }
-                        AstType::Vec(AstBaseType::Struct(struct_name)) => {
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            strs_to_release.push(cb_arg_name.clone());
-                            let struct_ident =
-                                Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
-                            let cb_tmp_vec_arg_name = Ident::new(
-                                &format!("c_tmp_vec_{}", cb_arg.name),
-                                Span::call_site(),
-                            );
-                            quote! {
-                                let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                                let #cb_tmp_arg_name = serde_json::to_string(&#cb_tmp_vec_arg_name);
-                                let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
-                            }
-                        }
-                        AstType::Vec(_) => {
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            strs_to_release.push(cb_arg_name.clone());
-                            quote! {
-                                let #cb_tmp_arg_name = serde_json::to_string(&#cb_origin_arg_name);
-                                let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
-                            }
-                        }
-                        AstType::Struct(origin) => {
-                            strs_to_release.push(cb_arg_name.clone());
-                            let struct_copy_name =
-                                Ident::new(&format!("Struct_{}", &origin), Span::call_site());
-                            let cb_tmp_arg_name =
-                                Ident::new(&format!("c_tmp_{}", cb_arg.name), Span::call_site());
-                            quote! {
-                                let #cb_tmp_arg_name = serde_json::to_string(&#struct_copy_name::from(#cb_origin_arg_name));
-                                let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
-                            }
-                        }
-                        _ => {
-                            let arg_ty_ident = RustMapping::map_arg_transfer_type(&cb_arg.ty);
-                            quote! {
-                                let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
-                            }
-                        }
-                    };
+                        _ => {}
+                    }
+
                     args_convert = quote! {
                         #args_convert
                         #args_convert_each
@@ -196,38 +109,8 @@ impl CallbackGenStrategy for CCallbackStrategy {
                     }
                 };
 
-                let return_convert = match method.return_type {
-                    AstType::Void => quote!(),
-                    AstType::Boolean => quote! {
-                        let s_result = if result > 0 {true} else {false};
-                    },
-                    AstType::String => quote! {
-                        let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
-                        let s_result_str: &str = s_result_c_str.to_str().unwrap();
-                        let s_result: String = s_result_str.to_owned();
-                    },
-                    AstType::Vec(AstBaseType::Byte(ref origin))
-                    | AstType::Vec(AstBaseType::Short(ref origin))
-                    | AstType::Vec(AstBaseType::Int(ref origin))
-                    | AstType::Vec(AstBaseType::Long(ref origin)) => {
-                        let origin_ident = Ident::new(origin, Span::call_site());
-                        let count = match method.return_type.clone() {
-                            AstType::Vec(AstBaseType::Byte(_)) => quote!(1),
-                            AstType::Vec(AstBaseType::Short(_)) => quote!(2),
-                            AstType::Vec(AstBaseType::Int(_)) => quote!(4),
-                            AstType::Vec(AstBaseType::Long(_)) => quote!(8),
-                            _ => quote!(1)
-                        };
-                        quote! {
-                            let s_result = unsafe { Vec::from_raw_parts(result.ptr as (* mut #origin_ident), result.len as usize, result.len as usize) };
-                        }
-                        //let fn_free_ptr = self.free_ptr;
-                        //fn_free_ptr(result.ptr as (* mut i8), result.len * #count);
-                    }
-                    _ => quote! {
-                        let s_result = result as #ret_ty_tokens;
-                    },
-                };
+                let return_convert = crate::swift::bridge_r2c::return_convert(&method.return_type)
+                    .expect("Return convert error!");
 
                 // return var ident name
                 let return_var_name = match method.return_type {
@@ -276,7 +159,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
         }
 
         // total converting codes.
-        quote! {
+        Ok(quote! {
             #callback_struct
 
             impl #callback_ty for #struct_ident {
@@ -297,7 +180,142 @@ impl CallbackGenStrategy for CCallbackStrategy {
                 index: #arg_name_ident.index,
             });
 
+        })
+    }
+
+    fn return_convert(
+        &self,
+        ret_ty: &AstType,
+        trait_desc: &TraitDesc,
+        callbacks: &[&TraitDesc],
+    ) -> Result<TokenStream> {
+        let callback_model_str = &format!("{}_{}_Model", &trait_desc.mod_name, &ret_ty.origin());
+        let callback_model_ident = Ident::new(callback_model_str, Span::call_site());
+        let callback_ident = Ident::new(&ret_ty.origin(), Span::call_site());
+
+        // find the callback type for this argument.
+        let mut callback_desc = None;
+        for desc in callbacks {
+            if desc.name == ret_ty.origin() {
+                callback_desc = Some(desc);
+            }
         }
+
+        let mut method_names = vec![];
+        let mut ret_method_names = vec![];
+
+        let mut method_result = TokenStream::new();
+        if let Some(callback_desc) = callback_desc {
+            method_names = callback_desc
+                .methods
+                .iter()
+                .map(|method| Ident::new(&method.name, Span::call_site()))
+                .collect::<Vec<Ident>>();
+            ret_method_names = callback_desc
+                .methods
+                .iter()
+                .map(|method| Ident::new(&format!("ret_{}", &method.name), Span::call_site()))
+                .collect::<Vec<Ident>>();
+
+            for method in callback_desc.methods.iter() {
+                let method_name = Ident::new(&method.name, Span::call_site());
+                let arg_names = &method
+                    .args
+                    .iter()
+                    .filter(|arg| !matches!(arg.ty, AstType::Void))
+                    .map(|arg| Ident::new(&arg.name, Span::call_site()))
+                    .collect::<Vec<Ident>>();
+                let r_arg_names = &method
+                    .args
+                    .iter()
+                    .filter(|arg| !matches!(arg.ty, AstType::Void))
+                    .map(|arg| Ident::new(&format!("r_{}", &arg.name), Span::call_site()))
+                    .collect::<Vec<Ident>>();
+                let arg_types = &method
+                    .args
+                    .iter()
+                    .filter(|arg| !matches!(arg.ty, AstType::Void))
+                    .map(|arg| RustMapping::map_c2r_transfer_type(&arg.ty))
+                    .collect::<Vec<TokenStream>>();
+                let ret_ty_tokens = RustMapping::map_c2r_transfer_type(&method.return_type);
+                let mut args_convert = TokenStream::new();
+                for arg in method.args.iter() {
+                    let each_convert = crate::swift::bridge_c2r::quote_arg_convert(arg)?;
+                    args_convert = quote! {
+                        #args_convert
+                        #each_convert
+                    }
+                }
+
+                let return_convert = crate::swift::bridge_c2r::quote_return_convert(
+                    &method.return_type,
+                    "r_result",
+                )?;
+
+                let ret_method_name =
+                    Ident::new(&format!("ret_{}", &method.name), Span::call_site());
+                method_result = quote! {
+                    #method_result
+
+                    pub extern "C" fn #ret_method_name(index: i64, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
+                        #args_convert
+
+                        let callback_hashmap = &*CALLBACK_HASHMAP.read().unwrap();
+                        let ret_callback = callback_hashmap.get(&index);
+                        match ret_callback {
+                            Some(ret_callback) => {
+                                if let CallbackEnum::#callback_ident(ret_callback) = ret_callback {
+                                    let mut r_result = ret_callback.#method_name(#(#r_arg_names),*);
+                                    #return_convert
+                                } else {
+                                    panic!("Callback doesn't match for index: {}", index);
+                                }
+                            }
+                            None => {
+                                panic!("No callback found for index: {}", index);
+                            }
+                        }
+                    }
+                };
+            }
+
+            let free_fn_ident = Ident::new(
+                &format!("{}_free_rust", &trait_desc.crate_name),
+                Span::call_site(),
+            );
+            method_result = quote! {
+                #method_result
+
+                pub extern "C" fn ret_free_callback(index: i64) {
+                    (*CALLBACK_HASHMAP.write().unwrap()).remove(&index);
+                }
+
+                pub extern "C" fn ret_free_ptr(buffer: *mut i8, size: i32) {
+                    #free_fn_ident(buffer, size as u32)
+                }
+            }
+        }
+
+        Ok(quote! {
+            let callback_index = { *CALLBACK_INDEX.read().unwrap() };
+            if callback_index == i64::MAX {
+                *CALLBACK_INDEX.write().unwrap() = 0;
+            } else {
+                *CALLBACK_INDEX.write().unwrap() = callback_index + 1;
+            }
+            (*CALLBACK_HASHMAP.write().unwrap()).insert(callback_index, CallbackEnum::#callback_ident(ret_value));
+
+            impl #callback_model_ident {
+                #method_result
+            }
+
+            #callback_model_ident {
+                #(#method_names: #callback_model_ident::#ret_method_names),*,
+                free_callback: #callback_model_ident::ret_free_callback,
+                free_ptr: #callback_model_ident::ret_free_ptr,
+                index: callback_index
+            }
+        })
     }
 }
 
@@ -316,12 +334,12 @@ impl CCallbackStrategy {
         let mut callback_methods = TokenStream::new();
         for method in trait_desc.methods.iter() {
             let callback_method_ident = Ident::new(&method.name, Span::call_site());
-            let ret_ty_tokens = RustMapping::map_arg_transfer_type(&method.return_type);
+            let ret_ty_tokens = RustMapping::map_c2r_transfer_type(&method.return_type);
             let arg_types = method
                 .args
                 .iter()
                 .filter(|arg| !matches!(arg.ty, AstType::Void))
-                .map(|arg| RustMapping::map_arg_transfer_type(&arg.ty))
+                .map(|arg| RustMapping::map_c2r_transfer_type(&arg.ty))
                 .collect::<Vec<TokenStream>>();
 
             callback_methods = quote! {

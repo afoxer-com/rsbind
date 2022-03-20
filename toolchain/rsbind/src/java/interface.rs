@@ -1,10 +1,11 @@
+use heck::ToLowerCamelCase;
+use rstgen::{IntoTokens, java, Java};
+use rstgen::java::{Argument, Interface, Method, Modifier};
+
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{to_java_file, JavaType};
-use heck::ToLowerCamelCase;
-use rstgen::java::{Argument, Class, Constructor, Interface, Method, Modifier};
-use rstgen::{java, IntoTokens, Java, Tokens};
+use crate::java::types::{JavaType, to_java_file};
 
 pub(crate) struct InterfaceGen<'a> {
     pub desc: &'a TraitDesc,
@@ -19,7 +20,7 @@ impl<'a> InterfaceGen<'a> {
 
         let methods = self.desc.methods.clone();
         for method in methods.into_iter() {
-            let mut outer_method = self.fill_method_sig(&method)?;
+            let outer_method = self.fill_method_sig(&method)?;
             interface.methods.push(outer_method)
         }
 

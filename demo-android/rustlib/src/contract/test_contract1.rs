@@ -1,4 +1,4 @@
-pub trait DemoTrait {
+pub trait DemoTrait : Send + Sync {
     fn setup();
 
     // Base types
@@ -55,7 +55,7 @@ pub trait DemoTrait {
     fn test_no_return();
 }
 
-pub trait DemoCallback: Sync {
+pub trait DemoCallback: Send + Sync {
     // Base types
     fn test_u8_1(&self, arg: u8, arg2: u8) -> u8;
     fn test_i8_2(&self, arg: i8, arg2: i8) -> i8;

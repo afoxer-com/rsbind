@@ -1,22 +1,9 @@
-use proc_macro2::TokenStream;
-use std::fmt::Write;
 use std::fs;
 use std::path::PathBuf;
 
-use rstgen::java::{self, *};
-use rstgen::Custom;
-use rstgen::Formatter;
-use rstgen::IntoTokens;
-use rstgen::Tokens;
-
-use crate::ast::contract::desc::MethodDesc;
-use crate::ast::contract::desc::StructDesc;
-use crate::ast::contract::desc::TraitDesc;
-use crate::ast::types::AstBaseType;
-use crate::ast::types::AstType;
 use crate::ast::AstResult;
 use crate::errors::*;
-use crate::java::callback::CallbackGen;
+use crate::java::callback::{CallbackGen, InnerCallbackGen};
 use crate::java::interface::InterfaceGen;
 use crate::java::internal::InnerTraitGen;
 use crate::java::manager::ManagerGen;
@@ -57,6 +44,18 @@ impl<'a> JavaCodeGen<'a> {
 
             let callback_str = gen.gen()?;
             let file_name = format!("{}.java", &each.name);
+            let callback_path = self.java_gen_dir.clone().join(file_name);
+            fs::write(callback_path, callback_str)?;
+
+            let gen = InnerCallbackGen {
+                desc: each,
+                pkg: self.namespace.clone(),
+                so_name: self.so_name.clone(),
+                ext_libs: self.ext_libs.clone(),
+            };
+
+            let callback_str = gen.gen()?;
+            let file_name = format!("Internal{}.java", &each.name);
             let callback_path = self.java_gen_dir.clone().join(file_name);
             fs::write(callback_path, callback_str)?;
         }
@@ -118,6 +117,8 @@ impl<'a> JavaCodeGen<'a> {
         let manager_gen = ManagerGen {
             ast: self.ast,
             pkg: self.namespace.clone(),
+            so_name: self.so_name.clone(),
+            ext_libs: self.ext_libs.clone()
         };
         let manager_result = manager_gen.gen()?;
         let path = self.java_gen_dir.join("RustLib.java");

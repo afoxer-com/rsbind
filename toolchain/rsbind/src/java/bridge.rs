@@ -1,14 +1,12 @@
-use heck::{ToLowerCamelCase, ToUpperCamelCase};
 use std::path::Path;
 
+use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, Span, TokenStream};
-use quote::TokenStreamExt;
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
 use crate::bridge::file::*;
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
 
 use super::bridge_cb::*;
@@ -82,6 +80,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             use std::sync::RwLock;
             use log::Level;
             use std::sync::Arc;
+            use std::collections::HashMap;
         })
     }
 
@@ -89,23 +88,50 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let class_names = trait_desc
             .iter()
             .map(|desc| {
-                if desc.is_callback {
-                    format!("{}.{}", self.java_namespace, &desc.name).replace('.', "/")
-                } else {
-                    format!("{}.Internal{}", self.java_namespace, &desc.name).replace('.', "/")
-                }
+                format!("{}.Internal{}", self.java_namespace, &desc.name).replace('.', "/")
             })
             .collect::<Vec<String>>();
 
         Ok(quote! {
             lazy_static! {
                 static ref JVM : Arc<RwLock<Option<JavaVM>>> = Arc::new(RwLock::new(None));
+                static ref CALLBACK_HASHMAP: RwLock<HashMap<i64, CallbackEnum>> =  RwLock::new(HashMap::new());
+                static ref CALLBACK_INDEX : RwLock<i64> = RwLock::new(0);
             }
 
             pub fn set_global_vm(jvm: JavaVM) {
-                #(let _ = jvm.get_env().unwrap().find_class(#class_names);)*
+                // #(let _ = jvm.get_env().unwrap().find_class(#class_names);)*
                 *(JVM.write().unwrap()) = Some(jvm);
             }
+        })
+    }
+
+    fn quote_for_all_cb(&self, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
+        let enum_items = callbacks
+            .iter()
+            .map(|item| Ident::new(&item.name, Span::call_site()))
+            .collect::<Vec<Ident>>();
+
+        let enum_tokens = quote! {
+            enum CallbackEnum {
+                #(#enum_items(Box<dyn #enum_items>)),*
+            }
+        };
+
+        let mut methods_tokens = TokenStream::new();
+        for callback in callbacks.iter() {
+            let each_callback_tokens = self.quote_method_for_callback(callback, callbacks)?;
+            methods_tokens = quote! {
+                #methods_tokens
+
+                #each_callback_tokens
+            }
+        }
+
+        Ok(quote! {
+            #enum_tokens
+
+            #methods_tokens
         })
     }
 
@@ -231,213 +257,189 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             &arg.name,
             &arg.ty.origin()
         );
-        let rust_arg_name = Ident::new(
-            &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
-            Span::call_site(),
-        );
-        let arg_name_ident = Ident::new(&arg.name, Span::call_site());
-        let _class_name =
-            format!("{}.{}", &self.java_namespace, &trait_desc.name).replace('.', "/");
-
         let result = match arg.clone().ty {
-            AstType::Byte(origin)
-            | AstType::Short(origin)
-            | AstType::Int(origin)
-            | AstType::Long(origin)
-            | AstType::Float(origin)
-            | AstType::Double(origin) => {
-                let origin_type_ident = Ident::new(&origin, Span::call_site());
-                quote! {
-                    let #rust_arg_name = #arg_name_ident as #origin_type_ident;
-                }
-            }
-            AstType::Boolean => {
-                quote! {
-                    let #rust_arg_name = if #arg_name_ident > 0 {true} else {false};
-                }
-            }
-            AstType::String => {
-                quote! {
-                    let #rust_arg_name: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
-                }
-            }
-            AstType::Vec(AstBaseType::Byte(origin)) => {
-                if origin.contains("i8") {
-                    let tmp_arg_name = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-                    let tmp_arg_ptr =
-                        Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
-                    let tmp_arg_len =
-                        Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
-                    let tmp_arg_cap =
-                        Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
-                    quote! {
-                        let mut #tmp_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
-                        let #tmp_arg_ptr = #tmp_arg_name.as_mut_ptr();
-                        let #tmp_arg_len = #tmp_arg_name.len();
-                        let #tmp_arg_cap = #tmp_arg_name.capacity();
-                        let #rust_arg_name = unsafe {
-                            std::mem::forget(#tmp_arg_name);
-                            Vec::from_raw_parts(#tmp_arg_ptr as (* mut i8), #tmp_arg_len, #tmp_arg_cap)
-                        };
-                    }
-                } else {
-                    quote! {
-                        let #rust_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
-                    }
-                }
-            }
-            AstType::Vec(AstBaseType::Struct(origin)) => {
-                let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
-                let tmp_arg_ident = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-                let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
-                let real_struct_name = Ident::new(&origin, Span::call_site());
-                quote! {
-                    let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
-                    let #tmp_arg_ident: Vec<#struct_name> = serde_json::from_str(&#json_arg_ident).unwrap();
-                    let #rust_arg_name: Vec<#real_struct_name> = #tmp_arg_ident.into_iter().map(|each| #real_struct_name::from(each)).collect();
-                }
-            }
-            AstType::Vec(_) => {
-                let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
-                quote! {
-                    let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
-                    let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
-                }
-            }
             AstType::Callback(_) => self
                 .java_callback_strategy
                 .arg_convert(arg, trait_desc, callbacks),
-            AstType::Struct(origin) => {
-                let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
-                let tmp_arg_ident = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-                let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
-                let real_struct_name = Ident::new(&origin, Span::call_site());
-                quote! {
-                    let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
-                    let #tmp_arg_ident: #struct_name = serde_json::from_str(&#json_arg_ident).unwrap();
-                    let #rust_arg_name: #real_struct_name = #tmp_arg_ident.into();
-                }
-            }
-            AstType::Void => {
-                return Err(
-                    GenerateError(format!("find unsupported type in arg, {:?}", &arg.ty)).into(),
-                );
-            }
+            _ => crate::java::bridge_j2r::quote_arg_convert(arg, self.java_namespace, trait_desc),
         };
         println!(
             "[bridge] ✅ end quote jni bridge method argument convert => {}:{}",
             &arg.name,
             &arg.ty.origin()
         );
-        Ok(result)
+        result
     }
 
-    fn quote_return_convert(&self, return_ty: &AstType, ret_name: &str) -> Result<TokenStream> {
+    fn quote_return_convert(
+        &self,
+        trait_desc: &TraitDesc,
+        callbacks: &[&TraitDesc],
+        return_ty: &AstType,
+        ret_name: &str,
+    ) -> Result<TokenStream> {
         println!(
             "[bridge]  🔆  begin quote jni bridge method return convert => {}",
             return_ty.origin()
         );
-        let ret_name_ident = Ident::new(ret_name, Span::call_site());
 
         let result = match return_ty.clone() {
-            AstType::Void => quote!(),
-            AstType::Boolean => quote! {
-                if #ret_name_ident {1} else {0}
-            },
-            AstType::String => quote! {
-                env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner()
-            },
-            AstType::Vec(AstBaseType::Struct(struct_name)) => {
-                let struct_ident =
-                    Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
-                quote! {
-                    let ret_value = ret_value.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                    let json_ret = serde_json::to_string(&ret_value);
-                    env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
-                }
-            }
-            AstType::Vec(AstBaseType::Byte(origin)) => {
-                if origin.contains("i8") {
-                    quote! {
-                        let ret_value_ptr = ret_value.as_mut_ptr();
-                        let ret_value_len = ret_value.len();
-                        let ret_value_cap = ret_value.capacity();
-                        let tmp_ret_name = unsafe {
-                            std::mem::forget(ret_value);
-                            Vec::from_raw_parts(ret_value_ptr as (* mut u8), ret_value_len, ret_value_cap)
-                        };
-                        env.byte_array_from_slice(&tmp_ret_name).unwrap()
-                    }
-                } else {
-                    quote! {
-                        env.byte_array_from_slice(&ret_value).unwrap()
-                    }
-                }
-            }
-            AstType::Vec(_) => {
-                quote! {
-                    let json_ret = serde_json::to_string(&ret_value);
-                    env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
-                }
-            }
-            AstType::Struct(name) => {
-                let struct_copy_name = Ident::new(&format!("Struct_{}", name), Span::call_site());
-                quote! {
-                    let json_ret = serde_json::to_string(&#struct_copy_name::from(ret_value));
-                    env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
-                }
-            }
-            _ => {
-                let ty_ident = self.ty_to_tokens(return_ty, TypeDirection::Return).unwrap();
-                quote! {
-                    #ret_name_ident as #ty_ident
-                }
-            }
+            AstType::Callback(_) => self
+                .java_callback_strategy
+                .return_convert(return_ty, trait_desc, callbacks),
+            _ => crate::java::bridge_j2r::quote_return_convert(
+                return_ty, trait_desc, callbacks, ret_name,
+            ),
         };
         println!(
             "[bridge]  ✅  end quote jni bridge method return convert => {}",
             return_ty.origin()
         );
 
-        Ok(result)
+        result
     }
 
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
-        let mut tokens = TokenStream::new();
-        match ast_type.clone() {
-            AstType::Byte(_) => tokens.append(Ident::new("i8", Span::call_site())),
-            AstType::Short(_) => tokens.append(Ident::new("i16", Span::call_site())),
-            AstType::Int(_) => tokens.append(Ident::new("i32", Span::call_site())),
-            AstType::Long(_) => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Float(_) => tokens.append(Ident::new("f32", Span::call_site())),
-            AstType::Double(_) => tokens.append(Ident::new("f64", Span::call_site())),
-            AstType::Boolean => tokens.append(Ident::new("u8", Span::call_site())),
-            AstType::String => match direction {
-                TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
-                TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
-            },
-            AstType::Vec(base) => match direction {
-                TypeDirection::Argument => match base {
-                    AstBaseType::Byte(_) => {
-                        tokens.append(Ident::new("jbyteArray", Span::call_site()))
-                    }
-                    _ => tokens.append(Ident::new("JString", Span::call_site())),
-                },
-                TypeDirection::Return => match base {
-                    AstBaseType::Byte(_) => {
-                        tokens.append(Ident::new("jbyteArray", Span::call_site()))
-                    }
-                    _ => tokens.append(Ident::new("jstring", Span::call_site())),
-                },
-            },
-            AstType::Struct(_) => match direction {
-                TypeDirection::Argument => tokens.append(Ident::new("JString", Span::call_site())),
-                TypeDirection::Return => tokens.append(Ident::new("jstring", Span::call_site())),
-            },
-            AstType::Callback(_) => tokens.append(Ident::new("i64", Span::call_site())),
-            AstType::Void => (),
+        crate::java::bridge_j2r::ty_to_tokens(ast_type, direction)
+    }
+}
+
+impl<'a> JniFileGenStrategy<'a> {
+    fn quote_method_for_callback(
+        &self,
+        callback: &TraitDesc,
+        callbacks: &[&TraitDesc],
+    ) -> Result<TokenStream> {
+        let callback_ident = Ident::new(&callback.name, Span::call_site());
+
+        let mut body = TokenStream::new();
+
+        let namespace = self.java_namespace.replace('.', "_");
+        for method in callback.methods.iter() {
+            let method_name = format!(
+                "Java_{}_Internal{}_j2r{}",
+                &namespace,
+                callback.name.clone(),
+                &method.name.to_upper_camel_case().replace('_', "_1")
+            );
+            let origin_method_name = Ident::new(&method.name, Span::call_site());
+            let method_name_ident = Ident::new(&method_name, Span::call_site());
+            let arg_names = method
+                .args
+                .iter()
+                .map(|arg| Ident::new(&arg.name, Span::call_site()))
+                .collect::<Vec<Ident>>();
+
+            let arg_types = method
+                .args
+                .iter()
+                .map(|arg| {
+                    crate::java::bridge_j2r::ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap()
+                })
+                .collect::<Vec<TokenStream>>();
+
+            let ret_ty_tokens =
+                crate::java::bridge_j2r::ty_to_tokens(&method.return_type, TypeDirection::Return)?;
+            let method_sig = if arg_names.is_empty() {
+                match method.return_type {
+                    AstType::Void => quote! {
+                        #[no_mangle]
+                        #[allow(non_snake_case)]
+                        pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, index: i64)
+                    },
+                    _ => quote! {
+                        #[no_mangle]
+                        #[allow(non_snake_case)]
+                        pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, index: i64) -> #ret_ty_tokens
+                    },
+                }
+            } else {
+                match method.return_type {
+                    AstType::Void => quote! {
+                        #[no_mangle]
+                        #[allow(non_snake_case)]
+                        pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, index: i64, #(#arg_names: #arg_types),*)
+                    },
+
+                    _ => quote! {
+                        #[no_mangle]
+                        #[allow(non_snake_case)]
+                        pub extern "C" fn #method_name_ident(env: JNIEnv, class: JClass, index: i64, #(#arg_names: #arg_types),*) -> #ret_ty_tokens
+                    },
+                }
+            };
+
+            let mut args_convert = TokenStream::new();
+            for arg in method.args.iter() {
+                let each_convert =
+                    crate::java::bridge_j2r::quote_arg_convert(arg, &namespace, callback)?;
+                args_convert = quote! {
+                    #args_convert
+                    #each_convert
+                }
+            }
+
+            let r_arg_names = &method
+                .args
+                .iter()
+                .filter(|arg| !matches!(arg.ty, AstType::Void))
+                .map(|arg| Ident::new(&format!("r_{}", &arg.name), Span::call_site()))
+                .collect::<Vec<Ident>>();
+
+            let return_convert = crate::java::bridge_j2r::quote_return_convert(
+                &method.return_type,
+                callback,
+                callbacks,
+                "r_result",
+            )?;
+
+            body = quote! {
+                #body
+
+                #method_sig {
+                    #args_convert
+
+                    let callback_hashmap = &*CALLBACK_HASHMAP.read().unwrap();
+                        let ret_callback = callback_hashmap.get(&index);
+                        match ret_callback {
+                            Some(ret_callback) => {
+                                if let CallbackEnum::#callback_ident(ret_callback) = ret_callback {
+                                    let mut r_result = ret_callback.#origin_method_name(#(#r_arg_names),*);
+                                    #return_convert
+                                } else {
+                                    panic!("Callback doesn't match for index: {}", index);
+                                }
+                            }
+                            None => {
+                                panic!("No callback found for index: {}", index);
+                            }
+                        }
+                }
+
+            }
+        }
+
+        let free_method_name = Ident::new(
+            &format!(
+                "Java_{}_Internal{}_j2rFreeCallback",
+                &namespace,
+                callback.name.clone(),
+            ),
+            Span::call_site(),
+        );
+
+        body = quote! {
+            #body
+
+            #[no_mangle]
+            #[allow(non_snake_case)]
+            pub extern "C" fn #free_method_name(env: JNIEnv, class: JClass, index: i64) {
+                (*CALLBACK_HASHMAP.write().unwrap()).remove(&index);
+            }
         };
 
-        Ok(tokens)
+        Ok(quote! {
+            #body
+        })
     }
 }

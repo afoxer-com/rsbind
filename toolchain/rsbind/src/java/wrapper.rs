@@ -1,10 +1,11 @@
+use heck::ToLowerCamelCase;
+use rstgen::{IntoTokens, java, Java, Tokens};
+use rstgen::java::{Argument, Class, Constructor, Method, Modifier};
+
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{to_java_file, JavaType};
-use heck::ToLowerCamelCase;
-use rstgen::java::{Argument, Class, Constructor, Method, Modifier};
-use rstgen::{java, IntoTokens, Java, Tokens};
+use crate::java::types::{JavaType, to_java_file};
 
 pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,
@@ -15,7 +16,7 @@ impl<'a> WrapperGen<'a> {
     /// Generate Java Code for rust trait.
     pub(crate) fn gen(&self) -> Result<String> {
         let outer_class_name = format!("Rust{}", &self.desc.name);
-        let mut outer_class = Class::new(outer_class_name.clone());
+        let mut outer_class = Class::new(outer_class_name);
         outer_class.modifiers = vec![Modifier::Public];
         outer_class
             .implements

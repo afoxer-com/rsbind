@@ -1,9 +1,10 @@
+use heck::ToLowerCamelCase;
+use rstgen::{IntoTokens, swift};
+use rstgen::swift::{Method, Modifier, Protocol, Swift};
+
 use crate::ast::contract::desc::TraitDesc;
 use crate::errors::*;
-use crate::swift::types::{to_swift_file, SwiftType};
-use heck::ToLowerCamelCase;
-use rstgen::swift::{Method, Modifier, Protocol, Swift};
-use rstgen::{swift, IntoTokens};
+use crate::swift::types::{SwiftType, to_swift_file};
 
 pub(crate) struct CallbackGen<'a> {
     pub desc: &'a TraitDesc,

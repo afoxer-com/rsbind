@@ -26,6 +26,11 @@ jobs:
       run: cd demo-jar/rustlib && pwd && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . jar all
     - name: Test-Jar-Demo
       run: cd demo-jar && pwd && ./gradlew assemble && ./gradlew app:test
+    # - uses: actions/upload-artifact@v3
+    #   if: always()
+    #   with:
+    #     name: my-artifact
+    #     path: demo-jar/app/
     
   swift-test:
     runs-on: macos-latest

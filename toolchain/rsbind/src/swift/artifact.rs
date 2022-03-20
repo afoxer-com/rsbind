@@ -1,20 +1,12 @@
 use std::fs;
 use std::path::PathBuf;
-
-use rstgen::swift::{self, *};
-use rstgen::{Custom, Formatter, IntoTokens, Tokens};
-
-use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
-use crate::ast::types::{AstBaseType, AstType};
 use crate::ast::AstResult;
 use crate::errors::*;
 use crate::swift::callback::CallbackGen;
 use crate::swift::internal::TraitGen;
 use crate::swift::manager::ManagerGen;
-use crate::swift::mapping::SwiftMapping;
 use crate::swift::protocol::ProtocolGen;
 use crate::swift::struct_::StructGen;
-use crate::swift::types::{to_swift_file, SwiftType};
 use crate::swift::wrapper::WrapperGen;
 
 pub(crate) struct SwiftCodeGen<'a> {

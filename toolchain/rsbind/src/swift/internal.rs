@@ -1,20 +1,14 @@
 use heck::ToLowerCamelCase;
-use std::fs;
-use std::path::PathBuf;
-
+use rstgen::{IntoTokens, Tokens};
 use rstgen::swift::{self, *};
-use rstgen::{Custom, Formatter, IntoTokens, Tokens};
-
-use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
+use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
-use crate::ast::AstResult;
+use crate::ErrorKind::GenerateError;
 use crate::errors::*;
 use crate::swift::arg_cb::ArgCbGen;
-use crate::swift::callback::CallbackGen;
 use crate::swift::mapping::SwiftMapping;
-use crate::swift::struct_::StructGen;
-use crate::swift::types::{to_swift_file, SwiftType};
-use crate::ErrorKind::GenerateError;
+use crate::swift::return_cb::ReturnCbGen;
+use crate::swift::types::{to_swift_file};
 
 pub(crate) struct TraitGen<'a> {
     pub desc: &'a TraitDesc,
@@ -24,7 +18,7 @@ pub(crate) struct TraitGen<'a> {
 impl<'a> TraitGen<'a> {
     pub fn gen(&'a self) -> Result<String> {
         let class_name = format!("Internal{}", &self.desc.name);
-        let mut class = Class::new(class_name.clone());
+        let mut class = Class::new(class_name);
         class.modifiers = vec![Modifier::Internal];
 
         let mut tokens = toks!();
@@ -105,102 +99,10 @@ impl<'a> TraitGen<'a> {
     ) -> Result<()> {
         for arg in method.args.iter() {
             // Argument convert
-            println!("quote arg convert for {}", arg.name.clone());
-            let s_arg_name = format!("s_{}", &arg.name);
             match arg.ty.clone() {
-                AstType::Void => {}
-                AstType::Boolean => method_body.push(toks!(
-                    "let ",
-                    s_arg_name.clone(),
-                    ": Int32 = ",
-                    arg.name.clone(),
-                    " ? 1 : 0"
-                )),
-                AstType::Byte(_)
-                | AstType::Short(_)
-                | AstType::Int(_)
-                | AstType::Long(_)
-                | AstType::Float(_)
-                | AstType::Double(_) => {
-                    let ty = SwiftMapping::map_transfer_type(&arg.ty);
-                    method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = ",
-                        ty,
-                        "(",
-                        arg.name.clone(),
-                        ")"
-                    ))
-                }
-                AstType::String => {
-                    method_body.push(toks!("let ", s_arg_name.clone(), " = ", arg.name.clone()))
-                }
-                AstType::Vec(AstBaseType::Byte(_))
-                | AstType::Vec(AstBaseType::Short(_))
-                | AstType::Vec(AstBaseType::Int(_))
-                | AstType::Vec(AstBaseType::Long(_)) => {
-                    let arg_buffer_name = format!("{}_buffer", &arg.name);
-                    let transfer_ty = SwiftMapping::map_transfer_type(&arg.ty);
-                    method_body.push(toks!(
-                        "let ",
-                        s_arg_name.clone(),
-                        " = ",
-                        transfer_ty.to_string(),
-                        "(ptr: ",
-                        arg_buffer_name.clone(),
-                        ".baseAddress, len: Int32(",
-                        arg_buffer_name.clone(),
-                        ".count))"
-                    ))
-                }
-                AstType::Vec(AstBaseType::Struct(_)) => {
-                    method_body.push(toks!("var ", format!("s_{}", &arg.name), ": String?"));
-                    method_body.push(toks!("autoreleasepool {"));
-                    let encoder_name = format!("{}_encoder", &arg.name);
-                    method_body.nested(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                    method_body.nested(toks!(
-                        "let ",
-                        format!("data_{}", &arg.name),
-                        " = try! ",
-                        encoder_name.clone(),
-                        ".encode(",
-                        arg.name.clone(),
-                        ")"
-                    ));
-                    method_body.nested(toks!(
-                        format!("s_{}", &arg.name),
-                        " = String(data: ",
-                        format!("data_{}", &arg.name),
-                        ", encoding: .utf8)!"
-                    ));
-                    method_body.push(toks!("}"));
-                }
-                AstType::Vec(_) | AstType::Struct(_) => {
-                    method_body.push(toks!("var ", format!("s_{}", &arg.name), ": String?"));
-                    method_body.push(toks!("autoreleasepool {"));
-                    let encoder_name = format!("{}_encoder", &arg.name);
-                    method_body.nested(toks!("let ", encoder_name.clone(), " = JSONEncoder()"));
-                    method_body.nested(toks!(
-                        "let ",
-                        format!("data_{}", &arg.name),
-                        " = try! ",
-                        encoder_name.clone(),
-                        ".encode(",
-                        arg.name.clone(),
-                        ")"
-                    ));
-                    method_body.nested(toks!(
-                        format!("s_{}", &arg.name),
-                        " = String(data: ",
-                        format!("data_{}", &arg.name),
-                        ", encoding: .utf8)!"
-                    ));
-                    method_body.push(toks!("}"));
-                }
                 AstType::Callback(_) => {
                     let callback = self
-                        .find_callback(arg)
+                        .find_callback(&arg.ty.origin())
                         .ok_or_else(|| GenerateError("Can't find Callback".to_string()))?;
                     let arg_cb = ArgCbGen {
                         desc: self.desc,
@@ -210,31 +112,34 @@ impl<'a> TraitGen<'a> {
                     .gen()?;
                     method_body.push(arg_cb);
                 }
+                _ => {
+                    crate::swift::artifact_s2c::fill_arg_convert(method_body, arg)?;
+                }
             }
         }
         Ok(())
     }
 
-    fn find_callback(&'a self, arg: &'a ArgDesc) -> Option<&'a TraitDesc> {
+    fn find_callback(&self, origin: &str) -> Option<&TraitDesc> {
         // Find the callback.
         let callbacks = self
             .callbacks
             .iter()
-            .filter(|callback| callback.name == arg.ty.origin())
+            .filter(|callback| callback.name == *origin)
             .collect::<Vec<&TraitDesc>>();
         if callbacks.is_empty() {
-            panic!("No Callback {} found!", arg.ty.origin());
+            panic!("No Callback {} found!", origin);
         }
 
         if callbacks.len() > 1 {
-            panic!("More than one Callback {} found!", arg.ty.origin());
+            panic!("More than one Callback {} found!", origin);
         }
 
         let callback = callbacks.get(0);
         if let Some(&callback) = callback {
             Some(callback)
         } else {
-            println!("Can't find Callback {}", arg.ty.origin());
+            println!("Can't find Callback {}", origin);
             None
         }
     }
@@ -271,94 +176,28 @@ impl<'a> TraitGen<'a> {
     fn fill_return_type_convert(
         &self,
         method_body: &mut Tokens<Swift>,
-        method: &MethodDesc,
+        method: &'a MethodDesc,
     ) -> Result<()> {
-        let crate_name = self.desc.crate_name.replace('-', "_");
         match method.return_type.clone() {
-            AstType::Void => {}
-            AstType::Byte(_)
-            | AstType::Short(_)
-            | AstType::Int(_)
-            | AstType::Long(_)
-            | AstType::Float(_)
-            | AstType::Double(_) => {
-                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
-                method_body.push(toks!("let s_result = ", ty, "(result)"));
+            AstType::Callback(_) => {
+                let origin = self
+                    .find_callback(&method.return_type.origin())
+                    .ok_or_else(|| GenerateError("Can't find callback".to_string()))?;
+                let ret = ReturnCbGen {
+                    desc: self.desc,
+                    method,
+                    callback: origin,
+                }
+                .gen()?;
+                method_body.push(ret);
             }
-            AstType::Boolean => {
-                method_body.push(toks!("let s_result = result > 0 ? true : false"));
+            _ => {
+                crate::swift::artifact_s2c::fill_return_type_convert(
+                    method_body,
+                    &method.return_type,
+                    &self.desc.crate_name,
+                )?;
             }
-            AstType::String => {
-                method_body.push(toks!("let s_result = String(cString:result!)"));
-                method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
-            }
-            AstType::Vec(AstBaseType::Byte(ref origin)) => {
-                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
-                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
-                method_body.push(toks!(format!("{}_free_rust", &crate_name), "(UnsafeMutablePointer(mutating: result.ptr), UInt32(result.len))"));
-            }
-            | AstType::Vec(AstBaseType::Short(ref origin)) => {
-                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
-                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
-                method_body.push(toks!("UnsafeMutablePointer(mutating: result.ptr).withMemoryRebound(to: Int8.self, capacity: 2 * Int(result.len)) {"));
-                method_body.nested(toks!(format!("{}_free_rust", &crate_name), "($0, UInt32(2 * result.len))"));
-                method_body.push(toks!("}"));
-            }
-            | AstType::Vec(AstBaseType::Int(ref origin)) => {
-                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
-                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
-                method_body.push(toks!("UnsafeMutablePointer(mutating: result.ptr).withMemoryRebound(to: Int8.self, capacity: 4 * Int(result.len)) {"));
-                method_body.nested(toks!(format!("{}_free_rust", &crate_name), "($0, UInt32(4 * result.len))"));
-                method_body.push(toks!("}"));
-            }
-            | AstType::Vec(AstBaseType::Long(ref origin)) => {
-                let ty = SwiftMapping::map_swift_sig_type(&method.return_type);
-                method_body.push(toks!("let s_result = ", ty, "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"));
-                method_body.push(toks!("UnsafeMutablePointer(mutating: result.ptr).withMemoryRebound(to: Int8.self, capacity: 8 * Int(result.len)) {"));
-                method_body.nested(toks!(format!("{}_free_rust", &crate_name), "($0, UInt32(8 * result.len))"));
-                method_body.push(toks!("}"));
-            }
-            AstType::Vec(_) => {
-                let return_ty = SwiftType::new(method.return_type.clone());
-                method_body.push(toks!("let ret_str = String(cString:result!)"));
-                method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
-                method_body.push(toks!(
-                    "var s_tmp_result:",
-                    Swift::from(return_ty.clone()),
-                    "?"
-                ));
-                method_body.push(toks!("autoreleasepool {"));
-                method_body.nested(toks!("let ret_str_json = ret_str.data(using: .utf8)!"));
-                method_body.nested(toks!("let decoder = JSONDecoder()"));
-                method_body.nested(toks!(
-                    "s_tmp_result = try! decoder.decode(",
-                    Swift::from(return_ty),
-                    ".self, from: ret_str_json)"
-                ));
-                method_body.push(toks!("}"));
-                method_body.push(toks!("let s_result = s_tmp_result!"));
-            }
-            AstType::Callback(_) => {}
-            AstType::Struct(struct_name) => {
-                method_body.push(toks!("let ret_str = String(cString:result!)"));
-                method_body.push(toks!(format!("{}_free_str(result!)", &crate_name)));
-                method_body.push(toks!("var s_tmp_result: ", struct_name.clone(), "?"));
-                method_body.push(toks!("autoreleasepool {"));
-                method_body.nested(toks!("let ret_str_json = ret_str.data(using: .utf8)!"));
-                method_body.nested(toks!("let decoder = JSONDecoder()"));
-                method_body.nested(toks!(
-                    "s_tmp_result = try! decoder.decode(",
-                    struct_name,
-                    ".self, from: ret_str_json)"
-                ));
-                method_body.push(toks!("}"));
-                method_body.push(toks!("let s_result = s_tmp_result!"));
-            }
-        }
-
-        match method.return_type.clone() {
-            AstType::Void => {}
-            _ => method_body.push(toks!("return s_result")),
         }
         Ok(())
     }

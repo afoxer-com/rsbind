@@ -1,12 +1,12 @@
-use crate::ast::contract::parser::parse_from_str;
-use crate::errors::ErrorKind::*;
-use crate::errors::*;
 use std::collections::HashMap;
 use std::fs;
-use std::hash::Hash;
 use std::io::Write;
 use std::path::{Path, PathBuf};
+
 use syn::__private::str;
+
+use crate::errors::*;
+use crate::errors::ErrorKind::*;
 
 use self::contract::desc::*;
 use self::imp::desc::*;

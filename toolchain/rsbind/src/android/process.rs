@@ -11,8 +11,8 @@ use crate::ast::AstResult;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
 use crate::bridges::BridgeGen::JavaGen;
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 use crate::java::artifact::JavaCodeGen;
 use crate::ndk_tool::{build, BuildConfig};
 use crate::unzip;
@@ -108,7 +108,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
     fn build_bridge_prj(&self) -> Result<()> {
         println!("building android bridge project");
         let _ndk = ndk_build::ndk::Ndk::from_env()?;
-        let mut archs = self.config().archs();
+        let archs = self.config().archs();
 
         let config = BuildConfig {
             lib_name: self.lib_name(),

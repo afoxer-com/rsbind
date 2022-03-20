@@ -10,13 +10,14 @@ mod tests {
                 pub arg_bool: bool
             }
 
-            pub trait FfiContract {
+            pub trait FfiContract : Send + Sync {
                 fn return_vec() -> Vec<u8>;
                 fn arg_vec(command: i32, data: Vec<u8>) -> i32;
                 fn arg_callback(command: i32, callback: Box<dyn FfiCallback>) -> i32;
+                fn return_callback() -> Box<dyn FfiCallback>;
             }
 
-            pub trait FfiCallback {
+            pub trait FfiCallback : Sync + Send {
                 fn callback_vec(&self, command: i32, data: Vec<u8>) -> i32;
             }
         ";
@@ -68,6 +69,12 @@ mod tests {
         assert_eq!(
             trait_desc[0].methods[2].return_type,
             AstType::Int("i32".to_string())
+        );
+        assert_eq!(trait_desc[0].methods[3].name, "return_callback");
+        assert!(trait_desc[0].methods[3].args.is_empty());
+        assert_eq!(
+            trait_desc[0].methods[3].return_type,
+            AstType::Callback("FfiCallback".to_string())
         );
 
         assert_eq!(trait_desc[1].name, "FfiCallback");

@@ -1,9 +1,18 @@
 use c::bridge::common::*;
 use contract::test_contract1::*;
 use imp::test_contract1_imp::*;
+use std::collections::HashMap;
 use std::ffi::CStr;
 use std::ffi::CString;
 use std::os::raw::c_char;
+lazy_static! {
+    static ref CALLBACK_HASHMAP: std::sync::RwLock<HashMap<i64, CallbackEnum>> =
+        std::sync::RwLock::new(HashMap::new());
+    static ref CALLBACK_INDEX: std::sync::RwLock<i64> = std::sync::RwLock::new(0);
+}
+enum CallbackEnum {
+    DemoCallback(Box<dyn DemoCallback>),
+}
 #[repr(C)]
 #[derive(Serialize, Deserialize)]
 pub struct Struct_DemoStruct {
@@ -136,7 +145,7 @@ pub extern "C" fn test_contract1_test_f64_31(arg: f64, arg2: f64) -> f64 {
     ret_value as f64
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_str(arg: *const c_char) -> *mut c_char {
+pub extern "C" fn test_contract1_test_str(arg: *const c_char) -> *const c_char {
     let c_str_arg: &CStr = unsafe { CStr::from_ptr(arg) };
     let c_str_arg: &str = c_str_arg.to_str().unwrap();
     let r_arg: String = c_str_arg.to_owned();
@@ -241,7 +250,7 @@ pub extern "C" fn test_contract1_test_two_vec_arg_15(arg: CInt32Array, arg1: CIn
     ret_value as i32
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_return_vec_str() -> *mut c_char {
+pub extern "C" fn test_contract1_test_return_vec_str() -> *const c_char {
     let ret_value = TestContract1Imp::test_return_vec_str();
     let json_ret = serde_json::to_string(&ret_value);
     CString::new(json_ret.unwrap()).unwrap().into_raw()
@@ -359,7 +368,7 @@ pub extern "C" fn test_contract1_test_return_vec_u64() -> CInt64Array {
     }
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_return_vec_bool_true() -> *mut c_char {
+pub extern "C" fn test_contract1_test_return_vec_bool_true() -> *const c_char {
     let ret_value = TestContract1Imp::test_return_vec_bool_true();
     let json_ret = serde_json::to_string(&ret_value);
     CString::new(json_ret.unwrap()).unwrap().into_raw()
@@ -382,7 +391,7 @@ pub extern "C" fn test_contract1_test_two_vec_u8(input: CInt8Array) -> CInt8Arra
     }
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_return_vec_struct() -> *mut c_char {
+pub extern "C" fn test_contract1_test_return_vec_struct() -> *const c_char {
     let ret_value = TestContract1Imp::test_return_vec_struct();
     let ret_value = ret_value
         .into_iter()
@@ -1823,7 +1832,7 @@ pub extern "C" fn test_contract1_test_two_arg_callback_20(
     ret_value as i8
 }
 #[no_mangle]
-pub extern "C" fn test_contract1_test_return_struct() -> *mut c_char {
+pub extern "C" fn test_contract1_test_return_struct() -> *const c_char {
     let ret_value = TestContract1Imp::test_return_struct();
     let json_ret = serde_json::to_string(&Struct_DemoStruct::from(ret_value));
     CString::new(json_ret.unwrap()).unwrap().into_raw()

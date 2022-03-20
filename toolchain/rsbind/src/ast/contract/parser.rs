@@ -5,13 +5,13 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use syn::TypeParamBound;
+use syn::{TypeParamBound, TypePath};
 
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 
-use super::super::types::*;
 use super::desc::*;
+use super::super::types::*;
 
 ///
 /// parse a syn file to TraitDesc which depicting the structure of the trait.
@@ -55,8 +55,26 @@ pub(crate) fn parse_from_str(
                 let trait_name = trait_inner.ident.to_string();
                 println!("found trait => {}", trait_inner.ident);
 
-                let methods = parse_methods(&trait_inner.items)?;
+                let mut send_derived = false;
+                let mut sync_derived = false;
+                for supertraits in trait_inner.supertraits.iter() {
+                    if let TypeParamBound::Trait(trait_bound) = supertraits {
+                        let segments = &(trait_bound.path.segments);
+                        let ident = (&segments[segments.len() - 1].ident).to_string();
+                        if ident == "Send" {
+                            send_derived = true;
+                        }
+                        if ident == "Sync" {
+                            sync_derived = true;
+                        }
+                    }
+                }
 
+                if !send_derived || !sync_derived {
+                    panic!("Please derive 'Sync' and 'Send' for your trait '{}', Like: trait {} : Send + Sync {{ .. }}", &trait_name, &trait_name)
+                }
+
+                let methods = parse_methods(&trait_inner.items)?;
                 let trait_desc = TraitDesc {
                     name: trait_name,
                     ty: "trait".to_string(),
@@ -177,41 +195,13 @@ fn parse_return_type(output: &syn::ReturnType) -> Result<AstType> {
                 let ident = &(segments[segments.len() - 1].ident);
 
                 // Generic parsing
-                let mut generic_ident = None;
-                let argument = &(segments[segments.len() - 1].arguments);
-                match argument {
-                    syn::PathArguments::None => (),
-                    syn::PathArguments::AngleBracketed(t) => {
-                        if let syn::GenericArgument::Type(syn::Type::Path(ref arg_ty_path)) =
-                            t.args[t.args.len() - 1]
-                        {
-                            let generic_segments = &(arg_ty_path.path.segments);
-                            generic_ident =
-                                Some(&(generic_segments[generic_segments.len() - 1].ident));
-                        }
-                        println!("angle bracketed = {:?}", t)
-                    }
-                    _ => (),
-                }
-
                 println!("found return type => {:?}", ident);
                 return if *ident == "Vec" {
-                    match generic_ident {
-                        Some(generic_ident) => {
-                            let ast = AstType::Vec(AstBaseType::new(
-                                &generic_ident.to_owned().to_string(),
-                                &generic_ident.to_owned().to_string(),
-                            ));
-                            Ok(ast)
-                        }
-                        None => {
-                            let origin = ident.to_string();
-                            Ok(AstType::new(&origin, &origin))
-                        }
-                    }
+                    println!("found Vec return type.");
+                    Ok(parse_vec_ast(type_path))
                 } else if *ident == "Box" {
-                    let origin = generic_ident.unwrap().to_owned().to_string();
-                    Ok(AstType::new("Box", &origin))
+                    println!("found Box return type.");
+                    Ok(parse_boxed_ast(type_path))
                 } else {
                     let origin = ident.to_string();
                     Ok(AstType::new(&origin, &origin))
@@ -241,44 +231,10 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
             let ident = (&segments[segments.len() - 1].ident).to_string();
             if ident == "Box" {
                 println!("found Box argument.");
-                let angle_bracketed = &segments[segments.len() - 1].arguments;
-                if let syn::PathArguments::AngleBracketed(t) = angle_bracketed {
-                    println!("parsing Boxed inner.");
-                    match &t.args[0] {
-                        syn::GenericArgument::Type(syn::Type::Path(ref type_path)) => {
-                            println!("found boxed types = {:?})", type_path);
-                            let segments = &(type_path.path.segments);
-                            let ident = (&segments[segments.len() - 1].ident).to_string();
-                            arg_type = Some(AstType::new("Box", &ident));
-                        }
-                        syn::GenericArgument::Type(syn::Type::TraitObject(ref trait_obj)) => {
-                            if trait_obj.dyn_token.is_some() {
-                                let bounds = &trait_obj.bounds;
-                                for bound in bounds.iter() {
-                                    if let TypeParamBound::Trait(trait_bound) = bound.clone() {
-                                        let segments = trait_bound.path.segments;
-                                        let ident =
-                                            (&segments[segments.len() - 1].ident).to_string();
-                                        arg_type = Some(AstType::new("Box", &ident));
-                                    }
-                                }
-                            }
-                        }
-                        _ => {}
-                    }
-                }
+                arg_type = Some(parse_boxed_ast(type_path));
             } else if ident == "Vec" {
                 println!("found Vec argument.");
-                let angle_bracketed = &segments[segments.len() - 1].arguments;
-                if let syn::PathArguments::AngleBracketed(t) = angle_bracketed {
-                    let arg = &t.args[0];
-                    if let syn::GenericArgument::Type(syn::Type::Path(ref type_path)) = arg {
-                        println!("found vec types = {:?})", type_path);
-                        let segments = &(type_path.path.segments);
-                        let ident = (&segments[segments.len() - 1].ident).to_string();
-                        arg_type = Some(AstType::Vec(AstBaseType::new(&ident, &ident.to_string())));
-                    }
-                }
+                arg_type = Some(parse_vec_ast(type_path));
             } else {
                 // normal arguments
                 arg_type = Some(AstType::new(&ident, &ident));
@@ -294,4 +250,56 @@ fn parse_one_arg(input: &syn::FnArg) -> Result<ArgDesc> {
         }),
         _ => Err(ParseError("parse argments error!".to_string()).into()),
     }
+}
+
+fn parse_vec_ast(type_path: &TypePath) -> AstType {
+    let mut arg_type: AstType = AstType::Void;
+    let segments = &(type_path.path.segments);
+    let angle_bracketed = &segments[segments.len() - 1].arguments;
+    if let syn::PathArguments::AngleBracketed(t) = angle_bracketed {
+        let arg = &t.args[0];
+        if let syn::GenericArgument::Type(syn::Type::Path(ref type_path)) = arg {
+            println!("found vec types = {:?})", type_path);
+            let ident = parse_ident_in_path(type_path);
+            arg_type = AstType::Vec(AstBaseType::new(&ident, &ident.to_string()));
+        }
+    }
+
+    arg_type
+}
+
+fn parse_boxed_ast(type_path: &TypePath) -> AstType {
+    let segments = &(type_path.path.segments);
+    let mut ty: AstType = AstType::Void;
+    let angle_bracketed = &segments[segments.len() - 1].arguments;
+    if let syn::PathArguments::AngleBracketed(t) = angle_bracketed {
+        println!("parsing Boxed inner.");
+        match &t.args[0] {
+            syn::GenericArgument::Type(syn::Type::Path(ref type_path)) => {
+                println!("found boxed types = {:?})", type_path);
+                let ident = parse_ident_in_path(type_path);
+                ty = AstType::new("Box", &ident);
+            }
+            syn::GenericArgument::Type(syn::Type::TraitObject(ref trait_obj)) => {
+                if trait_obj.dyn_token.is_some() {
+                    let bounds = &trait_obj.bounds;
+                    for bound in bounds.iter() {
+                        if let TypeParamBound::Trait(trait_bound) = bound.clone() {
+                            let segments = trait_bound.path.segments;
+                            let ident = (&segments[segments.len() - 1].ident).to_string();
+                            ty = AstType::new("Box", &ident);
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    ty
+}
+
+fn parse_ident_in_path(type_path: &TypePath) -> String {
+    let segments = &(type_path.path.segments);
+    (&segments[segments.len() - 1].ident).to_string()
 }

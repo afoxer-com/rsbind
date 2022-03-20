@@ -4,15 +4,14 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use cbindgen::{Config, Language};
-
 use fs_extra::dir::CopyOptions;
 
 use crate::ast::AstResult;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
 use crate::bridges::BridgeGen::CGen;
-use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::errors::ErrorKind::*;
 use crate::swift::artifact::SwiftCodeGen;
 use crate::unzip;
 

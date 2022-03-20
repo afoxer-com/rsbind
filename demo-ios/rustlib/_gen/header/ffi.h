@@ -89,7 +89,7 @@ float test_contract1_test_f32_30(float arg, float arg2);
 
 double test_contract1_test_f64_31(double arg, double arg2);
 
-char *test_contract1_test_str(const char *arg);
+const char *test_contract1_test_str(const char *arg);
 
 int32_t test_contract1_test_arg_vec_str_7(const char *arg);
 
@@ -115,7 +115,7 @@ int32_t test_contract1_test_arg_vec_struct_14(const char *arg);
 
 int32_t test_contract1_test_two_vec_arg_15(struct CInt32Array arg, struct CInt32Array arg1);
 
-char *test_contract1_test_return_vec_str(void);
+const char *test_contract1_test_return_vec_str(void);
 
 struct CInt8Array test_contract1_test_return_vec_u8(void);
 
@@ -133,18 +133,18 @@ struct CInt64Array test_contract1_test_return_vec_i64(void);
 
 struct CInt64Array test_contract1_test_return_vec_u64(void);
 
-char *test_contract1_test_return_vec_bool_true(void);
+const char *test_contract1_test_return_vec_bool_true(void);
 
 struct CInt8Array test_contract1_test_two_vec_u8(struct CInt8Array input);
 
-char *test_contract1_test_return_vec_struct(void);
+const char *test_contract1_test_return_vec_struct(void);
 
 int8_t test_contract1_test_arg_callback_16(struct test_contract1_DemoCallback_Model arg);
 
 int8_t test_contract1_test_two_arg_callback_20(struct test_contract1_DemoCallback_Model arg,
                                                struct test_contract1_DemoCallback_Model arg1);
 
-char *test_contract1_test_return_struct(void);
+const char *test_contract1_test_return_struct(void);
 
 void test_contract1_test_arg_struct(const char *arg);
 

@@ -50,15 +50,18 @@ impl<'a> ArgCbGen<'a> {
             );
         }
         self.fill_cb_closure_free_fn(self.arg, &mut method_body)?;
+        self.fill_cb_closure_free_ptr_fn(self.arg, &mut method_body)?;
 
         let free_fn_name = format!("{}_callback_free", &self.arg.name);
+        let free_ptr_name = format!("{}_ptr_free", &self.arg.name);
         method_body.push(toks!(format!(
-            "let s_{} = {}_{}_Model({}free_callback: {}, index: {}_index)\n",
+            "let s_{} = {}_{}_Model({}free_callback: {}, free_ptr: {}, index: {}_index)\n",
             &self.arg.name,
             &self.desc.mod_name,
             &cb.name,
             cb_args_model,
             &free_fn_name,
+            &free_ptr_name,
             &self.arg.name
         )));
 
@@ -334,17 +337,28 @@ impl<'a> ArgCbGen<'a> {
             AstType::String => {
                 method_body.nested(toks!("return result.withCString { $0 }"));
             }
-            AstType::Vec(AstBaseType::Byte(ref origin)) => {
-                method_body.nested(toks!("return CInt8Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
-            }
-            AstType::Vec(AstBaseType::Short(ref origin)) => {
-                method_body.nested(toks!("return CInt16Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
-            }
-            AstType::Vec(AstBaseType::Int(ref origin)) => {
-                method_body.nested(toks!("return CInt32Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
-            }
-            AstType::Vec(AstBaseType::Long(ref origin)) => {
-                    method_body.nested(toks!("return CInt64Array(ptr: UnsafePointer(result), len: Int32(result.count))"));
+            AstType::Vec(AstBaseType::Byte(ref origin))
+            | AstType::Vec(AstBaseType::Short(ref origin))
+            | AstType::Vec(AstBaseType::Int(ref origin))
+            | AstType::Vec(AstBaseType::Long(ref origin)) => {
+                let transfer_ty = SwiftMapping::map_transfer_type(&cb_method.return_type);
+                let base_ty = match cb_method.return_type.clone() {
+                    AstType::Vec(base) => SwiftMapping::map_transfer_type(&AstType::from(base)),
+                    _ => "".to_string(),
+                };
+                method_body.nested(toks!(
+                    "let tmp_ptr = UnsafeMutablePointer<",
+                    base_ty,
+                    ">.allocate(capacity: result.count)"
+                ));
+                method_body.nested(toks!(
+                    "tmp_ptr.initialize(from: result, count: result.count)"
+                ));
+                method_body.nested(toks!(
+                    "return ",
+                    transfer_ty,
+                    "(ptr: tmp_ptr, len: Int32(result.count))"
+                ));
             }
             AstType::Vec(_) => {}
             AstType::Callback(_) => {
@@ -370,6 +384,24 @@ impl<'a> ArgCbGen<'a> {
         ));
         method_body.nested(toks!("(index) in"));
         method_body.nested(toks!("globalCallbacks.removeValue(forKey: index)"));
+        method_body.push(toks!("}"));
+        Ok(())
+    }
+
+    fn fill_cb_closure_free_ptr_fn(
+        &self,
+        arg: &ArgDesc,
+        method_body: &mut Tokens<Swift>,
+    ) -> Result<()> {
+        let free_ptr_name = format!("{}_ptr_free", &arg.name);
+        method_body.push(toks!(
+            "let ",
+            free_ptr_name,
+            " : @convention(c) (UnsafeMutablePointer<Int8>?, Int32) -> () = {"
+        ));
+        method_body.nested(toks!("(ptr, count) in"));
+        method_body.nested(toks!("ptr?.deinitialize(count: Int(count))"));
+        method_body.nested(toks!("ptr?.deallocate()"));
         method_body.push(toks!("}"));
         Ok(())
     }

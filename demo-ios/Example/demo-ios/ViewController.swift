@@ -10,6 +10,42 @@ import UIKit
 import rustlib
 
 class ViewController: UIViewController, DemoCallback {
+    func testReturnVecU8() -> [Int8] {
+        [100]
+    }
+    
+    func testReturnVecI8() -> [Int8] {
+        [100]
+    }
+    
+    func testReturnVecI16() -> [Int16] {
+        [100]
+    }
+    
+    func testReturnVecU16() -> [Int16] {
+        [100]
+    }
+    
+    func testReturnVecI32() -> [Int32] {
+        [100]
+    }
+    
+    func testReturnVecU32() -> [Int32] {
+        [100]
+    }
+    
+    func testReturnVecI64() -> [Int64] {
+        [100]
+    }
+    
+    func testReturnVecU64() -> [Int64] {
+        [100]
+    }
+    
+    func testTwoVecU8(input: [Int8]) -> [Int8] {
+        [100]
+    }
+    
     private var demoTrait = RustLib.newDemoTrait();
     
     func testI647(arg: Int64, arg2: Int64) -> Int64 {

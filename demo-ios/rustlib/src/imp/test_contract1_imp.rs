@@ -265,6 +265,20 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     assert_eq(&arg.test_u64_7(100, 101), &7, "test_u64_7");
     assert_eq(&arg.test_arg_vec_i64_11(vec![100]), &11, "test_arg_vec_i64_11");
     assert_eq(&arg.test_arg_vec_u64_12(vec![100]), &12, "test_arg_vec_u64_12");
+
+    // assert_eq(&arg.test_return_vec_str(), &vec!["Hello world".to_string()], "test_return_vec_str");
+    assert_eq(&arg.test_return_vec_u8(), &vec![100], "test_return_vec_u8");
+    assert_eq(&arg.test_return_vec_i8(), &vec![100], "test_return_vec_i8");
+    assert_eq(&arg.test_return_vec_i16(), &vec![100], "test_return_vec_i16");
+    assert_eq(&arg.test_return_vec_u16(), &vec![100], "test_return_vec_u16");
+    assert_eq(&arg.test_return_vec_i32(), &vec![100], "test_return_vec_i32");
+    assert_eq(&arg.test_return_vec_u32(), &vec![100], "test_return_vec_u32");
+    assert_eq(&arg.test_return_vec_i64(), &vec![100], "test_return_vec_i64");
+    assert_eq(&arg.test_return_vec_u64(), &vec![100], "test_return_vec_u64");
+    // assert_eq(&arg.test_return_vec_bool_true(), &vec![true], "test_return_vec_bool_true");
+    assert_eq(&arg.test_two_vec_u8(vec![100]), &vec![100], "test_two_vec_u8");
+    // assert_struct(&arg.test_return_vec_struct()[0], "test_return_vec_struct");
+
     16
 }
 
@@ -307,9 +321,9 @@ fn assert(condition: bool, fn_name: &str) {
     }
 }
 
-fn assert_eq<T : PartialEq + std::fmt::Display + ?Sized>(expected: &T, actual: &T, fn_name: &str) {
+fn assert_eq<T : PartialEq + std::fmt::Debug + ?Sized>(expected: &T, actual: &T, fn_name: &str) {
     if expected != actual {
-        error!("Need {}, actual is {} in {}", expected, actual, fn_name);
+        error!("Need {:?}, actual is {:?} in {:?}", expected, actual, fn_name);
         // panic!("Need {}, actual is {} in {}", expected, actual, fn_name);
     }
 }

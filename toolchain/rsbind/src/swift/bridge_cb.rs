@@ -211,9 +211,18 @@ impl CallbackGenStrategy for CCallbackStrategy {
                     | AstType::Vec(AstBaseType::Int(ref origin))
                     | AstType::Vec(AstBaseType::Long(ref origin)) => {
                         let origin_ident = Ident::new(origin, Span::call_site());
+                        let count = match method.return_type.clone() {
+                            AstType::Vec(AstBaseType::Byte(_)) => quote!(1),
+                            AstType::Vec(AstBaseType::Short(_)) => quote!(2),
+                            AstType::Vec(AstBaseType::Int(_)) => quote!(4),
+                            AstType::Vec(AstBaseType::Long(_)) => quote!(8),
+                            _ => quote!(1)
+                        };
                         quote! {
                             let s_result = unsafe { Vec::from_raw_parts(result.ptr as (* mut #origin_ident), result.len as usize, result.len as usize) };
                         }
+                        //let fn_free_ptr = self.free_ptr;
+                        //fn_free_ptr(result.ptr as (* mut i8), result.len * #count);
                     }
                     _ => quote! {
                         let s_result = result as #ret_ty_tokens;
@@ -284,6 +293,7 @@ impl CallbackGenStrategy for CCallbackStrategy {
             let #converted_callback_name = Box::new(#struct_ident {
                 #method_assign_tokens
                 free_callback: #arg_name_ident.free_callback,
+                free_ptr: #arg_name_ident.free_ptr,
                 index: #arg_name_ident.index,
             });
 
@@ -324,6 +334,7 @@ impl CCallbackStrategy {
             #callback_struct_sig {
                 #callback_methods
                 pub free_callback: extern "C" fn(i64),
+                pub free_ptr: extern "C" fn(* mut i8, i32),
                 pub index: i64,
 
             }

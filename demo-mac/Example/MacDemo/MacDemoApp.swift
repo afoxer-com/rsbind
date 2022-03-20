@@ -52,8 +52,8 @@ struct MacDemoApp: App {
                     demoTrait.testTwoVecU8(input: [100])
                     demoTrait.testReturnVecStruct()
                     
-                    demoTrait.testArgCallback16(arg: createCallback())
-                    demoTrait.testTwoArgCallback20(arg: createCallback(), arg1: createCallback())
+//                    demoTrait.testArgCallback16(arg: createCallback())
+//                    demoTrait.testTwoArgCallback20(arg: createCallback(), arg1: createCallback())
 //                }
             })
         }
@@ -62,6 +62,38 @@ struct MacDemoApp: App {
     
     private func createCallback() -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
+            func testTwoVecU8(input: [Int8]) -> [Int8] {
+                [100]
+            }
+            
+            func testReturnVecI8() -> [Int8] {
+                [100]
+            }
+            
+            func testReturnVecI16() -> [Int16] {
+                [100]
+            }
+            
+            func testReturnVecU16() -> [Int16] {
+                [100]
+            }
+            
+            func testReturnVecI32() -> [Int32] {
+                [100]
+            }
+            
+            func testReturnVecU32() -> [Int32] {
+                [100]
+            }
+            
+            func testReturnVecI64() -> [Int64] {
+                [100]
+            }
+            
+            func testReturnVecU64() -> [Int64] {
+                [100]
+            }
+            
             func testReturnVecU8() -> [Int8] {
                 [100]
             }

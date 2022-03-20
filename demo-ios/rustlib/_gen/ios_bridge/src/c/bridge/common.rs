@@ -2,7 +2,7 @@ use std::ffi::CString;
 use std::os::raw::c_char;
 use std::panic::*;
 #[no_mangle]
-pub extern "C" fn demo_free_rust(ptr: *mut u8, length: u32) {
+pub extern "C" fn demo_free_rust(ptr: *mut i8, length: u32) {
     let catch_result = catch_unwind(AssertUnwindSafe(|| {
         let len: usize = length as usize;
         unsafe {

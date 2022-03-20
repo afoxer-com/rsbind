@@ -48,10 +48,20 @@ typedef struct test_contract1_DemoCallback_Model {
   int32_t (*test_arg_vec_bool_true)(int64_t, const char*);
   int32_t (*test_arg_vec_struct_17)(int64_t, const char*);
   int32_t (*test_two_vec_arg_13)(int64_t, struct CInt32Array, struct CInt32Array);
+  struct CInt8Array (*test_return_vec_u8)(int64_t);
+  struct CInt8Array (*test_return_vec_i8)(int64_t);
+  struct CInt16Array (*test_return_vec_i16)(int64_t);
+  struct CInt16Array (*test_return_vec_u16)(int64_t);
+  struct CInt32Array (*test_return_vec_i32)(int64_t);
+  struct CInt32Array (*test_return_vec_u32)(int64_t);
+  struct CInt64Array (*test_return_vec_i64)(int64_t);
+  struct CInt64Array (*test_return_vec_u64)(int64_t);
+  struct CInt8Array (*test_two_vec_u8)(int64_t, struct CInt8Array);
   int32_t (*test_arg_struct_14)(int64_t, const char*);
   int32_t (*test_two_arg_struct_15)(int64_t, const char*, const char*);
   void (*test_no_return)(int64_t);
   void (*free_callback)(int64_t);
+  void (*free_ptr)(int8_t*, int32_t);
   int64_t index;
 } test_contract1_DemoCallback_Model;
 
@@ -107,25 +117,25 @@ int32_t test_contract1_test_two_vec_arg_15(struct CInt32Array arg, struct CInt32
 
 char *test_contract1_test_return_vec_str(void);
 
-char *test_contract1_test_return_vec_u8(void);
+struct CInt8Array test_contract1_test_return_vec_u8(void);
 
-char *test_contract1_test_return_vec_i8(void);
+struct CInt8Array test_contract1_test_return_vec_i8(void);
 
-char *test_contract1_test_return_vec_i16(void);
+struct CInt16Array test_contract1_test_return_vec_i16(void);
 
-char *test_contract1_test_return_vec_u16(void);
+struct CInt16Array test_contract1_test_return_vec_u16(void);
 
-char *test_contract1_test_return_vec_i32(void);
+struct CInt32Array test_contract1_test_return_vec_i32(void);
 
-char *test_contract1_test_return_vec_u32(void);
+struct CInt32Array test_contract1_test_return_vec_u32(void);
 
-char *test_contract1_test_return_vec_i64(void);
+struct CInt64Array test_contract1_test_return_vec_i64(void);
 
-char *test_contract1_test_return_vec_u64(void);
+struct CInt64Array test_contract1_test_return_vec_u64(void);
 
 char *test_contract1_test_return_vec_bool_true(void);
 
-char *test_contract1_test_two_vec_u8(struct CInt8Array input);
+struct CInt8Array test_contract1_test_two_vec_u8(struct CInt8Array input);
 
 char *test_contract1_test_return_vec_struct(void);
 
@@ -140,6 +150,6 @@ void test_contract1_test_arg_struct(const char *arg);
 
 void test_contract1_test_no_return(void);
 
-void demo_free_rust(uint8_t *ptr, uint32_t length);
+void demo_free_rust(int8_t *ptr, uint32_t length);
 
 void demo_free_str(char *ptr);

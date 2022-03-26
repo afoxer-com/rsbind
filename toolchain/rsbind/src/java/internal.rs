@@ -11,8 +11,6 @@ use crate::java::types::{JavaType, to_java_file};
 pub(crate) struct InnerTraitGen<'a> {
     pub desc: &'a TraitDesc,
     pub pkg: String,
-    pub so_name: String,
-    pub ext_libs: String,
     pub callbacks: Vec<TraitDesc>,
 }
 

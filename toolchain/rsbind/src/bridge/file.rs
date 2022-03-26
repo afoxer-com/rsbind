@@ -7,8 +7,8 @@ use proc_macro2::{Ident, Span, TokenStream};
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::errors::*;
 use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 pub(crate) const TMP_ARG_PREFIX: &str = "r";
 
@@ -135,14 +135,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         let callbacks = self
             .trait_descs
             .iter()
-            .filter(|desc| {
-                for imp in self.imp_desc.iter() {
-                    if imp.contract == desc.name {
-                        return false;
-                    }
-                }
-                true
-            })
+            .filter(|desc| desc.is_callback)
             .collect::<Vec<&TraitDesc>>();
 
         println!("callbacks is {:?}", &callbacks);

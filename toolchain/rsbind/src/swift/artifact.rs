@@ -53,7 +53,6 @@ impl<'a> SwiftCodeGen<'a> {
 
                     let gen = ProtocolGen {
                         desc: each,
-                        callbacks: callbacks.clone(),
                     };
                     let str = gen.gen()?;
                     let file_name = format!("{}.swift", &each.name);
@@ -62,7 +61,6 @@ impl<'a> SwiftCodeGen<'a> {
 
                     let gen = WrapperGen {
                         desc: each,
-                        callbacks: callbacks.clone(),
                     };
                     let str = gen.gen()?;
                     let file_name = format!("Rust{}.swift", &each.name);

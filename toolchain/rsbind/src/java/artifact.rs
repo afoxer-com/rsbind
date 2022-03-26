@@ -50,8 +50,6 @@ impl<'a> JavaCodeGen<'a> {
             let gen = InnerCallbackGen {
                 desc: each,
                 pkg: self.namespace.clone(),
-                so_name: self.so_name.clone(),
-                ext_libs: self.ext_libs.clone(),
             };
 
             let callback_str = gen.gen()?;
@@ -68,8 +66,6 @@ impl<'a> JavaCodeGen<'a> {
                     let gen = InnerTraitGen {
                         desc: each,
                         pkg: self.namespace.clone(),
-                        so_name: self.so_name.clone(),
-                        ext_libs: self.ext_libs.clone(),
                         callbacks: callbacks.clone(),
                     };
                     let str = gen.gen()?;

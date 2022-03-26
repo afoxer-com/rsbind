@@ -54,7 +54,7 @@ pub(crate) fn fill_arg_convert(cb_arg: &ArgDesc, method_body: &mut Tokens<Swift>
             ));
         }
         AstType::Callback(_) => {
-            panic!("Don't support callback argument in callback");
+            // panic!("Don't support callback argument in callback");
         }
         AstType::Vec(AstBaseType::Byte(_))
         | AstType::Vec(AstBaseType::Short(_))
@@ -215,7 +215,7 @@ pub(crate) fn fill_return_convert(
         }
         AstType::Vec(_) => {}
         AstType::Callback(_) => {
-            panic!("Don't support Callback in callback return.");
+            // panic!("Don't support Callback in callback return.");
         }
         AstType::Struct(_) => {
             panic!("Don't support Struct in callback return.");

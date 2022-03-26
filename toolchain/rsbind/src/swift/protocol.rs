@@ -8,7 +8,6 @@ use crate::swift::types::{to_swift_file};
 
 pub(crate) struct ProtocolGen<'a> {
     pub desc: &'a TraitDesc,
-    pub callbacks: Vec<TraitDesc>,
 }
 
 impl<'a> ProtocolGen<'a> {

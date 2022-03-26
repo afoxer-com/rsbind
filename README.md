@@ -2,7 +2,7 @@
 [![Test](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
 [![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
 ## Rsbind
-Rsbind provide tools to bind rust trait with other language and export library artifact directly.  
+Rsbind provide tools to bind rust trait with other language and export library artifact directly. It also help you invoke rust services just like you write it in native language.     
 It generate bindings from a Rust package and packaged to android aar or iOS lib or other library artifact. You don't need to write jni or other ffi code with this tool.   
   
 The tool may be useful for the people who want to use Rust as a cross-platform language and exporting multiple artifact for each platform.

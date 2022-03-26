@@ -11,6 +11,7 @@ import rustlib
 
 class demo_ios_ExampleTests: XCTestCase {
     private var demoTrait: DemoTrait = RustLib.newDemoTrait()
+    private var demoTrait2 : DemoTrait2 = RustLib.newDemoTrait2();
     private var demoCallback: DemoCallback?
     
     override func setUpWithError() throws {
@@ -53,6 +54,8 @@ class demo_ios_ExampleTests: XCTestCase {
         assertStruct(demoStruct: demoStruct)
         demoTrait.testArgStruct(arg: demoStruct)
         XCTAssertEqual(demoTrait.testArgVecStruct14(arg: [demoStruct]), 14)
+        
+        XCTAssertEqual(demoTrait2.testU82(arg: 100), 2)
         
         
         XCTAssertEqual(demoCallback?.testU81(arg: 100, arg2: 101), 1)

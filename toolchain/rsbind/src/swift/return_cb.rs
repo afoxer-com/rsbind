@@ -9,8 +9,6 @@ use crate::swift::mapping::SwiftMapping;
 
 /// Generate callback Return handling for swift code.
 pub(crate) struct ReturnCbGen<'a> {
-    pub(crate) desc: &'a TraitDesc,
-    pub(crate) method: &'a MethodDesc,
     pub(crate) callback: &'a TraitDesc,
 }
 

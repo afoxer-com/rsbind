@@ -39,8 +39,6 @@ impl<'a> CallbackGen<'a> {
 pub(crate) struct InnerCallbackGen<'a> {
     pub desc: &'a TraitDesc,
     pub pkg: String,
-    pub so_name: String,
-    pub ext_libs: String,
 }
 
 impl<'a> InnerCallbackGen<'a> {

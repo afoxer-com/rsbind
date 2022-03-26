@@ -85,12 +85,12 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     }
 
     fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream> {
-        let class_names = trait_desc
-            .iter()
-            .map(|desc| {
-                format!("{}.Internal{}", self.java_namespace, &desc.name).replace('.', "/")
-            })
-            .collect::<Vec<String>>();
+        // let class_names = trait_desc
+        //     .iter()
+        //     .map(|desc| {
+        //         format!("{}.Internal{}", self.java_namespace, &desc.name).replace('.', "/")
+        //     })
+        //     .collect::<Vec<String>>();
 
         Ok(quote! {
             lazy_static! {

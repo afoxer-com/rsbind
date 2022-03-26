@@ -130,7 +130,7 @@ impl FileGenStrategy for CFileGenStrategy {
         _structs: &[StructDesc],
     ) -> Result<TokenStream> {
         let fun_name = Ident::new(
-            &format!("{}_{}", &trait_desc.mod_name, &method.name),
+            &format!("{}_{}_{}", &trait_desc.mod_name, trait_desc.name, &method.name),
             Span::call_site(),
         );
 

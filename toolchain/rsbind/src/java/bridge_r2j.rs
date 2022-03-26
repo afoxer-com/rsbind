@@ -193,7 +193,6 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Vec(AstBaseType::Byte(ref origin)) => {
-            let mut tokens = TokenStream::new();
             let buffer_get = quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -208,7 +207,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             };
 
             if origin.starts_with('u') {
-                tokens = quote! {
+                quote! {
                     #buffer_get
 
                     let mut array_buffer = std::mem::ManuallyDrop::new(array_buffer);
@@ -216,14 +215,13 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     let array_buffer_len = array_buffer.len();
                     let array_buffer_cap = array_buffer.capacity();
                     let s_result = unsafe { Vec::from_raw_parts(array_buffer_p as *mut u8, array_buffer_len, array_buffer_cap) };
-                };
+                }
             } else {
-                tokens = quote! {
+                quote! {
                     #buffer_get
                     let s_result = array_buffer;
-                };
+                }
             }
-            tokens
         }
         AstType::Vec(_) => {
             quote! {

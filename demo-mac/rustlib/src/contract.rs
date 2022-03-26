@@ -56,6 +56,12 @@ pub trait DemoTrait : Send + Sync {
     fn test_no_return();
 }
 
+pub trait DemoTrait2 : Send + Sync {
+    fn test_u8_2(arg: u8) -> u8;
+    // fn test_arg_callback1(callback: Box<dyn DemoCallback2>) -> i8;
+    // fn test_return_calllback2() -> Box<dyn DemoCallback2>;
+}
+
 pub trait DemoCallback: Sync + Send {
     // Base types
     fn test_u8_1(&self, arg: u8, arg2: u8) -> u8;
@@ -105,6 +111,11 @@ pub trait DemoCallback: Sync + Send {
     fn test_arg_struct_14(&self, arg: DemoStruct) -> i32;
     fn test_two_arg_struct_15(&self, arg: DemoStruct, arg1: DemoStruct) -> u32;
     fn test_no_return(&self);
+}
+
+pub trait DemoCallback2: Sync + Send {
+    fn test_arg_callback_16(&self, arg: Box<dyn DemoCallback>) -> u8;
+    fn test_return_callback(&self) -> Box<dyn DemoCallback>;
 }
 
 pub struct DemoStruct {

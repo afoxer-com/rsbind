@@ -9,7 +9,6 @@ use crate::swift::types::{to_swift_file};
 
 pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,
-    pub callbacks: Vec<TraitDesc>,
 }
 
 impl<'a> WrapperGen<'a> {

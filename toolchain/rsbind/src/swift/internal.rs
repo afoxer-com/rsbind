@@ -149,7 +149,7 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Swift>,
         method: &MethodDesc,
     ) -> Result<()> {
-        let method_name = format!("{}_{}", &self.desc.mod_name, &method.name);
+        let method_name = format!("{}_{}_{}", &self.desc.mod_name, &self.desc.name, &method.name);
         match method.return_type.clone() {
             AstType::Void => {
                 method_body.push(toks!(method_name, "("));
@@ -184,8 +184,6 @@ impl<'a> TraitGen<'a> {
                     .find_callback(&method.return_type.origin())
                     .ok_or_else(|| GenerateError("Can't find callback".to_string()))?;
                 let ret = ReturnCbGen {
-                    desc: self.desc,
-                    method,
                     callback: origin,
                 }
                 .gen()?;

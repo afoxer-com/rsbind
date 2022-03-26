@@ -114,7 +114,7 @@ impl<'a> JavaCodeGen<'a> {
             ast: self.ast,
             pkg: self.namespace.clone(),
             so_name: self.so_name.clone(),
-            ext_libs: self.ext_libs.clone()
+            ext_libs: self.ext_libs.clone(),
         };
         let manager_result = manager_gen.gen()?;
         let path = self.java_gen_dir.join("RustLib.java");

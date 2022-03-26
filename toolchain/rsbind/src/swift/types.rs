@@ -1,5 +1,5 @@
-use rstgen::{Custom, Formatter, swift, Tokens};
 use rstgen::swift::Swift;
+use rstgen::{swift, Custom, Formatter, Tokens};
 
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;

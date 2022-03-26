@@ -1,11 +1,11 @@
 use heck::ToLowerCamelCase;
-use rstgen::{IntoTokens, java, Java};
 use rstgen::java::{Argument, Interface, Method, Modifier};
+use rstgen::{java, IntoTokens, Java};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{JavaType, to_java_file};
+use crate::java::types::{to_java_file, JavaType};
 
 pub(crate) struct InterfaceGen<'a> {
     pub desc: &'a TraitDesc,

@@ -1,13 +1,13 @@
-use std::fs;
-use std::path::PathBuf;
 use crate::ast::AstResult;
 use crate::errors::*;
-use crate::swift::callback::CallbackGen;
+use crate::swift::callback::{CallbackGen, InternalCallbackGen};
 use crate::swift::internal::TraitGen;
 use crate::swift::manager::ManagerGen;
 use crate::swift::protocol::ProtocolGen;
 use crate::swift::struct_::StructGen;
 use crate::swift::wrapper::WrapperGen;
+use std::fs;
+use std::path::PathBuf;
 
 pub(crate) struct SwiftCodeGen<'a> {
     pub swift_gen_dir: &'a PathBuf,
@@ -22,7 +22,7 @@ impl<'a> SwiftCodeGen<'a> {
             let descs = desc.1;
             for each in descs.iter() {
                 if each.is_callback {
-                    callbacks.push(each.clone());
+                    callbacks.push(each);
                 }
             }
         }
@@ -35,6 +35,16 @@ impl<'a> SwiftCodeGen<'a> {
             let file_name = format!("{}.swift", &each.name);
             let callback_path = self.swift_gen_dir.clone().join(file_name);
             fs::write(callback_path, callback_str)?;
+
+            let gen = InternalCallbackGen {
+                desc: each,
+                callbacks: &callbacks,
+            };
+
+            let callback_str = gen.gen()?;
+            let file_name = format!("Internal{}.swift", &each.name);
+            let callback_path = self.swift_gen_dir.clone().join(file_name);
+            fs::write(callback_path, callback_str)?;
         }
 
         // generate all the traits.
@@ -44,24 +54,20 @@ impl<'a> SwiftCodeGen<'a> {
                 if !each.is_callback {
                     let gen = TraitGen {
                         desc: each,
-                        callbacks: callbacks.clone(),
+                        callbacks: &callbacks,
                     };
                     let str = gen.gen()?;
                     let file_name = format!("Internal{}.swift", &each.name);
                     let path = self.swift_gen_dir.clone().join(file_name);
                     fs::write(path, str)?;
 
-                    let gen = ProtocolGen {
-                        desc: each,
-                    };
+                    let gen = ProtocolGen { desc: each };
                     let str = gen.gen()?;
                     let file_name = format!("{}.swift", &each.name);
                     let path = self.swift_gen_dir.clone().join(file_name);
                     fs::write(path, str)?;
 
-                    let gen = WrapperGen {
-                        desc: each,
-                    };
+                    let gen = WrapperGen { desc: each };
                     let str = gen.gen()?;
                     let file_name = format!("Rust{}.swift", &each.name);
                     let path = self.swift_gen_dir.clone().join(file_name);

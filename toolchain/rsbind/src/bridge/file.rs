@@ -39,7 +39,11 @@ pub(crate) trait FileGenStrategy {
     fn quote_common_use_part(&self) -> Result<TokenStream>;
     fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream>;
     fn quote_for_all_cb(&self, callbacks: &[&TraitDesc]) -> Result<TokenStream>;
-    fn quote_callback_structures(&self, callback: &TraitDesc) -> Result<TokenStream>;
+    fn quote_callback_structures(
+        &self,
+        callback: &TraitDesc,
+        callbacks: &[&TraitDesc],
+    ) -> Result<TokenStream>;
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream>;
     fn quote_method_sig(
         &self,
@@ -140,14 +144,6 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
 
         println!("callbacks is {:?}", &callbacks);
 
-        let tokens = self.strategy.quote_for_all_cb(&callbacks);
-        results.push(GenResult { result: tokens });
-
-        for struct_desc in self.struct_descs.iter() {
-            let tokens = self.strategy.quote_for_structures(struct_desc);
-            results.push(GenResult { result: tokens });
-        }
-
         for desc in self.trait_descs.iter() {
             let imps = self
                 .imp_desc
@@ -172,7 +168,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     desc.name
                 );
                 results.push(GenResult {
-                    result: self.strategy.quote_callback_structures(desc),
+                    result: self.strategy.quote_callback_structures(desc, &callbacks),
                 });
             } else {
                 results.push(GenResult {
@@ -184,6 +180,14 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     ),
                 });
             }
+        }
+
+        let tokens = self.strategy.quote_for_all_cb(&callbacks);
+        results.push(GenResult { result: tokens });
+
+        for struct_desc in self.struct_descs.iter() {
+            let tokens = self.strategy.quote_for_structures(struct_desc);
+            results.push(GenResult { result: tokens });
         }
 
         Ok(results)
@@ -326,7 +330,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             trait_desc,
             callbacks,
             &method.return_type,
-            "ret_value",
+            "result",
         )?;
 
         // combine all the parts
@@ -351,7 +355,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             impl_name, &method.name
         );
 
-        let ret_name_str = "ret_value";
+        let ret_name_str = "result";
         let imp_fun_name = Ident::new(&method.name, Span::call_site());
         let ret_name_ident = Ident::new(ret_name_str, Span::call_site());
 
@@ -374,7 +378,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         let imp_ident = Ident::new(impl_name, Span::call_site());
         let imp_call = match method.return_type.clone() {
             AstType::Void => quote! {
-                #imp_ident::#imp_fun_name(#rust_args_repeat);
+                let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
             },
             AstType::Vec(AstBaseType::Byte(_))
             | AstType::Vec(AstBaseType::Short(_))

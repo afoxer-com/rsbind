@@ -1,11 +1,11 @@
 use heck::{ToLowerCamelCase, ToUpperCamelCase};
-use rstgen::{IntoTokens, java, Java, Tokens};
 use rstgen::java::{Argument, Class, Field, Interface, Method, Modifier};
+use rstgen::{java, IntoTokens, Java, Tokens};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{JavaType, to_java_file};
+use crate::java::types::{to_java_file, JavaType};
 
 pub(crate) struct CallbackGen<'a> {
     pub desc: &'a TraitDesc,

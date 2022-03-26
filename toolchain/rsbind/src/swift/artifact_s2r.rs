@@ -1,16 +1,21 @@
 use rstgen::swift::Swift;
 use rstgen::Tokens;
 
-use crate::ast::contract::desc::ArgDesc;
+use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::SwiftType;
+use crate::ErrorKind::GenerateError;
 
 ///
 /// Swift to C data convert.
 ///
-pub(crate) fn fill_arg_convert(method_body: &mut Tokens<Swift>, arg: &ArgDesc) -> Result<()> {
+pub(crate) fn fill_arg_convert<'a, 'b>(
+    method_body: &'b mut Tokens<'a, Swift<'a>>,
+    arg: &'a ArgDesc,
+    callbacks: &'a [&'a TraitDesc],
+) -> Result<()> {
     println!("quote arg convert for {}", arg.name.clone());
     let s_arg_name = format!("s_{}", &arg.name);
     match arg.ty.clone() {
@@ -28,7 +33,7 @@ pub(crate) fn fill_arg_convert(method_body: &mut Tokens<Swift>, arg: &ArgDesc) -
         | AstType::Long(_)
         | AstType::Float(_)
         | AstType::Double(_) => {
-            let ty = SwiftMapping::map_transfer_type(&arg.ty);
+            let ty = SwiftMapping::map_transfer_type(&arg.ty, callbacks);
             method_body.push(toks!(
                 "let ",
                 s_arg_name,
@@ -39,15 +44,13 @@ pub(crate) fn fill_arg_convert(method_body: &mut Tokens<Swift>, arg: &ArgDesc) -
                 ")"
             ))
         }
-        AstType::String => {
-            method_body.push(toks!("let ", s_arg_name, " = ", arg.name.clone()))
-        }
+        AstType::String => method_body.push(toks!("let ", s_arg_name, " = ", arg.name.clone())),
         AstType::Vec(AstBaseType::Byte(_))
         | AstType::Vec(AstBaseType::Short(_))
         | AstType::Vec(AstBaseType::Int(_))
         | AstType::Vec(AstBaseType::Long(_)) => {
             let arg_buffer_name = format!("{}_buffer", &arg.name);
-            let transfer_ty = SwiftMapping::map_transfer_type(&arg.ty);
+            let transfer_ty = SwiftMapping::map_transfer_type(&arg.ty, callbacks);
             method_body.push(toks!(
                 "let ",
                 s_arg_name,
@@ -104,18 +107,53 @@ pub(crate) fn fill_arg_convert(method_body: &mut Tokens<Swift>, arg: &ArgDesc) -
             ));
             method_body.push(toks!("}"));
         }
-        AstType::Callback(_) => {
-            println!("argument callback in s2c")
+        AstType::Callback(ref origin) => {
+            method_body.push(toks!(
+                "let s_",
+                arg.name.clone(),
+                " = Internal",
+                origin.clone(),
+                ".callbackToModel(callback: ",
+                arg.name.clone(),
+                ")"
+            ));
         }
     }
 
     Ok(())
 }
 
-pub(crate) fn fill_return_type_convert(
-    method_body: &mut Tokens<Swift>,
-    return_type: &AstType,
+pub(crate) fn find_callback<'a>(
+    origin: &str,
+    callbacks: &'a [&'a TraitDesc],
+) -> Option<&'a TraitDesc> {
+    // Find the callback.
+    let callbacks = callbacks
+        .iter()
+        .filter(|callback| callback.name == *origin)
+        .collect::<Vec<&&TraitDesc>>();
+    if callbacks.is_empty() {
+        panic!("No Callback {} found!", origin);
+    }
+
+    if callbacks.len() > 1 {
+        panic!("More than one Callback {} found!", origin);
+    }
+
+    let callback = callbacks.get(0);
+    if let Some(&callback) = callback {
+        Some(callback)
+    } else {
+        println!("Can't find Callback {}", origin);
+        None
+    }
+}
+
+pub(crate) fn fill_return_type_convert<'a, 'b>(
+    method_body: &'b mut Tokens<'a, Swift<'a>>,
+    return_type: &'a AstType,
     crate_name: &str,
+    callbacks: &'a [&'a TraitDesc],
 ) -> Result<()> {
     let crate_name = crate_name.replace('-', "_");
     match return_type.clone() {
@@ -127,13 +165,13 @@ pub(crate) fn fill_return_type_convert(
         | AstType::Float(_)
         | AstType::Double(_) => {
             let ty = SwiftMapping::map_swift_sig_type(return_type);
-            method_body.push(toks!("let s_result = ", ty, "(result)"));
+            method_body.push(toks!("let r_result = ", ty, "(result)"));
         }
         AstType::Boolean => {
-            method_body.push(toks!("let s_result = result > 0 ? true : false"));
+            method_body.push(toks!("let r_result = result > 0 ? true : false"));
         }
         AstType::String => {
-            method_body.push(toks!("let s_result = String(cString:result!)"));
+            method_body.push(toks!("let r_result = String(cString:result!)"));
             method_body.push(toks!(format!(
                 "{}_free_str(UnsafeMutablePointer(mutating: result!))",
                 &crate_name
@@ -142,7 +180,7 @@ pub(crate) fn fill_return_type_convert(
         AstType::Vec(AstBaseType::Byte(_)) => {
             let ty = SwiftMapping::map_swift_sig_type(return_type);
             method_body.push(toks!(
-                "let s_result = ",
+                "let r_result = ",
                 ty,
                 "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"
             ));
@@ -154,7 +192,7 @@ pub(crate) fn fill_return_type_convert(
         AstType::Vec(AstBaseType::Short(_)) => {
             let ty = SwiftMapping::map_swift_sig_type(return_type);
             method_body.push(toks!(
-                "let s_result = ",
+                "let r_result = ",
                 ty,
                 "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"
             ));
@@ -168,7 +206,7 @@ pub(crate) fn fill_return_type_convert(
         AstType::Vec(AstBaseType::Int(_)) => {
             let ty = SwiftMapping::map_swift_sig_type(return_type);
             method_body.push(toks!(
-                "let s_result = ",
+                "let r_result = ",
                 ty,
                 "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"
             ));
@@ -182,7 +220,7 @@ pub(crate) fn fill_return_type_convert(
         AstType::Vec(AstBaseType::Long(_)) => {
             let ty = SwiftMapping::map_swift_sig_type(return_type);
             method_body.push(toks!(
-                "let s_result = ",
+                "let r_result = ",
                 ty,
                 "(UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))"
             ));
@@ -214,9 +252,15 @@ pub(crate) fn fill_return_type_convert(
                 ".self, from: ret_str_json)"
             ));
             method_body.push(toks!("}"));
-            method_body.push(toks!("let s_result = s_tmp_result!"));
+            method_body.push(toks!("let r_result = s_tmp_result!"));
         }
-        AstType::Callback(_) => {}
+        AstType::Callback(ref origin) => {
+            method_body.push(toks!(
+                "let r_result = Internal",
+                origin.to_string(),
+                ".modelToCallback(model: result)",
+            ));
+        }
         AstType::Struct(struct_name) => {
             method_body.push(toks!("let ret_str = String(cString:result!)"));
             method_body.push(toks!(format!(
@@ -233,13 +277,13 @@ pub(crate) fn fill_return_type_convert(
                 ".self, from: ret_str_json)"
             ));
             method_body.push(toks!("}"));
-            method_body.push(toks!("let s_result = s_tmp_result!"));
+            method_body.push(toks!("let r_result = s_tmp_result!"));
         }
     }
 
     match return_type.clone() {
         AstType::Void => {}
-        _ => method_body.push(toks!("return s_result")),
+        _ => method_body.push(toks!("return r_result")),
     }
     Ok(())
 }

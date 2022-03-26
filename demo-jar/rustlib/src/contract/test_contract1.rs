@@ -58,6 +58,7 @@ pub trait DemoTrait : Sync + Send {
 
 pub trait DemoTrait2 : Send + Sync {
     fn test_return_callback2(arg: i8) -> Box<dyn DemoCallback2>;
+    fn test_arg_callback3(arg: Box<dyn DemoCallback2>) -> u8;
 }
 
 pub trait DemoCallback: Sync + Send {
@@ -112,7 +113,8 @@ pub trait DemoCallback: Sync + Send {
 }
 
 pub trait DemoCallback2 : Send + Sync {
-    fn test_u8_1(&self, arg: u8, arg2: u8) -> u8;
+    fn test_return_callback2(&self, arg: i8) -> Box<dyn DemoCallback>;
+    fn test_arg_callback3(&self, arg: Box<dyn DemoCallback>) -> u8;
 }
 
 pub struct DemoStruct {

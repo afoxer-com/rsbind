@@ -6,9 +6,9 @@ use proc_macro2::{Ident, Span, TokenStream};
 ///
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
-use crate::bridge::file::{TMP_ARG_PREFIX, TypeDirection};
-use crate::ErrorKind::GenerateError;
+use crate::bridge::file::{TypeDirection, TMP_ARG_PREFIX};
 use crate::errors::*;
+use crate::ErrorKind::GenerateError;
 
 pub(crate) fn quote_arg_convert(
     arg: &ArgDesc,
@@ -84,9 +84,11 @@ pub(crate) fn quote_arg_convert(
                 let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
             }
         }
-        AstType::Callback(_) => {
-            // Will handle in other places.
-            quote! {}
+        AstType::Callback(ref origin) => {
+            let index_to_cb_fn_name = Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
+            quote! {
+                let #rust_arg_name = #index_to_cb_fn_name(#arg_name_ident);
+            }
         }
         AstType::Struct(origin) => {
             let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
@@ -127,8 +129,8 @@ pub(crate) fn quote_return_convert(
         AstType::Vec(AstBaseType::Struct(struct_name)) => {
             let struct_ident = Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
             quote! {
-                let ret_value = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                let json_ret = serde_json::to_string(&ret_value);
+                let r_result = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
+                let json_ret = serde_json::to_string(&r_result);
                 env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
             }
         }
@@ -161,6 +163,15 @@ pub(crate) fn quote_return_convert(
             quote! {
                 let json_ret = serde_json::to_string(&#struct_copy_name::from(#ret_name_ident));
                 env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
+            }
+        }
+        AstType::Callback(ref origin) => {
+            let cb_to_index_fn_name = Ident::new(
+                &format!("callback_to_index_{}", origin),
+                Span::call_site(),
+            );
+            quote! {
+                #cb_to_index_fn_name(#ret_name_ident)
             }
         }
         _ => {

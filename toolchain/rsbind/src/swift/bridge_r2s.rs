@@ -1,6 +1,6 @@
 use proc_macro2::{Ident, Span, TokenStream};
 
-use crate::ast::contract::desc::ArgDesc;
+use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
 use crate::swift::mapping::RustMapping;
@@ -8,7 +8,7 @@ use crate::swift::mapping::RustMapping;
 ///
 /// Rust to C data convert.
 ///
-pub(crate) fn arg_convert(arg: &ArgDesc) -> Result<TokenStream> {
+pub(crate) fn arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
     let cb_arg_name = Ident::new(&format!("c_{}", arg.name), Span::call_site());
     let cb_origin_arg_name = Ident::new(&arg.name, Span::call_site());
     Ok(match arg.ty.clone() {
@@ -88,8 +88,15 @@ pub(crate) fn arg_convert(arg: &ArgDesc) -> Result<TokenStream> {
                 let #cb_arg_name = CString::new(#cb_tmp_arg_name.unwrap()).unwrap().into_raw();
             }
         }
+        AstType::Callback(ref origin) => {
+            let return_cb_fn_name =
+                Ident::new(&format!("box_to_model_{}", origin), Span::call_site());
+            quote! {
+                let #cb_arg_name = #return_cb_fn_name(callback_index);
+            }
+        }
         _ => {
-            let arg_ty_ident = RustMapping::map_c2r_transfer_type(&arg.ty);
+            let arg_ty_ident = RustMapping::map_transfer_type(&arg.ty, callbacks);
             quote! {
                 let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
             }
@@ -113,12 +120,12 @@ pub(crate) fn return_convert(return_type: &AstType) -> Result<TokenStream> {
     Ok(match return_type {
         AstType::Void => quote!(),
         AstType::Boolean => quote! {
-            let s_result = if result > 0 {true} else {false};
+            let r_result = if result > 0 {true} else {false};
         },
         AstType::String => quote! {
             let s_result_c_str: &CStr = unsafe { CStr::from_ptr(result) };
             let s_result_str: &str = s_result_c_str.to_str().unwrap();
-            let s_result: String = s_result_str.to_owned();
+            let r_result: String = s_result_str.to_owned();
         },
         AstType::Vec(AstBaseType::Byte(ref origin))
         | AstType::Vec(AstBaseType::Short(ref origin))
@@ -133,11 +140,17 @@ pub(crate) fn return_convert(return_type: &AstType) -> Result<TokenStream> {
                 _ => quote!(1),
             };
             quote! {
-                let s_result = unsafe { Vec::from_raw_parts(result.ptr as (* mut #origin_ident), result.len as usize, result.len as usize) };
+                let r_result = unsafe { Vec::from_raw_parts(result.ptr as (* mut #origin_ident), result.len as usize, result.len as usize) };
+            }
+        }
+        AstType::Callback(ref origin) => {
+            let arg_cb_fn_name = Ident::new(&format!("model_to_box_{}", origin), Span::call_site());
+            quote! {
+                let r_result = #arg_cb_fn_name(result);
             }
         }
         _ => quote! {
-            let s_result = result as #ret_ty_tokens;
+            let r_result = result as #ret_ty_tokens;
         },
     })
 }

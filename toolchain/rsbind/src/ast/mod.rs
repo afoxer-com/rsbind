@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 
 use syn::__private::str;
 
-use crate::errors::*;
 use crate::errors::ErrorKind::*;
+use crate::errors::*;
 
 use self::contract::desc::*;
 use self::imp::desc::*;

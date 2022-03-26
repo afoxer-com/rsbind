@@ -1,16 +1,21 @@
 use rstgen::swift::Swift;
 use rstgen::Tokens;
 
-use crate::ast::contract::desc::{ArgDesc, MethodDesc};
+use crate::ast::contract::desc::{ArgDesc, MethodDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::SwiftType;
+use crate::ErrorKind::GenerateError;
 
 ///
 /// C to Swift data convert.
 ///
-pub(crate) fn fill_arg_convert(cb_arg: &ArgDesc, method_body: &mut Tokens<Swift>) -> Result<()> {
+pub(crate) fn fill_arg_convert<'a, 'b>(
+    cb_arg: &'a ArgDesc,
+    callbacks: &'a [&'a TraitDesc],
+    method_body: &'b mut Tokens<'a, Swift<'a>>,
+) -> Result<()> {
     let mut fn_body = toks!();
     let cb_arg_str = SwiftType {
         ast_type: cb_arg.ty.clone(),
@@ -53,8 +58,16 @@ pub(crate) fn fill_arg_convert(cb_arg: &ArgDesc, method_body: &mut Tokens<Swift>
                 "!)"
             ));
         }
-        AstType::Callback(_) => {
-            // panic!("Don't support callback argument in callback");
+        AstType::Callback(ref origin) => {
+            method_body.nested(toks!(
+                "let ",
+                format!("c_{}", &cb_arg.name),
+                " = Internal",
+                origin.to_string(),
+                ".modelToCallback(model: ",
+                cb_arg.name.clone(),
+                ")"
+            ));
         }
         AstType::Vec(AstBaseType::Byte(_))
         | AstType::Vec(AstBaseType::Short(_))
@@ -171,6 +184,7 @@ pub(crate) fn fill_arg_convert(cb_arg: &ArgDesc, method_body: &mut Tokens<Swift>
 
 pub(crate) fn fill_return_convert(
     cb_method: &MethodDesc,
+    callbacks: &[&TraitDesc],
     method_body: &mut Tokens<Swift>,
 ) -> Result<()> {
     match cb_method.return_type.clone() {
@@ -181,7 +195,7 @@ pub(crate) fn fill_return_convert(
         | AstType::Long(_)
         | AstType::Float(_)
         | AstType::Double(_) => {
-            let ty = SwiftMapping::map_transfer_type(&cb_method.return_type);
+            let ty = SwiftMapping::map_transfer_type(&cb_method.return_type, callbacks);
             method_body.nested(toks!("return ", ty, "(result)"));
         }
         AstType::Boolean => {
@@ -194,9 +208,11 @@ pub(crate) fn fill_return_convert(
         | AstType::Vec(AstBaseType::Short(_))
         | AstType::Vec(AstBaseType::Int(_))
         | AstType::Vec(AstBaseType::Long(_)) => {
-            let transfer_ty = SwiftMapping::map_transfer_type(&cb_method.return_type);
+            let transfer_ty = SwiftMapping::map_transfer_type(&cb_method.return_type, callbacks);
             let base_ty = match cb_method.return_type.clone() {
-                AstType::Vec(base) => SwiftMapping::map_transfer_type(&AstType::from(base)),
+                AstType::Vec(base) => {
+                    SwiftMapping::map_transfer_type(&AstType::from(base), callbacks)
+                }
                 _ => "".to_string(),
             };
             method_body.nested(toks!(
@@ -214,8 +230,12 @@ pub(crate) fn fill_return_convert(
             ));
         }
         AstType::Vec(_) => {}
-        AstType::Callback(_) => {
-            // panic!("Don't support Callback in callback return.");
+        AstType::Callback(ref origin) => {
+            method_body.push(toks!(
+                "return Internal",
+                origin.clone(),
+                ".callbackToModel(callback:  result)"
+            ));
         }
         AstType::Struct(_) => {
             panic!("Don't support Struct in callback return.");

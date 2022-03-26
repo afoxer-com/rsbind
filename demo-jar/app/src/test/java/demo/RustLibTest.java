@@ -1,9 +1,6 @@
 package demo;
 
-import com.afoxer.xxx.ffi.DemoCallback;
-import com.afoxer.xxx.ffi.DemoStruct;
-import com.afoxer.xxx.ffi.DemoTrait;
-import com.afoxer.xxx.ffi.RustLib;
+import com.afoxer.xxx.ffi.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -11,11 +8,13 @@ import org.junit.jupiter.api.Test;
 
 public class RustLibTest {
     private static DemoTrait demoTrait;
+    private static DemoTrait2 demoTrait2;
 
     @BeforeAll
     static void setup() {
         demoTrait = RustLib.newDemoTrait();
         demoTrait.setup();
+        demoTrait2 = RustLib.newDemoTrait2();
     }
 
     @Test
@@ -79,6 +78,39 @@ public class RustLibTest {
         Assertions.assertEquals(result, 16);
         int result2 = demoTrait.testTwoArgCallback20(createAssertCallback(), createAssertCallback());
         Assertions.assertEquals(result2, 20);
+
+        DemoCallback2 demoCallback2 = demoTrait2.testReturnCallback2((byte) 100);
+        Assertions.assertEquals(demoCallback2.testArgCallback3(createAssertCallback()), 3);
+        DemoCallback demoCallback = demoCallback2.testReturnCallback2((byte) 100);
+    }
+
+    private void assertCallback(DemoCallback demoCallback) {
+        Assertions.assertEquals(demoCallback.testU81((byte) 100, (byte) 101), 1);
+        Assertions.assertEquals(demoCallback.testI82((byte) 100, (byte) 101), 2);
+        Assertions.assertEquals(demoCallback.testI163((short) 100, (short) 101), (short)3);
+        Assertions.assertEquals(demoCallback.testU164((short) 100, (short) 101), (short)4);
+        Assertions.assertEquals(demoCallback.testI325(100, 101), 5);
+        Assertions.assertEquals(demoCallback.testU326(100, 101), 6);
+        Assertions.assertTrue(demoCallback.testF3230(100.0f, 101.0f) > 29.0);
+        Assertions.assertTrue(demoCallback.testF6431(100.0, 101.0) > 30.0);
+        Assertions.assertEquals(demoCallback.testBoolFalse(true, false), false);
+        demoCallback.testNoReturn();
+
+        Assertions.assertEquals(demoCallback.testStr("Hello world"), "Hello world");
+
+        Assertions.assertEquals(demoCallback.testArgVecI169(new Short[]{(short)100}), 9);
+
+        Assertions.assertEquals(demoCallback.testArgVecU1610(new Short[]{100}), 10);
+        Assertions.assertEquals(demoCallback.testArgVecI3211(new Integer[]{100}), 11);
+        Assertions.assertEquals(demoCallback.testArgVecU3212(new Integer[]{100}), 12);
+
+        Assertions.assertArrayEquals(demoCallback.testReturnVecU8(), new byte[]{100});
+        Assertions.assertArrayEquals(demoCallback.testReturnVecI8(), new byte[]{100});
+        Assertions.assertArrayEquals(demoCallback.testReturnVecI16(), new Short[]{100});
+        Assertions.assertArrayEquals(demoCallback.testReturnVecU16(), new Short[]{100});
+        Assertions.assertArrayEquals(demoCallback.testReturnVecI32(), new Integer[]{100});
+        Assertions.assertArrayEquals(demoCallback.testReturnVecU32(), new Integer[]{100});
+        Assertions.assertArrayEquals(demoCallback.testTwoVecU8(new byte[]{(byte)100}), new byte[]{100});
     }
 
     private DemoCallback createAssertCallback() {

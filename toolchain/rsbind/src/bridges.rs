@@ -4,9 +4,9 @@
 //!
 use std::path::{Path, PathBuf};
 
-use crate::ast::AstResult;
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
+use crate::ast::AstResult;
 use crate::bridge::gen;
 use crate::errors::*;
 use crate::java::bridge as android_bridge;

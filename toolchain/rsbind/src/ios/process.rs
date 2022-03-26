@@ -10,8 +10,8 @@ use crate::ast::AstResult;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
 use crate::bridges::BridgeGen::CGen;
-use crate::errors::*;
 use crate::errors::ErrorKind::*;
+use crate::errors::*;
 use crate::swift::artifact::SwiftCodeGen;
 use crate::unzip;
 

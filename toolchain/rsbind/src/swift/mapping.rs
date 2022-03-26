@@ -1,4 +1,6 @@
-use proc_macro2::TokenStream;
+use crate::ast::contract::desc::TraitDesc;
+use crate::errors::*;
+use proc_macro2::{Ident, Span, TokenStream};
 use rstgen::swift;
 use rstgen::swift::Swift;
 
@@ -28,7 +30,7 @@ impl<'a> SwiftMapping {
     }
 
     /// Get the swift argument types for transferring to C.
-    pub(crate) fn map_transfer_type(ty: &'a AstType) -> String {
+    pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> String {
         match &ty {
             AstType::Void => "()",
             AstType::Byte(_) => "Int8",
@@ -49,12 +51,32 @@ impl<'a> SwiftMapping {
         }
         .to_string()
     }
+
+    pub(crate) fn map_transfer_type(ty: &AstType, callbacks: &[&TraitDesc]) -> String {
+        match ty.clone() {
+            AstType::Callback(origin) => {
+                let mut callback_trait = None;
+                for callback in callbacks.iter() {
+                    if callback.name == origin.clone() {
+                        callback_trait = Some(callback);
+                        break;
+                    }
+                }
+                format!(
+                    "{}_{}_Model",
+                    &callback_trait.unwrap().mod_name,
+                    &callback_trait.unwrap().name
+                )
+            }
+            _ => SwiftMapping::map_base_transfer_type(ty),
+        }
+    }
 }
 
 pub(crate) struct RustMapping {}
 
 impl<'a> RustMapping {
-    pub(crate) fn map_c2r_transfer_type(ty: &'a AstType) -> TokenStream {
+    pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> TokenStream {
         match &ty {
             AstType::Void => quote!(()),
             AstType::Byte(_) => quote!(i8),
@@ -74,24 +96,27 @@ impl<'a> RustMapping {
             AstType::Struct(_) => quote!(*const c_char),
         }
     }
-    pub(crate) fn map_r2c_transfer_type(ty: &'a AstType) -> TokenStream {
-        match &ty {
-            AstType::Void => quote!(()),
-            AstType::Byte(_) => quote!(i8),
-            AstType::Short(_) => quote!(i16),
-            AstType::Int(_) => quote!(i32),
-            AstType::Long(_) => quote!(i64),
-            AstType::Float(_) => quote!(f32),
-            AstType::Double(_) => quote!(f64),
-            AstType::Boolean => quote!(i32),
-            AstType::String => quote!(*const c_char),
-            AstType::Vec(AstBaseType::Byte(_)) => quote!(CInt8Array),
-            AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),
-            AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
-            AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
-            AstType::Vec(_) => quote!(*const c_char),
-            AstType::Callback(_) => quote!(()), // not expected to call here!
-            AstType::Struct(_) => quote!(*const c_char),
+
+    pub(crate) fn map_transfer_type(ty: &AstType, callbacks: &[&TraitDesc]) -> TokenStream {
+        match ty.clone() {
+            AstType::Callback(origin) => {
+                let mut callback_trait = None;
+                for callback in callbacks.iter() {
+                    if callback.name == origin.clone() {
+                        callback_trait = Some(callback);
+                        break;
+                    }
+                }
+                let callback_str = &format!(
+                    "{}_{}_Model",
+                    &callback_trait.unwrap().mod_name,
+                    &callback_trait.unwrap().name
+                );
+                let callback_ident = Ident::new(callback_str, Span::call_site());
+                quote!(#callback_ident)
+            }
+
+            _ => RustMapping::map_base_transfer_type(ty),
         }
     }
 }

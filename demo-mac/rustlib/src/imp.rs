@@ -12,26 +12,28 @@ impl DemoTrait2 for TestContract1Imp {
         assert(arg == 100, "test_u8_2");
         2
     }
-    // fn test_arg_callback1(callback: Box<dyn DemoCallback2>) -> i8 {
-    //     callback.test_arg_callback_16(create_callback());
-    //     let ret_callback = callback.test_return_callback();
-    //     handle_callback(ret_callback);
-    //     1
-    // }
-    //
-    // fn test_return_calllback2() -> Box<dyn DemoCallback2> {
-    //     struct CallbackHolder {}
-    //     impl DemoCallback2 for CallbackHolder {
-    //         fn test_arg_callback_16(&self, arg: Box<dyn DemoCallback>) -> u8 {
-    //             handle_callback(arg);
-    //             16
-    //         }
-    //
-    //         fn test_return_callback(&self) -> Box<dyn DemoCallback> {
-    //             create_callback()
-    //         }
-    //     }
-    // }
+    fn test_arg_callback1(callback: Box<dyn DemoCallback2>) -> i8 {
+        callback.test_arg_callback_16(create_callback());
+        let ret_callback = callback.test_return_callback();
+        handle_callback(ret_callback);
+        1
+    }
+
+    fn test_return_calllback2() -> Box<dyn DemoCallback2> {
+        struct CallbackHolder {}
+        impl DemoCallback2 for CallbackHolder {
+            fn test_arg_callback_16(&self, arg: Box<dyn DemoCallback>) -> u8 {
+                handle_callback(arg);
+                16
+            }
+
+            fn test_return_callback(&self) -> Box<dyn DemoCallback> {
+                create_callback()
+            }
+        }
+
+        Box::new(CallbackHolder{})
+    }
 }
 
 impl DemoTrait for TestContract1Imp {

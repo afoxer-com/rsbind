@@ -1,12 +1,12 @@
-use heck::{ToLowerCamelCase, ToUpperCamelCase};
-use rstgen::IntoTokens;
-use rstgen::java::{self, *};
-use rstgen::Tokens;
 use crate::ast::contract::desc::MethodDesc;
 use crate::ast::contract::desc::TraitDesc;
 use crate::ast::types::AstType;
 use crate::errors::*;
-use crate::java::types::{JavaType, to_java_file};
+use crate::java::types::{to_java_file, JavaType};
+use heck::{ToLowerCamelCase, ToUpperCamelCase};
+use rstgen::java::{self, *};
+use rstgen::IntoTokens;
+use rstgen::Tokens;
 
 pub(crate) struct InnerTraitGen<'a> {
     pub desc: &'a TraitDesc,

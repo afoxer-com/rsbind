@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 
 use proc_macro2::{Ident, Span};
 
-use crate::ast::AstResult;
 use crate::ast::contract::desc::{StructDesc, TraitDesc};
 use crate::ast::imp::desc::ImpDesc;
+use crate::ast::AstResult;
 use crate::errors::*;
 
 ///

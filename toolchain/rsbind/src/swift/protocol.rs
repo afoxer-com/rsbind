@@ -1,10 +1,10 @@
-use heck::ToLowerCamelCase;
-use rstgen::{IntoTokens};
-use rstgen::swift::{self, *};
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::errors::*;
 use crate::swift::mapping::SwiftMapping;
-use crate::swift::types::{to_swift_file};
+use crate::swift::types::to_swift_file;
+use heck::ToLowerCamelCase;
+use rstgen::swift::{self, *};
+use rstgen::IntoTokens;
 
 pub(crate) struct ProtocolGen<'a> {
     pub desc: &'a TraitDesc,

@@ -38,14 +38,7 @@ pub(crate) fn fill_arg_convert(
         AstType::Vec(AstBaseType::Byte(_)) => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
             let java = Java::from(java);
-            method_body.push(toks!(
-                java,
-                " ",
-                converted,
-                " = ",
-                arg.name.clone(),
-                ";"
-            ));
+            method_body.push(toks!(java, " ", converted, " = ", arg.name.clone(), ";"));
         }
         AstType::Vec(_) => {
             let json_cls = java::imported("com.google.gson", "Gson");

@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
 
-use crate::errors::*;
 use crate::errors::ErrorKind::*;
+use crate::errors::*;
 use crate::unzip;
 
 const MAGIC_NUM: &str = "*521%";

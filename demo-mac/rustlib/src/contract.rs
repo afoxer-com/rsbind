@@ -58,8 +58,8 @@ pub trait DemoTrait : Send + Sync {
 
 pub trait DemoTrait2 : Send + Sync {
     fn test_u8_2(arg: u8) -> u8;
-    // fn test_arg_callback1(callback: Box<dyn DemoCallback2>) -> i8;
-    // fn test_return_calllback2() -> Box<dyn DemoCallback2>;
+    fn test_arg_callback1(callback: Box<dyn DemoCallback2>) -> i8;
+    fn test_return_calllback2() -> Box<dyn DemoCallback2>;
 }
 
 pub trait DemoCallback: Sync + Send {

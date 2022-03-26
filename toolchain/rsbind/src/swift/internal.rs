@@ -1,18 +1,16 @@
-use heck::ToLowerCamelCase;
-use rstgen::{IntoTokens, Tokens};
-use rstgen::swift::{self, *};
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
-use crate::ErrorKind::GenerateError;
 use crate::errors::*;
-use crate::swift::arg_cb::ArgCbGen;
 use crate::swift::mapping::SwiftMapping;
-use crate::swift::return_cb::ReturnCbGen;
-use crate::swift::types::{to_swift_file};
+use crate::swift::types::to_swift_file;
+use crate::ErrorKind::GenerateError;
+use heck::ToLowerCamelCase;
+use rstgen::swift::{self, *};
+use rstgen::{IntoTokens, Tokens};
 
 pub(crate) struct TraitGen<'a> {
     pub desc: &'a TraitDesc,
-    pub callbacks: Vec<TraitDesc>,
+    pub callbacks: &'a Vec<&'a TraitDesc>,
 }
 
 impl<'a> TraitGen<'a> {
@@ -53,7 +51,7 @@ impl<'a> TraitGen<'a> {
 
             self.fill_arg_convert(&mut method_body, method)?;
             self.fill_call_native_method(&mut method_body, method)?;
-            self.fill_return_type_convert(&mut method_body, method)?;
+            self.fill_return_type_convert(&mut method_body, method, self.callbacks)?;
 
             for _i in 0..byte_count {
                 method_body.push("}");
@@ -69,11 +67,6 @@ impl<'a> TraitGen<'a> {
     }
 
     fn fill_global_block(&self, tokens: &mut Tokens<Swift>) -> Result<()> {
-        let global_vars = toks!(
-            "private  var globalIndex : Int64 = 0\n",
-            "private  var globalCallbacks : [Int64: Any] = [Int64: Any]()\n"
-        );
-        tokens.push(global_vars);
         Ok(())
     }
 
@@ -92,56 +85,16 @@ impl<'a> TraitGen<'a> {
         Ok(m)
     }
 
-    fn fill_arg_convert(
+    fn fill_arg_convert<'b>(
         &'a self,
-        method_body: &mut Tokens<'a, Swift<'a>>,
+        method_body: &'b mut Tokens<'a, Swift<'a>>,
         method: &'a MethodDesc,
     ) -> Result<()> {
         for arg in method.args.iter() {
             // Argument convert
-            match arg.ty.clone() {
-                AstType::Callback(_) => {
-                    let callback = self
-                        .find_callback(&arg.ty.origin())
-                        .ok_or_else(|| GenerateError("Can't find Callback".to_string()))?;
-                    let arg_cb = ArgCbGen {
-                        desc: self.desc,
-                        arg,
-                        callback,
-                    }
-                    .gen()?;
-                    method_body.push(arg_cb);
-                }
-                _ => {
-                    crate::swift::artifact_s2c::fill_arg_convert(method_body, arg)?;
-                }
-            }
+            crate::swift::artifact_s2r::fill_arg_convert(method_body, arg, self.callbacks)?;
         }
         Ok(())
-    }
-
-    fn find_callback(&self, origin: &str) -> Option<&TraitDesc> {
-        // Find the callback.
-        let callbacks = self
-            .callbacks
-            .iter()
-            .filter(|callback| callback.name == *origin)
-            .collect::<Vec<&TraitDesc>>();
-        if callbacks.is_empty() {
-            panic!("No Callback {} found!", origin);
-        }
-
-        if callbacks.len() > 1 {
-            panic!("More than one Callback {} found!", origin);
-        }
-
-        let callback = callbacks.get(0);
-        if let Some(&callback) = callback {
-            Some(callback)
-        } else {
-            println!("Can't find Callback {}", origin);
-            None
-        }
     }
 
     fn fill_call_native_method(
@@ -149,7 +102,10 @@ impl<'a> TraitGen<'a> {
         method_body: &mut Tokens<Swift>,
         method: &MethodDesc,
     ) -> Result<()> {
-        let method_name = format!("{}_{}_{}", &self.desc.mod_name, &self.desc.name, &method.name);
+        let method_name = format!(
+            "{}_{}_{}",
+            &self.desc.mod_name, &self.desc.name, &method.name
+        );
         match method.return_type.clone() {
             AstType::Void => {
                 method_body.push(toks!(method_name, "("));
@@ -175,28 +131,15 @@ impl<'a> TraitGen<'a> {
 
     fn fill_return_type_convert(
         &self,
-        method_body: &mut Tokens<Swift>,
+        method_body: &mut Tokens<'a, Swift<'a>>,
         method: &'a MethodDesc,
+        callbacks: &'a [&'a TraitDesc],
     ) -> Result<()> {
-        match method.return_type.clone() {
-            AstType::Callback(_) => {
-                let origin = self
-                    .find_callback(&method.return_type.origin())
-                    .ok_or_else(|| GenerateError("Can't find callback".to_string()))?;
-                let ret = ReturnCbGen {
-                    callback: origin,
-                }
-                .gen()?;
-                method_body.push(ret);
-            }
-            _ => {
-                crate::swift::artifact_s2c::fill_return_type_convert(
-                    method_body,
-                    &method.return_type,
-                    &self.desc.crate_name,
-                )?;
-            }
-        }
-        Ok(())
+        crate::swift::artifact_s2r::fill_return_type_convert(
+            method_body,
+            &method.return_type,
+            &self.desc.crate_name,
+            callbacks,
+        )
     }
 }

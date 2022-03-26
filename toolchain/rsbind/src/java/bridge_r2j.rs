@@ -24,6 +24,12 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
                 let #cb_arg_name = env.new_string(#cb_origin_arg_name).unwrap().into();
             }
         }
+        AstType::Callback(ref origin) => {
+            let cb_to_index_fn = Ident::new(&format!("callback_to_index_{}", origin), Span::call_site());
+            quote! {
+                let #cb_arg_name = #cb_to_index_fn(#cb_origin_arg_name);
+            }
+        }
         AstType::Vec(ref base_ty) => {
             let cb_tmp_arg_name = Ident::new(&format!("j_tmp_{}", cb_arg.name), Span::call_site());
             match base_ty {
@@ -106,7 +112,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                 _ => assert!(false)
             }
 
-            let s_result = if r_result.unwrap() > 0 {true} else {false};
+            let r_result = if r_result.unwrap() > 0 {true} else {false};
         },
 
         AstType::Byte(origin) => {
@@ -118,7 +124,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     _ => assert!(false)
                 }
 
-                let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                let r_result = r_result.unwrap() as #origin_return_ty_ident;
             }
         }
         AstType::Short(origin) => {
@@ -130,7 +136,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     _ => assert!(false)
                 }
 
-                let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                let r_result = r_result.unwrap() as #origin_return_ty_ident;
             }
         }
         AstType::Int(origin) => {
@@ -142,7 +148,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     _ => assert!(false)
                 }
 
-                let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                let r_result = r_result.unwrap() as #origin_return_ty_ident;
             }
         }
         AstType::Long(origin) => {
@@ -154,7 +160,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     _ => assert!(false)
                 }
 
-                let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                let r_result = r_result.unwrap() as #origin_return_ty_ident;
             }
         }
         AstType::Float(origin) => {
@@ -166,7 +172,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     _ => assert!(false)
                 }
 
-                let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                let r_result = r_result.unwrap() as #origin_return_ty_ident;
             }
         }
         AstType::Double(origin) => {
@@ -177,7 +183,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     JValue::Double(value) => r_result = Some(value),
                     _ => assert!(false)
                 }
-                let s_result = r_result.unwrap() as #origin_return_ty_ident;
+                let r_result = r_result.unwrap() as #origin_return_ty_ident;
             }
         }
         AstType::String => {
@@ -189,7 +195,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                 }
 
                 let jstr = JString::from(r_result.unwrap());
-                let s_result = env.get_string(jstr).unwrap().to_string_lossy().to_string();
+                let r_result = env.get_string(jstr).unwrap().to_string_lossy().to_string();
             }
         }
         AstType::Vec(AstBaseType::Byte(ref origin)) => {
@@ -214,12 +220,12 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     let array_buffer_p = array_buffer.as_mut_ptr();
                     let array_buffer_len = array_buffer.len();
                     let array_buffer_cap = array_buffer.capacity();
-                    let s_result = unsafe { Vec::from_raw_parts(array_buffer_p as *mut u8, array_buffer_len, array_buffer_cap) };
+                    let r_result = unsafe { Vec::from_raw_parts(array_buffer_p as *mut u8, array_buffer_len, array_buffer_cap) };
                 }
             } else {
                 quote! {
                     #buffer_get
-                    let s_result = array_buffer;
+                    let r_result = array_buffer;
                 }
             }
         }
@@ -233,12 +239,26 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
 
                 let jstr_result = JString::from(r_result.unwrap());
                 let rstr_result = env.get_string(jstr_result).unwrap().to_string_lossy().to_string();
-                let s_result = serde_json::from_str(&rstr_result).unwrap();
+                let r_result = serde_json::from_str(&rstr_result).unwrap();
+            }
+        }
+        AstType::Callback(ref origin) => {
+            let index_to_callback_fn = Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
+
+            quote! {
+                let mut r_result = None;
+                match result.unwrap() {
+                    JValue::Long(value) => {
+                        r_result = Some(#index_to_callback_fn(value));
+                    }
+                    _ => assert!(false),
+                }
+                let r_result = r_result.unwrap();
             }
         }
         _ => {
             quote! {
-                let s_result = result as #ret_ty_tokens;
+                let r_result = result as #ret_ty_tokens;
             }
         }
     })

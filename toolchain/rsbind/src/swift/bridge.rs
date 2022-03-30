@@ -60,7 +60,6 @@ impl FileGenStrategy for CFileGenStrategy {
         Ok(quote! {
             lazy_static! {
                 static ref CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));
-                static ref PENDING_CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));
                 static ref CALLBACK_INDEX : Arc<RwLock<i64>> = Arc::new(RwLock::new(0));
             }
         })
@@ -422,8 +421,13 @@ fn model_to_box_convert(
         // methods calls on impl
         let method_name = Ident::new(&method.name, Span::call_site());
         let fn_method_name = Ident::new(&format!("fn_{}", method.name), Span::call_site());
+        let self_token = if method.swallow_self {
+            quote!(self)
+        } else {
+            quote!(&self)
+        };
         let each_method_tokens = quote! {
-            fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
+            fn #method_name(#self_token, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
                 #args_convert
                 let #fn_method_name = self.#method_name;
                 let result = #fn_method_name(self.index, #(#convert_arg_names),*);

@@ -19,6 +19,7 @@ mod tests {
 
             pub trait FfiCallback : Sync + Send {
                 fn callback_vec(&self, command: i32, data: Vec<u8>) -> i32;
+                fn test_self(self);
             }
         ";
 
@@ -96,5 +97,6 @@ mod tests {
             trait_desc[1].methods[0].args[1].ty,
             AstType::Vec(AstBaseType::Byte("u8".to_string()))
         );
+        assert_eq!(trait_desc[1].methods[1].name, "test_self")
     }
 }

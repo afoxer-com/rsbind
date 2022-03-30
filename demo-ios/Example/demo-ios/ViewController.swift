@@ -9,158 +9,22 @@
 import UIKit
 import rustlib
 
-class ViewController: UIViewController, DemoCallback {
-    func testReturnVecU8() -> [Int8] {
-        [100]
-    }
-    
-    func testReturnVecI8() -> [Int8] {
-        [100]
-    }
-    
-    func testReturnVecI16() -> [Int16] {
-        [100]
-    }
-    
-    func testReturnVecU16() -> [Int16] {
-        [100]
-    }
-    
-    func testReturnVecI32() -> [Int32] {
-        [100]
-    }
-    
-    func testReturnVecU32() -> [Int32] {
-        [100]
-    }
-    
-    func testReturnVecI64() -> [Int64] {
-        [100]
-    }
-    
-    func testReturnVecU64() -> [Int64] {
-        [100]
-    }
-    
-    func testTwoVecU8(input: [Int8]) -> [Int8] {
-        [100]
-    }
-    
-    private var demoTrait = RustLib.newDemoTrait();
-    
-    func testI647(arg: Int64, arg2: Int64) -> Int64 {
-        7
-    }
-    
-    func testU647(arg: Int64, arg2: Int64) -> Int64 {
-        7
-    }
-    
-    func testStr(arg: String) -> String {
-        "Hello world"
-    }
-    
-    func testArgVecI6411(arg: [Int64]) -> Int64 {
-        11
-    }
-    
-    func testArgVecU6412(arg: [Int64]) -> Int64 {
-        12
-    }
-    
-    func testF3230(arg: Float, arg2: Float) -> Float {
-        30.0
-    }
-    
-    func testF6431(arg: Double, arg2: Double) -> Double {
-        31.0
-    }
-    
-    func testU81(arg: Int8, arg2: Int8) -> Int8 {
-        1
-    }
-    
-    func testI82(arg: Int8, arg2: Int8) -> Int8 {
-        2
-    }
-    
-    func testI163(arg: Int16, arg2: Int16) -> Int16 {
-        3
-    }
-    
-    func testU164(arg: Int16, arg2: Int16) -> Int16 {
-        4
-    }
-    
-    func testI325(arg: Int32, arg2: Int32) -> Int32 {
-        5
-    }
-    
-    func testU326(arg: Int32, arg2: Int32) -> Int32 {
-        6
-    }
-    
-    func testBoolFalse(arg_true: Bool, arg_false: Bool) -> Bool {
-        false
-    }
-    
-    func testArgVecStr18(arg: [String]) -> Int32 {
-        18
-    }
-    
-    func testArgVecU87(arg: [Int8]) -> Int32 {
-        7
-    }
-    
-    func testArgVecI88(arg: [Int8]) -> Int32 {
-        8
-    }
-    
-    func testArgVecI169(arg: [Int16]) -> Int32 {
-        9
-    }
-    
-    func testArgVecU1610(arg: [Int16]) -> Int32 {
-        10
-    }
-    
-    func testArgVecI3211(arg: [Int32]) -> Int32 {
-        11
-    }
-    
-    func testArgVecU3212(arg: [Int32]) -> Int32 {
-        12
-    }
-    
-    func testArgVecBoolTrue(arg_true: [Bool]) -> Bool {
-        true
-    }
-    
-    func testArgVecStruct17(arg: [DemoStruct]) -> Int32 {
-        17
-    }
-    
-    func testTwoVecArg13(arg: [Int32], arg1: [Int32]) -> Int32 {
-        13
-    }
-    
-    func testArgStruct14(arg: DemoStruct) -> Int32 {
-        14
-    }
-    
-    func testTwoArgStruct15(arg: DemoStruct, arg1: DemoStruct) -> Int32 {
-        15
-    }
-    
-    func testNoReturn() {
-        
-    }
+class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        let loginService = RustLib.newServices().getLoginService();
+        let future = loginService.login(user_name: "sidney.wang", pwd: "88888888")
+        let result = future.get();
+        print("login result = \(result)")
         
-        demoTrait.setup()
-        demoTrait.testArgCallback16(arg: self)
+        class Listener : UploadProgress {
+            func onProgress(id: Int64, process: Int64, total: Int64) {
+                print("Progress is \(process)/\(total)")
+            }
+        }
+        let uploadService = RustLib.newServices().getUploadService();
+        uploadService.upload(path: "to/your/path", listener: Listener())
     }
 
     override func didReceiveMemoryWarning() {

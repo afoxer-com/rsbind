@@ -11,55 +11,73 @@ The tool may be useful for the people who want to use Rust as a cross-platform l
 Suppose you are writing two services in Rust and invoke from iOS and Android.  
 First you need write several Rust traits stands for your services.   
 ```rust
-pub trait LoginService : Send + Sync {
-    fn login(user: String, pwd: String, callback: Box<dyn ResultCallback>);
-    fn logout(callback: Box<dyn ResultCallback>);
+pub trait Services: Send + Sync {
+    fn get_login_service() -> Box<dyn LoginService>;
+    fn get_upload_service() -> Box<dyn UploadService>;
 }
 
-pub trait InfoService: Send + Sync {
-    fn get_info(user: String) -> Box<dyn InfoHolder>;
+pub trait LoginService: Send + Sync {
+    fn login(&self, user_name: String, pwd: String) -> Box<dyn Future>;
 }
 
-pub trait ResultCallback : Send + Sync {
-    fn on_result(&self, result: Bool);
+pub trait Future: Send + Sync {
+    fn get(&self) -> bool;
 }
 
-pub trait InfoHolder: Send + Sync {
-    fn user_name(&self) -> String;
-    fn user_id(&self) -> i64;
+pub trait UploadService: Send + Sync {
+    fn upload(&self, path: String, listener: Box<dyn UploadProgress>) -> i64;
 }
 
+pub trait UploadProgress : Send + Sync {
+    fn on_progress(&self, id: i64, process: i64, total: i64);
+}
 ```
 Then you can implement your trait to achive your services.
 
 ```rust
-struct ServiceHolder {}
-impl LoginService for ServiceHolder {
-    fn login(user: String, pwd: String, callback: Box<dyn ResultCallback>) {
-        // do login
-        callback.on_result(true);
+pub struct ServiceHolder {}
+
+impl Services for ServiceHolder {
+    fn get_login_service() -> Box<dyn LoginService> {
+        Box::new(LoginServiceImp {})
     }
 
-    fn logout(callback: Box<dyn ResultCallback>) {
-        // do logout
-        callback.on_result(true);
+    fn get_upload_service() -> Box<dyn UploadService> {
+        Box::new(UploadServiceImp {})
     }
 }
 
-impl InfoService for ServiceHolder {
-    fn get_info(user: String) -> Box<dyn InfoHolder> {
-        // do obtaining info
-        struct InfoStruct {}
-        impl InfoHolder for InfoStruct {
-            fn user_name(&self) -> String {
-                self.user_name
-            }
+pub struct LoginServiceImp {}
 
-            fn user_id(&self) -> i64 {
-                self.user_id
+impl LoginService for LoginServiceImp {
+    fn login(&self, user_name: String, pwd: String) -> Box<dyn Future> {
+        struct FutureImp {
+            pub user_name: String,
+            pub pwd: String,
+        }
+        impl Future for FutureImp {
+            fn get(&self) -> bool {
+                let handle = thread::spawn(move || {
+                    // do your login
+                    true
+                });
+                handle.join().unwrap()
             }
         }
-        Box::new(InfoStruct{})
+        Box::new(FutureImp { user_name, pwd })
+    }
+}
+
+pub struct UploadServiceImp {}
+
+impl UploadService for UploadServiceImp {
+    fn upload(&self, path: String, listener: Box<dyn UploadProgress>) -> i64 {
+        thread::spawn(move || {
+            // doing uploading
+            listener.on_progress(99999, 10, 12345);
+        });
+
+        99999
     }
 }
 ```
@@ -70,18 +88,19 @@ cargo run . android all
 cargo run . ios all
 ```
 
-Then with Android library, you can invoke service from java directly.
+Then with iOS library, you can invoke service from swift directly.
 ```java
-LoginService loginService = RustLib.newLoginService();
-loginService.login(new ResultCallback(){
-    void onResult(bool result) {
-        // handle result.
-    }
-})
+let future = loginService.login(user_name: "sidney.wang", pwd: "88888888")
+let result = future.get();
+print("login result = \(result)")
 
-InfoService infoService = RustLib.newInfoService();
-InfoHolder infoHolder = infoService.getInfo("sidney.wang");
-long userId = infoHolder.getUserId();
+class Listener : UploadProgress {
+    func onProgress(id: Int64, process: Int64, total: Int64) {
+        print("Progress is \(process)/\(total)")
+    }
+}
+let uploadService = RustLib.newServices().getUploadService();
+uploadService.upload(path: "to/your/path", listener: Listener())
 
 ```
 

@@ -145,6 +145,13 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         println!("callbacks is {:?}", &callbacks);
 
         for desc in self.trait_descs.iter() {
+            if desc.is_callback {
+                results.push(GenResult {
+                    result: self.strategy.quote_callback_structures(desc, &callbacks),
+                });
+                continue;
+            }
+
             let imps = self
                 .imp_desc
                 .iter()
@@ -162,15 +169,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     desc.name
                 ))
                 .into());
-            } else if imps.is_empty() {
-                println!(
-                    "You haven't impl the trait {}, so I guess it is a callback",
-                    desc.name
-                );
-                results.push(GenResult {
-                    result: self.strategy.quote_callback_structures(desc, &callbacks),
-                });
-            } else {
+            } else if imps.len() == 1 {
                 results.push(GenResult {
                     result: self.generate_for_one_trait(
                         desc,
@@ -180,6 +179,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     ),
                 });
             }
+
         }
 
         let tokens = self.strategy.quote_for_all_cb(&callbacks);

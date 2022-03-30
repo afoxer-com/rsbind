@@ -153,9 +153,11 @@ fn parse_methods(items: &[syn::TraitItem]) -> Result<(Vec<MethodDesc>, bool)> {
             let return_type = parse_return_type(&method_inner.sig.output)?;
 
             // arguments
+            let mut swallow_self = false;
             for input in method_inner.sig.inputs.iter() {
                 match input {
-                    syn::FnArg::Receiver(ref _arg) => {
+                    syn::FnArg::Receiver(ref arg) => {
+                        swallow_self = !arg.reference.is_some();
                         is_callback = true;
                         continue;
                     }
@@ -170,6 +172,7 @@ fn parse_methods(items: &[syn::TraitItem]) -> Result<(Vec<MethodDesc>, bool)> {
                 name: method_name,
                 return_type,
                 args,
+                swallow_self
             };
             method_descs.push(method_desc);
         }

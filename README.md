@@ -89,7 +89,7 @@ cargo run . ios all
 ```
 
 Then with iOS library, you can invoke service from swift directly.
-```java
+```swift
 let future = loginService.login(user_name: "sidney.wang", pwd: "88888888")
 let result = future.get();
 print("login result = \(result)")
@@ -104,7 +104,21 @@ uploadService.upload(path: "to/your/path", listener: Listener())
 
 ```
 
-In iOS, it is very similar, just run swift code.
+In Android, it is very similar, just run java code.
+```java
+LoginService loginService = RustLib.newServices().getLoginService();
+Future future = loginService.login("sidney.wang", "88888888");
+boolean result = future.get();
+Log.i(TAG, "login result is " + result);
+
+UploadService uploadService = RustLib.newServices().getUploadService();
+uploadService.upload("to/your/path", new UploadProgress() {
+    @Override
+    public void onProgress(long id, long process, long total) {
+        Log.i(TAG, "upload process is " + process);
+    }
+});
+```
 
 ## Step by step.
 1. [Setup rust environment](/docs/env.md).

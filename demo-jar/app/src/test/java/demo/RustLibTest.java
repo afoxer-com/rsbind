@@ -82,6 +82,7 @@ public class RustLibTest {
         DemoCallback2 demoCallback2 = demoTrait2.testReturnCallback2((byte) 100);
         Assertions.assertEquals(demoCallback2.testArgCallback3(createAssertCallback()), 3);
         DemoCallback demoCallback = demoCallback2.testReturnCallback2((byte) 100);
+        assertCallback(demoCallback);
     }
 
     private void assertCallback(DemoCallback demoCallback) {
@@ -111,6 +112,10 @@ public class RustLibTest {
         Assertions.assertArrayEquals(demoCallback.testReturnVecI32(), new Integer[]{100});
         Assertions.assertArrayEquals(demoCallback.testReturnVecU32(), new Integer[]{100});
         Assertions.assertArrayEquals(demoCallback.testTwoVecU8(new byte[]{(byte)100}), new byte[]{100});
+        assertStruct(demoCallback.testReturnStruct());
+        Assertions.assertEquals(demoCallback.testStr("Hello world"), "Hello world");
+        Assertions.assertTrue(demoCallback.testReturnVecBoolTrue()[0]);
+        assertStruct(demoCallback.testReturnVecStruct()[0]);
     }
 
     private DemoCallback createAssertCallback() {
@@ -270,6 +275,11 @@ public class RustLibTest {
             }
 
             @Override
+            public String[] testReturnVecStr() {
+                return new String[]{"Hello world"};
+            }
+
+            @Override
             public byte[] testReturnVecU8() {
                 return new byte[]{100};
             }
@@ -310,8 +320,18 @@ public class RustLibTest {
             }
 
             @Override
+            public Boolean[] testReturnVecBoolTrue() {
+                return new Boolean[]{true};
+            }
+
+            @Override
             public byte[] testTwoVecU8(byte[] input) {
                 return new byte[]{100};
+            }
+
+            @Override
+            public DemoStruct[] testReturnVecStruct() {
+                return new DemoStruct[]{createNewStruct()};
             }
 
             @Override
@@ -328,10 +348,31 @@ public class RustLibTest {
             }
 
             @Override
+            public DemoStruct testReturnStruct() {
+                return createNewStruct();
+            }
+
+            @Override
             public void testNoReturn() {
 
             }
         };
+    }
+
+    private DemoStruct createNewStruct() {
+        DemoStruct demoStruct = new DemoStruct();
+        demoStruct.arg1 = 1;
+        demoStruct.arg2 = 2;
+        demoStruct.arg3 = 3;
+        demoStruct.arg4 = 4;
+        demoStruct.arg5 = 5;
+        demoStruct.arg6 = 6;
+        demoStruct.arg7_str = "Hello world";
+        demoStruct.arg8_false = false;
+        demoStruct.arg9 = 100.0f;
+        demoStruct.arg10 = 101.0f;
+
+        return demoStruct;
     }
 
     private void assertStruct(DemoStruct demoStruct) {

@@ -6,7 +6,7 @@ use proc_macro2::{Ident, Span, TokenStream};
 ///
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
-use crate::bridge::file::{TypeDirection, TMP_ARG_PREFIX};
+use crate::bridge::file::TypeDirection;
 use crate::errors::*;
 use crate::ident;
 use crate::ErrorKind::GenerateError;
@@ -16,7 +16,7 @@ pub(crate) fn quote_arg_convert(
     namespace: &str,
     trait_desc: &TraitDesc,
 ) -> Result<TokenStream> {
-    let rust_arg_name = ident!(&format!("{}_{}", TMP_ARG_PREFIX, &arg.name));
+    let rust_arg_name = ident!(&format!("r_{}", &arg.name));
     let arg_name_ident = ident!(&arg.name);
     let _class_name = format!("{}.{}", namespace, &trait_desc.name).replace('.', "/");
 

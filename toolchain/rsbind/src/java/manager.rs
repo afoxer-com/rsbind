@@ -24,7 +24,7 @@ impl<'a> ManagerGen<'a> {
                     method.modifiers = vec![Modifier::Public, Modifier::Static];
                     method.returns = java::local(each.name.clone());
                     let mut method_body: Tokens<Java> = Tokens::new();
-                    method_body.push(toks!("return new Rust", each.name.to_string(), "();"));
+                    push!(method_body, "return new Rust", each.name.to_string(), "();");
                     method.body = method_body;
                     class.methods.push(method)
                 }
@@ -41,19 +41,21 @@ impl<'a> ManagerGen<'a> {
         body.push("static {");
         body.nested({
             let mut load_lib_tokens = Tokens::new();
-            load_lib_tokens.push(toks!(
+            push!(
+                load_lib_tokens,
                 "com.afoxer.rsbind.Common.loadLibrary(\"",
                 self.so_name.clone(),
                 "\");"
-            ));
+            );
             let ext_libs = self.ext_libs.split(',').collect::<Vec<&str>>();
             for ext_lib in ext_libs.iter() {
                 if !ext_lib.to_owned().is_empty() {
-                    load_lib_tokens.push(toks!(
+                    push!(
+                        load_lib_tokens,
                         "com.afoxer.rsbind.Common.loadLibrary(\"",
                         ext_lib.to_owned(),
                         "\");"
-                    ));
+                    );
                 }
             }
             load_lib_tokens

@@ -8,18 +8,20 @@ use crate::java::types::JavaType;
 pub(crate) fn fill_arg_convert(arg: &ArgDesc, cb_body: &mut Tokens<Java>, pkg: &str) -> Result<()> {
     match arg.ty.clone() {
         AstType::Boolean => {
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 "boolean ",
                 "j_",
                 arg.name.clone(),
                 " = ",
                 arg.name.clone(),
                 " > 0 ? true : false;"
-            ));
+            );
         }
         AstType::Struct(sub) => {
             let json = java::imported("com.google.gson", "Gson");
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 sub.clone(),
                 " j_",
                 arg.name.clone(),
@@ -30,11 +32,12 @@ pub(crate) fn fill_arg_convert(arg: &ArgDesc, cb_body: &mut Tokens<Java>, pkg: &
                 ", ",
                 sub,
                 ".class);"
-            ));
+            );
         }
         AstType::Vec(AstBaseType::Byte(_)) => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 java.get_base_ty(),
                 "[] ",
                 "j_",
@@ -42,12 +45,13 @@ pub(crate) fn fill_arg_convert(arg: &ArgDesc, cb_body: &mut Tokens<Java>, pkg: &
                 " = ",
                 arg.name.clone(),
                 ";"
-            ));
+            );
         }
         AstType::Vec(_) => {
             let json = java::imported("com.google.gson", "Gson");
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 java.get_base_ty().as_boxed(),
                 "[] ",
                 "j_",
@@ -59,11 +63,12 @@ pub(crate) fn fill_arg_convert(arg: &ArgDesc, cb_body: &mut Tokens<Java>, pkg: &
                 ", ",
                 java.get_base_ty().as_boxed(),
                 "[].class);"
-            ));
+            );
         }
         AstType::Callback(ref origin) => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 Java::from(java),
                 " j_",
                 arg.name.clone(),
@@ -74,18 +79,26 @@ pub(crate) fn fill_arg_convert(arg: &ArgDesc, cb_body: &mut Tokens<Java>, pkg: &
                 "Wrapper(",
                 arg.name.clone(),
                 ");"
-            ));
+            );
         }
-        _ => {
+        AstType::Void
+        | AstType::Byte(_)
+        | AstType::Int(_)
+        | AstType::Short(_)
+        | AstType::Long(_)
+        | AstType::Float(_)
+        | AstType::Double(_)
+        | AstType::String => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 Java::from(java),
                 " j_",
                 arg.name.clone(),
                 " = ",
                 arg.name.clone(),
                 ";"
-            ));
+            );
         }
     }
 
@@ -98,24 +111,31 @@ pub(crate) fn fill_return_convert(
 ) -> Result<()> {
     match cb_method.return_type.clone() {
         AstType::Boolean => {
-            cb_body.push(toks!("return result ? 1 : 0;"));
+            push!(cb_body, "return result ? 1 : 0;");
         }
         AstType::Vec(AstBaseType::Byte(_)) => {
-            cb_body.push(toks!("return result;"));
+            push!(cb_body, "return result;");
         }
-        AstType::Vec(_) => {
-            cb_body.push(toks!("return new Gson().toJson(result);"));
+        AstType::Struct(_) | AstType::Vec(_) => {
+            push!(cb_body, "return new Gson().toJson(result);");
         }
         AstType::Void => (),
         AstType::Callback(ref origin) => {
-            cb_body.push(toks!(
+            push!(
+                cb_body,
                 "return Internal",
                 origin.to_string(),
                 ".pushGlobalCallback(result);"
-            ));
+            );
         }
-        _ => {
-            cb_body.push(toks!("return result;"));
+        AstType::String
+        | AstType::Byte(_)
+        | AstType::Int(_)
+        | AstType::Short(_)
+        | AstType::Long(_)
+        | AstType::Float(_)
+        | AstType::Double(_) => {
+            push!(cb_body, "return result;");
         }
     }
     Ok(())

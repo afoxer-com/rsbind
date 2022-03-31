@@ -59,9 +59,40 @@ struct MacDemoApp: App {
         }
     }
     
+    static func newStruct() -> DemoStruct {
+        let demoStruct = DemoStruct(
+            arg1: 1,
+            arg2: 2,
+            arg3: 3,
+            arg4: 4,
+            arg5: 5,
+            arg6: 6,
+            arg7_str: "Hello world",
+            arg8_false: false,
+            arg9: 100.0,
+            arg10: 101.0
+        )
+        return demoStruct
+    }
     
     private func createCallback() -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
+            func testReturnVecStr() -> [String] {
+                ["Hello world"]
+            }
+            
+            func testReturnVecBoolTrue() -> [Bool] {
+                [true]
+            }
+            
+            func testReturnStruct() -> DemoStruct {
+                MacDemoApp.newStruct()
+            }
+            
+            func testReturnVecStruct() -> [DemoStruct] {
+                return [MacDemoApp.newStruct()]
+            }
+            
             func testTwoVecU8(input: [Int8]) -> [Int8] {
                 [100]
             }

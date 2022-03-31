@@ -94,7 +94,13 @@ pub(crate) fn arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Result<Tok
                 let #cb_arg_name = #return_cb_fn_name(callback_index);
             }
         }
-        _ => {
+        AstType::Void
+        | AstType::Byte(_)
+        | AstType::Int(_)
+        | AstType::Short(_)
+        | AstType::Long(_)
+        | AstType::Float(_)
+        | AstType::Double(_) => {
             let arg_ty_ident = RustMapping::map_transfer_type(&arg.ty, callbacks);
             quote! {
                 let #cb_arg_name = #cb_origin_arg_name as #arg_ty_ident;
@@ -142,14 +148,46 @@ pub(crate) fn return_convert(return_type: &AstType) -> Result<TokenStream> {
                 let r_result = unsafe { Vec::from_raw_parts(result.ptr as (* mut #origin_ident), result.len as usize, result.len as usize) };
             }
         }
+        AstType::Vec(AstBaseType::Struct(ref origin)) => {
+            let struct_ident = ident!(&format!("Struct_{}", origin));
+            quote! {
+                let c_str_result: &CStr = unsafe { CStr::from_ptr(result) };
+                let c_slice_result: &str = c_str_result.to_str().unwrap();
+                let r_result =
+                serde_json::from_str::<Vec<#struct_ident>>(&c_slice_result.to_owned()).unwrap().into_iter().map(|each| each.into()).collect();
+            }
+        }
+        AstType::Vec(_) => {
+            quote! {
+                let c_str_result: &CStr = unsafe { CStr::from_ptr(result) };
+                let c_slice_result: &str = c_str_result.to_str().unwrap();
+                let r_result = serde_json::from_str(&c_slice_result.to_owned()).unwrap();
+            }
+        }
         AstType::Callback(ref origin) => {
             let arg_cb_fn_name = ident!(&format!("model_to_box_{}", origin));
             quote! {
                 let r_result = #arg_cb_fn_name(result);
             }
         }
-        _ => quote! {
-            let r_result = result as #ret_ty_tokens;
-        },
+        AstType::Struct(ref origin) => {
+            let struct_ident = ident!(&format!("Struct_{}", origin));
+            quote! {
+                let c_str_result: &CStr = unsafe { CStr::from_ptr(result) };
+                let c_slice_result: &str = c_str_result.to_str().unwrap();
+                let r_result =
+                serde_json::from_str::<#struct_ident>(&c_slice_result.to_owned()).unwrap().into();
+            }
+        }
+        AstType::Byte(_)
+        | AstType::Int(_)
+        | AstType::Short(_)
+        | AstType::Long(_)
+        | AstType::Float(_)
+        | AstType::Double(_) => {
+            quote! {
+                let r_result = result as #ret_ty_tokens;
+            }
+        }
     })
 }

@@ -87,6 +87,10 @@ class demo_ios_ExampleTests: XCTestCase {
         XCTAssertEqual(demoCallback.testReturnVecI32(), [100])
         XCTAssertEqual(demoCallback.testReturnVecU32(), [100])
         XCTAssertEqual(demoCallback.testTwoVecU8(input: [100]), [100])
+        assertStruct(demoStruct: demoCallback.testReturnVecStruct()[0]);
+        assertStruct(demoStruct: demoCallback.testReturnStruct());
+        XCTAssertEqual(demoCallback.testReturnVecStr()[0], "Hello world")
+        XCTAssertEqual(demoCallback.testReturnVecBoolTrue()[0], true)
     }
     
     func testReturnVec() throws {
@@ -134,6 +138,22 @@ class demo_ios_ExampleTests: XCTestCase {
         XCTAssertTrue(demoStruct.arg10 > 0)
     }
     
+    func newStruct() -> DemoStruct {
+        let demoStruct = DemoStruct(
+            arg1: 1,
+            arg2: 2,
+            arg3: 3,
+            arg4: 4,
+            arg5: 5,
+            arg6: 6,
+            arg7_str: "Hello world",
+            arg8_false: false,
+            arg9: 100.0,
+            arg10: 101.0
+        )
+        return demoStruct
+    }
+    
     private func createCallback2(demoTest: demo_ios_ExampleTests) -> DemoCallback2 {
         class AssertCallback2 : DemoCallback2 {
             private var demoTest: demo_ios_ExampleTests
@@ -157,6 +177,23 @@ class demo_ios_ExampleTests: XCTestCase {
 
     private func createCallback(demoTest: demo_ios_ExampleTests) -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
+            func testReturnVecStr() -> [String] {
+                ["Hello world"]
+            }
+            
+            func testReturnVecBoolTrue() -> [Bool] {
+                [true]
+            }
+            
+            func testReturnStruct() -> DemoStruct {
+                demoTest.newStruct()
+            }
+            
+            func testReturnVecStruct() -> [DemoStruct] {
+                let struct_ = demoTest.newStruct()
+                return [struct_]
+            }
+            
             func testTwoVecU8(input: [Int8]) -> [Int8] {
                 XCTAssertEqual(input[0], 100)
                 return [100]

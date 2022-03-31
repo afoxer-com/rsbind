@@ -61,13 +61,14 @@ impl<'a> InnerCallbackGen<'a> {
             java::local(self.desc.name.clone()),
             "callback",
         ));
-        method.body.push(toks!(
+        push!(
+            method.body,
             "long callback_index = globalIndex.incrementAndGet();"
-        ));
+        );
         method
             .body
             .push(toks!("globalCallbacks.put(callback_index, callback);"));
-        method.body.push(toks!("return callback_index;"));
+        push!(method.body, "return callback_index;");
         method.returns = java::LONG;
         inner_class.methods.push(method);
 
@@ -113,9 +114,8 @@ impl<'a> InnerCallbackGen<'a> {
         constructor
             .arguments
             .push(Argument::new(java::LONG, "index"));
-        constructor.body.push(toks!("this.index = index;"));
-        // constructor.body.push(toks!(
-        //     "cleaner.register(this, () -> ",
+        push!(constructor.body, "this.index = index;");
+        // push!(constructor.body,        //     "cleaner.register(this, () -> ",
         //     inner_class_name.clone(),
         //     ".j2rFreeCallback(index));"
         // ));
@@ -152,7 +152,7 @@ impl<'a> InnerCallbackGen<'a> {
         finalize_method.modifiers = vec![Modifier::Protected];
         finalize_method.annotation(toks!("@Override"));
         let _ = finalize_method.throws.insert(toks!("Throwable"));
-        finalize_method.body.push(toks!("super.finalize();"));
+        push!(finalize_method.body, "super.finalize();");
         finalize_method
             .body
             .push(toks!(inner_class_name, ".j2rFreeCallback(index);"));
@@ -251,32 +251,35 @@ impl<'a> InnerCallbackGen<'a> {
             }
         }
 
-        cb_body.push(toks!(
+        push!(
+            cb_body,
             callback.name.clone(),
             " callback = (",
             callback.name.clone(),
             ") globalCallbacks.get(index);"
-        ));
+        );
         match cb_method.return_type.clone() {
             AstType::Void => {
-                cb_body.push(toks!(
+                push!(
+                    cb_body,
                     "callback.",
                     cb_method.name.to_lower_camel_case(),
                     "(",
                     arg_calls,
                     ");"
-                ));
+                );
             }
             _ => {
                 let java = JavaType::new(cb_method.return_type.clone(), self.pkg.clone());
-                cb_body.push(toks!(
+                push!(
+                    cb_body,
                     Java::from(java),
                     " result = callback.",
                     cb_method.name.to_lower_camel_case(),
                     "(",
                     arg_calls,
                     ");"
-                ));
+                );
             }
         }
 
@@ -350,25 +353,27 @@ impl<'a> InnerCallbackGen<'a> {
 
         match cb_method.return_type.clone() {
             AstType::Void => {
-                cb_body.push(toks!(
+                push!(
+                    cb_body,
                     "j2r",
                     cb_method.name.to_upper_camel_case(),
                     "(",
                     arg_calls,
                     ");"
-                ));
+                );
             }
             _ => {
                 let java =
                     JavaType::new(cb_method.return_type.clone(), self.pkg.clone()).to_transfer();
-                cb_body.push(toks!(
+                push!(
+                    cb_body,
                     java,
                     " ret = j2r",
                     cb_method.name.to_upper_camel_case(),
                     "(",
                     arg_calls,
                     ");"
-                ));
+                );
             }
         }
 

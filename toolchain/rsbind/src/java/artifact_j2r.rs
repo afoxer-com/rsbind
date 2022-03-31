@@ -15,7 +15,8 @@ pub(crate) fn fill_arg_convert(
     match arg.ty.clone() {
         AstType::Void => (),
         AstType::Callback(ref origin) => {
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "long ",
                 converted,
                 " = Internal",
@@ -23,25 +24,35 @@ pub(crate) fn fill_arg_convert(
                 ".pushGlobalCallback(",
                 arg.name.clone(),
                 ");"
-            ));
+            );
         }
         AstType::Boolean => {
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "int ",
                 converted,
                 " = ",
                 arg.name.clone(),
                 " ? 1 : 0;"
-            ));
+            );
         }
         AstType::Vec(AstBaseType::Byte(_)) => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
             let java = Java::from(java);
-            method_body.push(toks!(java, " ", converted, " = ", arg.name.clone(), ";"));
+            push!(
+                method_body,
+                java,
+                " ",
+                converted,
+                " = ",
+                arg.name.clone(),
+                ";"
+            );
         }
         AstType::Vec(_) => {
             let json_cls = java::imported("com.google.gson", "Gson");
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "String ",
                 converted,
                 " = new ",
@@ -49,11 +60,12 @@ pub(crate) fn fill_arg_convert(
                 "().toJson(",
                 arg.name.clone(),
                 ");"
-            ));
+            );
         }
         AstType::Struct(_) => {
             let json_cls = java::imported("com.google.gson", "Gson");
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "String ",
                 converted,
                 " = new ",
@@ -61,12 +73,20 @@ pub(crate) fn fill_arg_convert(
                 "().toJson(",
                 arg.name.clone(),
                 ");"
-            ));
+            );
         }
         _ => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
             let java = Java::from(java);
-            method_body.push(toks!(java, " ", converted, " = ", arg.name.clone(), ";"));
+            push!(
+                method_body,
+                java,
+                " ",
+                converted,
+                " = ",
+                arg.name.clone(),
+                ";"
+            );
         }
     }
 
@@ -83,43 +103,46 @@ pub(crate) fn fill_return_convert(
     match return_ty.ast_type.clone() {
         AstType::Void => (),
         AstType::Vec(AstBaseType::Byte(_)) => {
-            method_body.push(toks!("return ret;"));
+            push!(method_body, "return ret;");
         }
         AstType::Vec(_) => {
             let sub_ty = return_ty.get_base_ty();
             let json = java::imported("com.google.gson", "Gson");
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "return new ",
                 json,
                 "().fromJson(ret, ",
                 sub_ty.clone().as_boxed(),
                 "[].class);"
-            ));
+            );
         }
         AstType::Boolean => {
-            method_body.push(toks!("return ret > 0 ? true : false;"));
+            push!(method_body, "return ret > 0 ? true : false;");
         }
         AstType::Struct(origin) => {
             let json = java::imported("com.google.gson", "Gson");
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "return new ",
                 json,
                 "().fromJson(ret,",
                 origin,
                 ".class);"
-            ));
+            );
         }
         AstType::Callback(ref origin) => {
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "return new Internal",
                 origin.to_string(),
                 ".J2R",
                 origin.to_string(),
                 "Wrapper(ret);"
-            ));
+            );
         }
         _ => {
-            method_body.push(toks!("return ret;"));
+            push!(method_body, "return ret;");
         }
     }
 

@@ -29,7 +29,8 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
         | AstType::Float(_)
         | AstType::Double(_) => {
             let ty = SwiftMapping::map_swift_sig_type(&cb_arg.ty);
-            fn_body.nested(toks!(
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = ",
@@ -37,28 +38,31 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
                 "(",
                 cb_arg.name.clone(),
                 ")"
-            ));
+            );
         }
         AstType::Boolean => {
-            fn_body.nested(toks!(
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " : Bool = ",
                 cb_arg.name.clone(),
                 " > 0 ? true : false"
-            ));
+            );
         }
         AstType::String => {
-            method_body.nested(toks!(
+            nested!(
+                method_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = String(cString: ",
                 cb_arg.name.clone(),
                 "!)"
-            ));
+            );
         }
         AstType::Callback(ref origin) => {
-            method_body.nested(toks!(
+            nested!(
+                method_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = Internal",
@@ -66,14 +70,15 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
                 ".modelToCallback(model: ",
                 cb_arg.name.clone(),
                 ")"
-            ));
+            );
         }
         AstType::Vec(AstBaseType::Byte(_))
         | AstType::Vec(AstBaseType::Short(_))
         | AstType::Vec(AstBaseType::Int(_))
         | AstType::Vec(AstBaseType::Long(_)) => {
             let ty = SwiftMapping::map_swift_sig_type(&cb_arg.ty);
-            fn_body.nested(toks!(
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = ",
@@ -83,98 +88,108 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
                 ".ptr, count: Int(",
                 cb_arg.name.clone(),
                 ".len)))"
-            ));
+            );
         }
         AstType::Vec(_) => {
-            fn_body.nested(toks!(
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_tmp_{}", &cb_arg.name),
                 " = String(cString:",
                 cb_arg.name.clone(),
                 "!)"
-            ));
-            fn_body.nested(toks!(
+            );
+            nested!(
+                fn_body,
                 "var ",
                 format!("c_option_{}", &cb_arg.name),
                 " : ",
                 cb_arg_str.clone(),
                 "?"
-            ));
-            fn_body.nested(toks!("autoreleasepool {"));
+            );
+            nested!(fn_body, "autoreleasepool {");
             fn_body.nested({
                 let mut body = toks!();
-                body.nested(toks!(
+                nested!(
+                    body,
                     "let ",
                     format!("c_tmp_json_{}", &cb_arg.name),
                     " = ",
                     format!("c_tmp_{}", &cb_arg.name),
                     ".data(using: .utf8)!"
-                ));
-                body.nested(toks!("let decoder = JSONDecoder()"));
-                body.nested(toks!(
+                );
+                nested!(body, "let decoder = JSONDecoder()");
+                nested!(
+                    body,
                     format!("c_option_{}", &cb_arg.name),
                     " = try! decoder.decode(",
                     cb_arg_str,
                     ".self, from: ",
                     format!("c_tmp_json_{}", &cb_arg.name),
                     ")"
-                ));
+                );
 
                 body
             });
-            fn_body.nested(toks!("}"));
-            fn_body.nested(toks!(
+            nested!(fn_body, "}");
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = ",
                 format!("c_option_{}", &cb_arg.name),
                 "!"
-            ));
+            );
         }
         AstType::Struct(_) => {
-            fn_body.nested(toks!(
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_tmp_{}", &cb_arg.name),
                 " = String(cString:",
                 cb_arg.name.clone(),
                 "!)"
-            ));
-            fn_body.nested(toks!(
+            );
+            nested!(
+                fn_body,
                 "var ",
                 format!("c_option_{}", &cb_arg.name),
                 " : ",
                 cb_arg_str.clone(),
                 "?"
-            ));
-            fn_body.nested(toks!("autoreleasepool {"));
+            );
+            nested!(fn_body, "autoreleasepool {");
             fn_body.nested({
                 let mut body = toks!();
-                body.nested(toks!(
+                nested!(
+                    body,
                     "let ",
                     format!("c_tmp_json_{}", &cb_arg.name),
                     " = ",
                     format!("c_tmp_{}", &cb_arg.name),
                     ".data(using: .utf8)!"
-                ));
-                body.nested(toks!("let decoder = JSONDecoder()"));
-                body.nested(toks!(
+                );
+                nested!(body, "let decoder = JSONDecoder()");
+                nested!(
+                    body,
                     format!("c_option_{}", &cb_arg.name),
                     " = try! decoder.decode(",
                     cb_arg_str,
                     ".self, from: ",
                     format!("c_tmp_json_{}", &cb_arg.name),
                     ")"
-                ));
+                );
                 body
             });
-            fn_body.nested(toks!("}"));
-            fn_body.nested(toks!(
+            nested!(fn_body, "}");
+            nested!(
+                fn_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = ",
                 format!("c_option_{}", &cb_arg.name),
                 "!"
-            ));
+            );
         }
     }
     method_body.push(fn_body);
@@ -195,13 +210,13 @@ pub(crate) fn fill_return_convert(
         | AstType::Float(_)
         | AstType::Double(_) => {
             let ty = SwiftMapping::map_transfer_type(&cb_method.return_type, callbacks);
-            method_body.nested(toks!("return ", ty, "(result)"));
+            nested!(method_body, "return ", ty, "(result)");
         }
         AstType::Boolean => {
-            method_body.nested(toks!("return result ? 1 : 0"));
+            nested!(method_body, "return result ? 1 : 0");
         }
         AstType::String => {
-            method_body.nested(toks!("return result.withCString { $0 }"));
+            nested!(method_body, "return result.withCString { $0 }");
         }
         AstType::Vec(AstBaseType::Byte(_))
         | AstType::Vec(AstBaseType::Short(_))
@@ -214,30 +229,44 @@ pub(crate) fn fill_return_convert(
                 }
                 _ => "".to_string(),
             };
-            method_body.nested(toks!(
+            nested!(
+                method_body,
                 "let tmp_ptr = UnsafeMutablePointer<",
                 base_ty,
                 ">.allocate(capacity: result.count)"
-            ));
-            method_body.nested(toks!(
+            );
+            nested!(
+                method_body,
                 "tmp_ptr.initialize(from: result, count: result.count)"
-            ));
-            method_body.nested(toks!(
+            );
+            nested!(
+                method_body,
                 "return ",
                 transfer_ty,
                 "(ptr: tmp_ptr, len: Int32(result.count))"
-            ));
+            );
         }
-        AstType::Vec(_) => {}
+        AstType::Vec(_) | AstType::Struct(_) => {
+            push!(
+                method_body,
+                "return autoreleasepool { () -> UnsafePointer<Int8>? in",
+            );
+            nested!(method_body, "let encoder = JSONEncoder()");
+            nested!(method_body, "let data_result = try! encoder.encode(result)");
+            nested!(
+                method_body,
+                "let str_result = String(data: data_result, encoding: .utf8)"
+            );
+            nested!(method_body, "return str_result?.withCString{$0}");
+            push!(method_body, "}");
+        }
         AstType::Callback(ref origin) => {
-            method_body.push(toks!(
+            push!(
+                method_body,
                 "return Internal",
                 origin.clone(),
                 ".callbackToModel(callback:  result)"
-            ));
-        }
-        AstType::Struct(_) => {
-            panic!("Don't support Struct in callback return.");
+            );
         }
     }
     Ok(())

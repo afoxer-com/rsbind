@@ -99,15 +99,21 @@ impl<'a> InnerTraitGen<'a> {
         let return_java_ty = return_ty.to_transfer();
         match return_ty.ast_type.clone() {
             AstType::Void => {
-                method_body.push(toks!("native", method.name.to_upper_camel_case(), "("));
+                push!(
+                    method_body,
+                    "native",
+                    method.name.to_upper_camel_case(),
+                    "("
+                );
             }
             _ => {
-                method_body.push(toks!(
+                push!(
+                    method_body,
                     return_java_ty,
                     " ret = native",
                     method.name.to_upper_camel_case(),
                     "("
-                ));
+                );
             }
         }
 

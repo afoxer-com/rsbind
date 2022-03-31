@@ -224,6 +224,20 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                 }
             }
         }
+        AstType::Vec(AstBaseType::Struct(ref origin)) => {
+            let struct_ident = ident!(&format!("Struct_{}", origin));
+            quote! {
+                let mut r_result = None;
+                match result.unwrap() {
+                    JValue::Object(value) => r_result = Some(value),
+                    _ => assert!(false)
+                }
+
+                let jstr_result = JString::from(r_result.unwrap());
+                let rstr_result = env.get_string(jstr_result).unwrap().to_string_lossy().to_string();
+                let r_result = serde_json::from_str::<Vec<#struct_ident>>(&rstr_result).unwrap().into_iter().map(|each| each.into()).collect();
+            }
+        }
         AstType::Vec(_) => {
             quote! {
                 let mut r_result = None;
@@ -235,6 +249,20 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                 let jstr_result = JString::from(r_result.unwrap());
                 let rstr_result = env.get_string(jstr_result).unwrap().to_string_lossy().to_string();
                 let r_result = serde_json::from_str(&rstr_result).unwrap();
+            }
+        }
+        AstType::Struct(ref origin) => {
+            let struct_ident = ident!(&format!("Struct_{}", origin));
+            quote! {
+                let mut r_result = None;
+                match result.unwrap() {
+                    JValue::Object(value) => r_result = Some(value),
+                    _ => assert!(false)
+                }
+
+                let jstr_result = JString::from(r_result.unwrap());
+                let rstr_result = env.get_string(jstr_result).unwrap().to_string_lossy().to_string();
+                let r_result = serde_json::from_str::<#struct_ident>(&rstr_result).unwrap().into();
             }
         }
         AstType::Callback(ref origin) => {
@@ -249,11 +277,6 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
                     _ => assert!(false),
                 }
                 let r_result = r_result.unwrap();
-            }
-        }
-        _ => {
-            quote! {
-                let r_result = result as #ret_ty_tokens;
             }
         }
     })
@@ -281,6 +304,6 @@ pub(crate) fn ty_to_tokens(ast_type: &AstType, direction: TypeDirection) -> Resu
             TypeDirection::Return => quote!(jstring),
         },
         AstType::Callback(_) => quote!(i64),
-        _ => quote!(()),
+        AstType::Void => quote!(()),
     })
 }

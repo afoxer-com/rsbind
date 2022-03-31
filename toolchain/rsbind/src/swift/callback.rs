@@ -75,10 +75,8 @@ impl<'a> InternalCallbackGen<'a> {
         class.modifiers = vec![];
         class.implements.push(swift::local(self.desc.name.clone()));
 
-        class.body.push(toks!("deinit {"));
-        class
-            .body
-            .nested(toks!("self.model.free_callback(self.model.index)"));
+        push!(class.body, "deinit {");
+        nested!(class.body, "self.model.free_callback(self.model.index)");
         class.body.push("}");
 
         let callback_model_str = format!("{}_{}_Model", &self.desc.mod_name, &self.desc.name);
@@ -89,7 +87,7 @@ impl<'a> InternalCallbackGen<'a> {
         let mut constructor = swift::Constructor::new();
         let constructor_arg = swift::Argument::new(swift::local(callback_model_str), "model");
         constructor.arguments.push(constructor_arg);
-        constructor.body.push(toks!("self.model = model"));
+        push!(constructor.body, "self.model = model");
         class.constructors.push(constructor);
 
         for method in self.desc.methods.iter() {
@@ -113,12 +111,13 @@ impl<'a> InternalCallbackGen<'a> {
                     | AstType::Vec(AstBaseType::Int(_))
                     | AstType::Vec(AstBaseType::Long(_)) => {
                         byte_count += 1;
-                        method_body.push(toks!(
+                        push!(
+                            method_body,
                             arg.name.clone(),
                             ".withUnsafeBufferPointer { ",
                             arg.name.clone(),
                             "_buffer in"
-                        ));
+                        );
                     }
                     _ => {}
                 }
@@ -152,7 +151,7 @@ impl<'a> InternalCallbackGen<'a> {
             class.methods.push(cls_method);
         }
         body.push(class.into_tokens());
-        body.push(toks!("return ", class_name, "(model: model)"));
+        push!(body, "return ", class_name, "(model: model)");
         m.body.push(body);
         outer_cls.methods.push(m);
 
@@ -167,11 +166,11 @@ impl<'a> InternalCallbackGen<'a> {
         let method_name = method.name.clone();
         match method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!("self.model.", method_name, "("));
+                push!(method_body, "self.model.", method_name, "(");
             }
             _ => {
                 println!("quote method call for {}", method_name);
-                method_body.push(toks!("let result = self.model.", method_name, "("));
+                push!(method_body, "let result = self.model.", method_name, "(");
             }
         }
 
@@ -212,10 +211,11 @@ impl<'a> InternalCallbackGen<'a> {
         for cb_method in cb.methods.iter() {
             self.fill_cb_closure_method_sig(cb_method, self.callbacks, &mut method_body)?;
 
-            method_body.nested(toks!(
+            nested!(
+                method_body,
                 "let origin_callback = globalCallbacks[index] as! ",
                 cb.name.clone()
-            ));
+            );
 
             for cb_arg in cb_method.args.iter() {
                 self.fill_cb_closure_arg_convert(cb_arg, self.callbacks, &mut method_body)?;
@@ -225,7 +225,7 @@ impl<'a> InternalCallbackGen<'a> {
 
             self.fill_cb_closure_return_convert(cb_method, self.callbacks, &mut method_body)?;
 
-            method_body.push(toks!("}"));
+            push!(method_body, "}");
 
             cb_args_model = format!(
                 "{}{}:arg_{},",
@@ -248,9 +248,9 @@ impl<'a> InternalCallbackGen<'a> {
     }
 
     fn fill_callback_index(&self, method_body: &mut Tokens<Swift>) -> Result<()> {
-        method_body.push(toks!("let callback_index = globalIndex + 1"));
-        method_body.push(toks!("globalIndex = callback_index"));
-        method_body.push(toks!("globalCallbacks[callback_index] = callback",));
+        push!(method_body, "let callback_index = globalIndex + 1");
+        push!(method_body, "globalIndex = callback_index");
+        push!(method_body, "globalCallbacks[callback_index] = callback",);
 
         Ok(())
     }
@@ -275,14 +275,15 @@ impl<'a> InternalCallbackGen<'a> {
         let closure = format!("{} -> {}", &args_str, &cb_return_ty);
         arg_params = format!("{} -> {}", &arg_params, &cb_return_ty);
 
-        method_body.push(toks!(
+        push!(
+            method_body,
             "let ",
             format!("arg_{}", &cb_method.name),
             ": @convention(c) ",
             closure,
             " = {"
-        ));
-        method_body.nested(toks!(arg_params, " in\n"));
+        );
+        nested!(method_body, arg_params, " in\n");
         Ok(())
     }
 
@@ -312,18 +313,20 @@ impl<'a> InternalCallbackGen<'a> {
 
         match cb_method.return_type.clone() {
             AstType::Void => {
-                method_body.nested(toks!(
+                nested!(
+                    method_body,
                     "origin_callback.",
                     cb_method.name.to_lower_camel_case(),
                     cb_method_call
-                ));
+                );
             }
             _ => {
-                method_body.nested(toks!(
+                nested!(
+                    method_body,
                     "let result = origin_callback.",
                     cb_method.name.to_lower_camel_case(),
                     cb_method_call
-                ));
+                );
             }
         }
 
@@ -340,23 +343,25 @@ impl<'a> InternalCallbackGen<'a> {
     }
 
     fn fill_cb_closure_free_fn(&self, method_body: &mut Tokens<Swift>) -> Result<()> {
-        method_body.push(toks!(
+        push!(
+            method_body,
             "let arg_callback_free : @convention(c)(Int64) -> () = {"
-        ));
-        method_body.nested(toks!("(index) in"));
-        method_body.nested(toks!("globalCallbacks.removeValue(forKey: index)"));
-        method_body.push(toks!("}"));
+        );
+        nested!(method_body, "(index) in");
+        nested!(method_body, "globalCallbacks.removeValue(forKey: index)");
+        push!(method_body, "}");
         Ok(())
     }
 
     fn fill_cb_closure_free_ptr_fn(&self, method_body: &mut Tokens<Swift>) -> Result<()> {
-        method_body.push(toks!(
+        push!(
+            method_body,
             "let arg_ptr_free : @convention(c) (UnsafeMutablePointer<Int8>?, Int32) -> () = {"
-        ));
-        method_body.nested(toks!("(ptr, count) in"));
-        method_body.nested(toks!("ptr?.deinitialize(count: Int(count))"));
-        method_body.nested(toks!("ptr?.deallocate()"));
-        method_body.push(toks!("}"));
+        );
+        nested!(method_body, "(ptr, count) in");
+        nested!(method_body, "ptr?.deinitialize(count: Int(count))");
+        nested!(method_body, "ptr?.deallocate()");
+        push!(method_body, "}");
         Ok(())
     }
 }

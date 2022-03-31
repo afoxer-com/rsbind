@@ -11,8 +11,6 @@ use crate::errors::ErrorKind::*;
 use crate::errors::*;
 use crate::ident;
 
-pub(crate) const TMP_ARG_PREFIX: &str = "r";
-
 struct GenResult {
     pub result: Result<TokenStream>,
 }
@@ -69,8 +67,6 @@ pub(crate) trait FileGenStrategy {
     ) -> Result<TokenStream>;
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream>;
 }
-
-pub(crate) trait CallbackGenStrategy {}
 
 impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
     ///
@@ -226,6 +222,11 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         let mut merge = self.strategy.quote_common_use_part().unwrap();
 
         for trait_desc in self.trait_descs.iter() {
+            if trait_desc.is_callback {
+                println!("Skip callback trait {}", &trait_desc.name);
+                continue;
+            }
+
             let imps = self
                 .imp_desc
                 .iter()
@@ -239,12 +240,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     trait_desc.name
                 ))
                 .into());
-            } else if imps.is_empty() {
-                println!(
-                    "You haven't impl the trait {}, I guess it is a callback",
-                    trait_desc.name
-                );
-            } else {
+            } else if imps.len() == 1 {
                 let use_part = self
                     .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
                     .unwrap();
@@ -349,7 +345,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             .args
             .iter()
             .map(|e| &e.name)
-            .map(|arg_name| ident!(&format!("{}_{}", TMP_ARG_PREFIX, arg_name)))
+            .map(|arg_name| ident!(&format!("r_{}", arg_name)))
             .collect::<Vec<Ident>>();
 
         let rust_args_repeat = quote! {

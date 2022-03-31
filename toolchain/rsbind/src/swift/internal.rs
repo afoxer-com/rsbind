@@ -37,12 +37,13 @@ impl<'a> TraitGen<'a> {
                     | AstType::Vec(AstBaseType::Int(_))
                     | AstType::Vec(AstBaseType::Long(_)) => {
                         byte_count += 1;
-                        method_body.push(toks!(
+                        push!(
+                            method_body,
                             arg.name.clone(),
                             ".withUnsafeBufferPointer { ",
                             arg.name.clone(),
                             "_buffer in"
-                        ));
+                        );
                     }
                     _ => {}
                 }
@@ -107,11 +108,11 @@ impl<'a> TraitGen<'a> {
         );
         match method.return_type.clone() {
             AstType::Void => {
-                method_body.push(toks!(method_name, "("));
+                push!(method_body, method_name, "(");
             }
             _ => {
                 println!("quote method call for {}", method_name);
-                method_body.push(toks!("let result = ", method_name, "("));
+                push!(method_body, "let result = ", method_name, "(");
             }
         }
 

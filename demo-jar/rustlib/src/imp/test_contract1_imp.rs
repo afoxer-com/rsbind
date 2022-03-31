@@ -334,6 +334,10 @@ impl DemoTrait for TestContract1Imp {
                 13
             }
 
+            fn test_return_vec_str(&self) -> Vec<String> {
+                vec!["Hello world".to_string()]
+            }
+
             fn test_return_vec_u8(&self) -> Vec<u8> {
                 vec![100]
             }
@@ -366,8 +370,16 @@ impl DemoTrait for TestContract1Imp {
                 vec![100]
             }
 
+            fn test_return_vec_bool_true(&self) -> Vec<bool> {
+                vec![true]
+            }
+
             fn test_two_vec_u8(&self, input: Vec<u8>) -> Vec<u8> {
                 vec![100]
+            }
+
+            fn test_return_vec_struct(&self) -> Vec<DemoStruct> {
+                vec![new_struct()]
             }
 
             fn test_arg_struct_14(&self, arg: DemoStruct) -> i32 {
@@ -379,6 +391,10 @@ impl DemoTrait for TestContract1Imp {
                 assert_struct(&arg, "test_arg_struct_14");
                 assert_struct(&arg1, "test_arg_struct_14");
                 15
+            }
+
+            fn test_return_struct(&self) -> DemoStruct {
+                new_struct()
             }
 
             fn test_no_return(&self) {}
@@ -516,7 +532,7 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
         "test_arg_vec_u64_12",
     );
 
-    // assert_eq(&arg.test_return_vec_str(), &vec!["Hello world".to_string()], "test_return_vec_str");
+    assert_eq(&arg.test_return_vec_str(), &vec!["Hello world".to_string()], "test_return_vec_str");
     assert_eq(&arg.test_return_vec_u8(), &vec![100], "test_return_vec_u8");
     assert_eq(&arg.test_return_vec_i8(), &vec![100], "test_return_vec_i8");
     assert_eq(
@@ -693,6 +709,10 @@ fn create_callback() -> Box<dyn DemoCallback> {
             13
         }
 
+        fn test_return_vec_str(&self) -> Vec<String> {
+            vec!["Hello world".to_string()]
+        }
+
         fn test_return_vec_u8(&self) -> Vec<u8> {
             vec![100]
         }
@@ -725,8 +745,16 @@ fn create_callback() -> Box<dyn DemoCallback> {
             vec![100]
         }
 
+        fn test_return_vec_bool_true(&self) -> Vec<bool> {
+            vec![true]
+        }
+
         fn test_two_vec_u8(&self, input: Vec<u8>) -> Vec<u8> {
             vec![100]
+        }
+
+        fn test_return_vec_struct(&self) -> Vec<DemoStruct> {
+            vec![new_struct()]
         }
 
         fn test_arg_struct_14(&self, arg: DemoStruct) -> i32 {
@@ -738,6 +766,10 @@ fn create_callback() -> Box<dyn DemoCallback> {
             assert_struct(&arg, "test_arg_struct_14");
             assert_struct(&arg1, "test_arg_struct_14");
             15
+        }
+
+        fn test_return_struct(&self) -> DemoStruct {
+            new_struct()
         }
 
         fn test_no_return(&self) {

@@ -2,7 +2,6 @@ use proc_macro2::{Ident, Span, TokenStream};
 
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
-use crate::bridge::file::TMP_ARG_PREFIX;
 use crate::errors::*;
 use crate::ident;
 use crate::swift::mapping::RustMapping;
@@ -12,7 +11,7 @@ use crate::ErrorKind::GenerateError;
 /// C to Rust data convert.
 ///
 pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
-    let rust_arg_name = ident!(&format!("{}_{}", TMP_ARG_PREFIX, &arg.name));
+    let rust_arg_name = ident!(&format!("r_{}", &arg.name));
     let arg_name_ident = ident!(&arg.name);
 
     let result = match arg.ty.clone() {

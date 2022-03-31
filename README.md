@@ -84,8 +84,8 @@ impl UploadService for UploadServiceImp {
 
 After that, run rsbind command to generate iOS and Android library artifact.
 ```shell
-cargo run . android all
-cargo run . ios all
+rsbind . android all
+rsbind . ios all
 ```
 
 Then with iOS library, you can invoke service from swift directly.

@@ -50,6 +50,8 @@ mod mac;
 mod swift;
 mod test;
 mod unzip;
+#[macro_use]
+mod common;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";

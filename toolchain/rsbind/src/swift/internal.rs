@@ -3,7 +3,6 @@ use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::to_swift_file;
-use crate::ErrorKind::GenerateError;
 use heck::ToLowerCamelCase;
 use rstgen::swift::{self, *};
 use rstgen::{IntoTokens, Tokens};

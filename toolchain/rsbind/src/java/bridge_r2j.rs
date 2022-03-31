@@ -4,14 +4,15 @@ use crate::ast::contract::desc::{ArgDesc, MethodDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::bridge::file::TypeDirection;
 use crate::errors::*;
+use crate::ident;
 
 ///
 /// Rust to Java data convert.
 ///
 ///
 pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
-    let cb_arg_name = Ident::new(&format!("j_{}", cb_arg.name), Span::call_site());
-    let cb_origin_arg_name = Ident::new(&cb_arg.name, Span::call_site());
+    let cb_arg_name = ident!(&format!("j_{}", cb_arg.name));
+    let cb_origin_arg_name = ident!(&cb_arg.name);
 
     Ok(match cb_arg.ty.clone() {
         AstType::Boolean => {
@@ -25,20 +26,17 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
             }
         }
         AstType::Callback(ref origin) => {
-            let cb_to_index_fn =
-                Ident::new(&format!("callback_to_index_{}", origin), Span::call_site());
+            let cb_to_index_fn = ident!(&format!("callback_to_index_{}", origin));
             quote! {
                 let #cb_arg_name = #cb_to_index_fn(#cb_origin_arg_name);
             }
         }
         AstType::Vec(ref base_ty) => {
-            let cb_tmp_arg_name = Ident::new(&format!("j_tmp_{}", cb_arg.name), Span::call_site());
+            let cb_tmp_arg_name = ident!(&format!("j_tmp_{}", cb_arg.name));
             match base_ty {
                 AstBaseType::Struct(struct_name) => {
-                    let struct_ident =
-                        Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
-                    let cb_tmp_vec_arg_name =
-                        Ident::new(&format!("j_tmp_vec_{}", cb_arg.name), Span::call_site());
+                    let struct_ident = ident!(&format!("Struct_{}", &struct_name));
+                    let cb_tmp_vec_arg_name = ident!(&format!("j_tmp_vec_{}", cb_arg.name));
                     quote! {
                         let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                         let #cb_tmp_arg_name = serde_json::to_string(&#cb_tmp_vec_arg_name);
@@ -47,12 +45,9 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
                 }
                 AstBaseType::Byte(origin) => {
                     if origin.contains("i8") {
-                        let tmp_arg_name =
-                            Ident::new(&format!("tmp_{}", &cb_arg.name), Span::call_site());
-                        let tmp_converted_arg_name = Ident::new(
-                            &format!("tmp_converted_{}", &cb_arg.name),
-                            Span::call_site(),
-                        );
+                        let tmp_arg_name = ident!(&format!("tmp_{}", &cb_arg.name));
+                        let tmp_converted_arg_name =
+                            ident!(&format!("tmp_converted_{}", &cb_arg.name));
                         vec![1u8].as_slice();
                         quote! {
                             let #tmp_arg_name = #cb_origin_arg_name.as_slice();
@@ -74,9 +69,8 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
             }
         }
         AstType::Struct(struct_name) => {
-            let struct_copy_name =
-                Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
-            let cb_tmp_arg_name = Ident::new(&format!("r_tmp_{}", cb_arg.name), Span::call_site());
+            let struct_copy_name = ident!(&format!("Struct_{}", &struct_name));
+            let cb_tmp_arg_name = ident!(&format!("r_tmp_{}", cb_arg.name));
             quote! {
                 let #cb_tmp_arg_name = serde_json::to_string(&#struct_copy_name::from(#cb_origin_arg_name));
                 let #cb_arg_name = env.new_string(#cb_tmp_arg_name.unwrap()).unwrap().into();
@@ -95,11 +89,11 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
     let ret_ty_tokens = match method.return_type {
         AstType::Void => quote!(()),
         AstType::Vec(ref base) => {
-            let origin_ident = Ident::new(&base.origin(), Span::call_site());
+            let origin_ident = ident!(&base.origin());
             quote!(Vec<#origin_ident>)
         }
         _ => {
-            let ident = Ident::new(&method.return_type.origin(), Span::call_site());
+            let ident = ident!(&method.return_type.origin());
             quote!(#ident)
         }
     };
@@ -117,7 +111,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
         },
 
         AstType::Byte(origin) => {
-            let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+            let origin_return_ty_ident = ident!(&origin);
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -129,7 +123,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Short(origin) => {
-            let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+            let origin_return_ty_ident = ident!(&origin);
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -141,7 +135,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Int(origin) => {
-            let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+            let origin_return_ty_ident = ident!(&origin);
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -153,7 +147,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Long(origin) => {
-            let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+            let origin_return_ty_ident = ident!(&origin);
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -165,7 +159,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Float(origin) => {
-            let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+            let origin_return_ty_ident = ident!(&origin);
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -177,7 +171,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Double(origin) => {
-            let origin_return_ty_ident = Ident::new(&origin, Span::call_site());
+            let origin_return_ty_ident = ident!(&origin);
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -244,8 +238,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Callback(ref origin) => {
-            let index_to_callback_fn =
-                Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
+            let index_to_callback_fn = ident!(&format!("index_to_callback_{}", origin));
 
             quote! {
                 let mut r_result = None;

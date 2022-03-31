@@ -5,6 +5,7 @@ use rstgen::swift;
 use rstgen::swift::Swift;
 
 use crate::ast::types::{AstBaseType, AstType};
+use crate::ident;
 
 pub(crate) struct SwiftMapping {}
 
@@ -112,7 +113,7 @@ impl<'a> RustMapping {
                     &callback_trait.unwrap().mod_name,
                     &callback_trait.unwrap().name
                 );
-                let callback_ident = Ident::new(callback_str, Span::call_site());
+                let callback_ident = ident!(callback_str);
                 quote!(#callback_ident)
             }
 

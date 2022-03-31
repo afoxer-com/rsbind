@@ -6,7 +6,6 @@ use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::SwiftType;
-use crate::ErrorKind::GenerateError;
 
 ///
 /// C to Swift data convert.

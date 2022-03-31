@@ -4,6 +4,7 @@ use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::bridge::file::TMP_ARG_PREFIX;
 use crate::errors::*;
+use crate::ident;
 use crate::swift::mapping::RustMapping;
 use crate::ErrorKind::GenerateError;
 
@@ -11,11 +12,8 @@ use crate::ErrorKind::GenerateError;
 /// C to Rust data convert.
 ///
 pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
-    let rust_arg_name = Ident::new(
-        &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
-        Span::call_site(),
-    );
-    let arg_name_ident = Ident::new(&arg.name, Span::call_site());
+    let rust_arg_name = ident!(&format!("{}_{}", TMP_ARG_PREFIX, &arg.name));
+    let arg_name_ident = ident!(&arg.name);
 
     let result = match arg.ty.clone() {
         AstType::Byte(origin)
@@ -24,7 +22,7 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
         | AstType::Long(origin)
         | AstType::Float(origin)
         | AstType::Double(origin) => {
-            let origin_type_ident = Ident::new(&origin, Span::call_site());
+            let origin_type_ident = ident!(&origin);
             quote! {
                 let #rust_arg_name = #arg_name_ident as #origin_type_ident;
             }
@@ -35,8 +33,8 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
             }
         }
         AstType::String => {
-            let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-            let c_slice_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
+            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
+            let c_slice_ident = ident!(&format!("c_str_{}", &arg.name));
             quote! {
                 let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
                 let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
@@ -88,11 +86,11 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
             }
         }
         AstType::Vec(AstBaseType::Struct(origin)) => {
-            let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-            let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
-            let tmp_ident = Ident::new(&format!("c_tmp_{}", &arg.name), Span::call_site());
-            let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
-            let origin_struct_name = Ident::new(&origin, Span::call_site());
+            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
+            let c_slice_ident = ident!(&format!("c_slice_{}", &arg.name));
+            let tmp_ident = ident!(&format!("c_tmp_{}", &arg.name));
+            let struct_name = ident!(&format!("Struct_{}", &origin));
+            let origin_struct_name = ident!(&origin);
             quote! {
                 let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
                 let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
@@ -101,8 +99,8 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
             }
         }
         AstType::Vec(_) => {
-            let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-            let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
+            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
+            let c_slice_ident = ident!(&format!("c_slice_{}", &arg.name));
             quote! {
                 let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
                 let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
@@ -110,17 +108,16 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
             }
         }
         AstType::Callback(ref origin) => {
-            let model_to_box_fn =
-                Ident::new(&format!("model_to_box_{}", origin), Span::call_site());
+            let model_to_box_fn = ident!(&format!("model_to_box_{}", origin));
             quote! {
                 let #rust_arg_name = #model_to_box_fn(#arg_name_ident);
             }
         }
         AstType::Struct(origin) => {
-            let c_str_ident = Ident::new(&format!("c_str_{}", &arg.name), Span::call_site());
-            let c_slice_ident = Ident::new(&format!("c_slice_{}", &arg.name), Span::call_site());
-            let tmp_struct = Ident::new(&format!("c_tmp_{}", &arg.name), Span::call_site());
-            let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
+            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
+            let c_slice_ident = ident!(&format!("c_slice_{}", &arg.name));
+            let tmp_struct = ident!(&format!("c_tmp_{}", &arg.name));
+            let struct_name = ident!(&format!("Struct_{}", &origin));
             quote! {
                 let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
                 let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
@@ -143,7 +140,7 @@ pub(crate) fn quote_callback_struct(
     callbacks: &[&TraitDesc],
     name: &str,
 ) -> Result<TokenStream> {
-    let callback_ident = Ident::new(name, Span::call_site());
+    let callback_ident = ident!(name);
 
     let callback_struct_sig = quote! {
         pub struct #callback_ident
@@ -151,7 +148,7 @@ pub(crate) fn quote_callback_struct(
 
     let mut callback_methods = TokenStream::new();
     for method in callback.methods.iter() {
-        let callback_method_ident = Ident::new(&method.name, Span::call_site());
+        let callback_method_ident = ident!(&method.name);
         let ret_ty_tokens = RustMapping::map_transfer_type(&method.return_type, callbacks);
         let arg_types = method
             .args
@@ -184,7 +181,7 @@ pub(crate) fn quote_return_convert(
     callbacks: &[&TraitDesc],
     ret_name: &str,
 ) -> Result<TokenStream> {
-    let ret_name_ident = Ident::new(ret_name, Span::call_site());
+    let ret_name_ident = ident!(ret_name);
 
     let result = match ty.clone() {
         AstType::Void => quote! {
@@ -197,7 +194,7 @@ pub(crate) fn quote_return_convert(
             let r_result = CString::new(#ret_name_ident).unwrap().into_raw();
         },
         AstType::Vec(AstBaseType::Struct(struct_name)) => {
-            let struct_ident = Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
+            let struct_ident = ident!(&format!("Struct_{}", &struct_name));
             quote! {
                 let #ret_name_ident = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                 let json_ret = serde_json::to_string(&#ret_name_ident);
@@ -215,8 +212,8 @@ pub(crate) fn quote_return_convert(
                 }
                 _ => quote!(),
             };
-            let ptr_name = Ident::new(&format!("ptr_{}", &ret_name), Span::call_site());
-            let len_name = Ident::new(&format!("len_{}", &ret_name), Span::call_site());
+            let ptr_name = ident!(&format!("ptr_{}", &ret_name));
+            let len_name = ident!(&format!("len_{}", &ret_name));
             quote! {
                 #ret_name_ident.shrink_to_fit();
                 let #ptr_name = #ret_name_ident.as_ptr();
@@ -237,17 +234,14 @@ pub(crate) fn quote_return_convert(
             }
         }
         AstType::Struct(origin) => {
-            let struct_copy_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
+            let struct_copy_name = ident!(&format!("Struct_{}", &origin));
             quote! {
                 let json_ret = serde_json::to_string(&#struct_copy_name::from(#ret_name_ident));
                 let r_result = CString::new(json_ret.unwrap()).unwrap().into_raw();
             }
         }
         AstType::Callback(ref origin) => {
-            let box_to_model_fn_name = Ident::new(
-                &format!("box_to_model_{}", origin.to_string()),
-                Span::call_site(),
-            );
+            let box_to_model_fn_name = ident!(&format!("box_to_model_{}", origin.to_string()));
             quote! {
                 let r_result = #box_to_model_fn_name(callback_index);
             }

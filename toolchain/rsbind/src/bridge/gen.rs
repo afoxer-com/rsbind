@@ -8,6 +8,7 @@ use crate::ast::contract::desc::{StructDesc, TraitDesc};
 use crate::ast::imp::desc::ImpDesc;
 use crate::ast::AstResult;
 use crate::errors::*;
+use crate::ident;
 
 ///
 /// Different strategy on generating a bridge mod.
@@ -94,8 +95,8 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
     ///
     fn gen_common_code(&self, bridge_dir: &Path) -> Result<()> {
         let crate_name = &self.crate_name.replace('-', "_");
-        let free_fun_ident = Ident::new(&format!("{}_free_rust", crate_name), Span::call_site());
-        let free_str_fun_ident = Ident::new(&format!("{}_free_str", crate_name), Span::call_site());
+        let free_fun_ident = ident!(&format!("{}_free_rust", crate_name));
+        let free_str_fun_ident = ident!(&format!("{}_free_str", crate_name));
 
         let tokens = quote! {
             use std::panic::*;
@@ -173,7 +174,7 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
     fn gen_bridge_mod_code(&self, out_dir: &Path, bridges: &[String]) -> Result<()> {
         let bridge_ident = bridges
             .iter()
-            .map(|bridge| Ident::new(bridge, Span::call_site()))
+            .map(|bridge| ident!(bridge))
             .collect::<Vec<Ident>>();
 
         let bridge_mod_tokens = quote! {

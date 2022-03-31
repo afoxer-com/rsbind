@@ -8,6 +8,7 @@ use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::bridge::file::{TypeDirection, TMP_ARG_PREFIX};
 use crate::errors::*;
+use crate::ident;
 use crate::ErrorKind::GenerateError;
 
 pub(crate) fn quote_arg_convert(
@@ -15,11 +16,8 @@ pub(crate) fn quote_arg_convert(
     namespace: &str,
     trait_desc: &TraitDesc,
 ) -> Result<TokenStream> {
-    let rust_arg_name = Ident::new(
-        &format!("{}_{}", TMP_ARG_PREFIX, &arg.name),
-        Span::call_site(),
-    );
-    let arg_name_ident = Ident::new(&arg.name, Span::call_site());
+    let rust_arg_name = ident!(&format!("{}_{}", TMP_ARG_PREFIX, &arg.name));
+    let arg_name_ident = ident!(&arg.name);
     let _class_name = format!("{}.{}", namespace, &trait_desc.name).replace('.', "/");
 
     let result = match arg.clone().ty {
@@ -29,7 +27,7 @@ pub(crate) fn quote_arg_convert(
         | AstType::Long(origin)
         | AstType::Float(origin)
         | AstType::Double(origin) => {
-            let origin_type_ident = Ident::new(&origin, Span::call_site());
+            let origin_type_ident = ident!(&origin);
             quote! {
                 let #rust_arg_name = #arg_name_ident as #origin_type_ident;
             }
@@ -46,10 +44,10 @@ pub(crate) fn quote_arg_convert(
         }
         AstType::Vec(AstBaseType::Byte(origin)) => {
             if origin.contains("i8") {
-                let tmp_arg_name = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-                let tmp_arg_ptr = Ident::new(&format!("tmp_{}_ptr", &arg.name), Span::call_site());
-                let tmp_arg_len = Ident::new(&format!("tmp_{}_len", &arg.name), Span::call_site());
-                let tmp_arg_cap = Ident::new(&format!("tmp_{}_cap", &arg.name), Span::call_site());
+                let tmp_arg_name = ident!(&format!("tmp_{}", &arg.name));
+                let tmp_arg_ptr = ident!(&format!("tmp_{}_ptr", &arg.name));
+                let tmp_arg_len = ident!(&format!("tmp_{}_len", &arg.name));
+                let tmp_arg_cap = ident!(&format!("tmp_{}_cap", &arg.name));
                 quote! {
                     let mut #tmp_arg_name = env.convert_byte_array(#arg_name_ident).unwrap();
                     let #tmp_arg_ptr = #tmp_arg_name.as_mut_ptr();
@@ -67,10 +65,10 @@ pub(crate) fn quote_arg_convert(
             }
         }
         AstType::Vec(AstBaseType::Struct(origin)) => {
-            let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
-            let tmp_arg_ident = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-            let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
-            let real_struct_name = Ident::new(&origin, Span::call_site());
+            let json_arg_ident = ident!(&format!("json_{}", &arg.name));
+            let tmp_arg_ident = ident!(&format!("tmp_{}", &arg.name));
+            let struct_name = ident!(&format!("Struct_{}", &origin));
+            let real_struct_name = ident!(&origin);
             quote! {
                 let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
                 let #tmp_arg_ident: Vec<#struct_name> = serde_json::from_str(&#json_arg_ident).unwrap();
@@ -78,24 +76,23 @@ pub(crate) fn quote_arg_convert(
             }
         }
         AstType::Vec(_) => {
-            let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
+            let json_arg_ident = ident!(&format!("json_{}", &arg.name));
             quote! {
                 let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
                 let #rust_arg_name = serde_json::from_str(&#json_arg_ident).unwrap();
             }
         }
         AstType::Callback(ref origin) => {
-            let index_to_cb_fn_name =
-                Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
+            let index_to_cb_fn_name = ident!(&format!("index_to_callback_{}", origin));
             quote! {
                 let #rust_arg_name = #index_to_cb_fn_name(#arg_name_ident);
             }
         }
         AstType::Struct(origin) => {
-            let json_arg_ident = Ident::new(&format!("json_{}", &arg.name), Span::call_site());
-            let tmp_arg_ident = Ident::new(&format!("tmp_{}", &arg.name), Span::call_site());
-            let struct_name = Ident::new(&format!("Struct_{}", &origin), Span::call_site());
-            let real_struct_name = Ident::new(&origin, Span::call_site());
+            let json_arg_ident = ident!(&format!("json_{}", &arg.name));
+            let tmp_arg_ident = ident!(&format!("tmp_{}", &arg.name));
+            let struct_name = ident!(&format!("Struct_{}", &origin));
+            let real_struct_name = ident!(&origin);
             quote! {
                 let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
                 let #tmp_arg_ident: #struct_name = serde_json::from_str(&#json_arg_ident).unwrap();
@@ -117,7 +114,7 @@ pub(crate) fn quote_return_convert(
     _callbacks: &[&TraitDesc],
     ret_name: &str,
 ) -> Result<TokenStream> {
-    let ret_name_ident = Ident::new(ret_name, Span::call_site());
+    let ret_name_ident = ident!(ret_name);
 
     let result = match return_ty.clone() {
         AstType::Void => quote!(),
@@ -128,7 +125,7 @@ pub(crate) fn quote_return_convert(
             env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner()
         },
         AstType::Vec(AstBaseType::Struct(struct_name)) => {
-            let struct_ident = Ident::new(&format!("Struct_{}", &struct_name), Span::call_site());
+            let struct_ident = ident!(&format!("Struct_{}", &struct_name));
             quote! {
                 let r_result = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                 let json_ret = serde_json::to_string(&r_result);
@@ -160,15 +157,14 @@ pub(crate) fn quote_return_convert(
             }
         }
         AstType::Struct(name) => {
-            let struct_copy_name = Ident::new(&format!("Struct_{}", name), Span::call_site());
+            let struct_copy_name = ident!(&format!("Struct_{}", name));
             quote! {
                 let json_ret = serde_json::to_string(&#struct_copy_name::from(#ret_name_ident));
                 env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()
             }
         }
         AstType::Callback(ref origin) => {
-            let cb_to_index_fn_name =
-                Ident::new(&format!("callback_to_index_{}", origin), Span::call_site());
+            let cb_to_index_fn_name = ident!(&format!("callback_to_index_{}", origin));
             quote! {
                 #cb_to_index_fn_name(#ret_name_ident)
             }

@@ -53,7 +53,7 @@ impl<'a> InternalCallbackGen<'a> {
         class.modifiers = vec![Modifier::Internal];
 
         self.fill_callback_to_model(&mut class)?;
-        self.fill_model_to_callback(&mut class);
+        self.fill_model_to_callback(&mut class)?;
 
         tokens.push(class.into_tokens());
 

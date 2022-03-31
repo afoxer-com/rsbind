@@ -9,6 +9,7 @@ use crate::ast::imp::desc::*;
 use crate::ast::types::*;
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
+use crate::ident;
 
 pub(crate) const TMP_ARG_PREFIX: &str = "r";
 
@@ -262,13 +263,13 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             .split("::")
             .collect::<Vec<&str>>()
             .iter()
-            .map(|str| Ident::new(str, Span::call_site()))
+            .map(|str| ident!(str))
             .collect();
         let imp_mod_splits: Vec<Ident> = imp_mod_path
             .split("::")
             .collect::<Vec<&str>>()
             .iter()
-            .map(|str| Ident::new(str, Span::call_site()))
+            .map(|str| ident!(str))
             .collect();
 
         Ok(quote! {
@@ -341,26 +342,21 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         );
 
         let ret_name_str = "result";
-        let imp_fun_name = Ident::new(&method.name, Span::call_site());
-        let ret_name_ident = Ident::new(ret_name_str, Span::call_site());
+        let imp_fun_name = ident!(&method.name);
+        let ret_name_ident = ident!(ret_name_str);
 
         let tmp_arg_names = method
             .args
             .iter()
             .map(|e| &e.name)
-            .map(|arg_name| {
-                Ident::new(
-                    &format!("{}_{}", TMP_ARG_PREFIX, arg_name),
-                    Span::call_site(),
-                )
-            })
+            .map(|arg_name| ident!(&format!("{}_{}", TMP_ARG_PREFIX, arg_name)))
             .collect::<Vec<Ident>>();
 
         let rust_args_repeat = quote! {
             #(#tmp_arg_names),*
         };
 
-        let imp_ident = Ident::new(impl_name, Span::call_site());
+        let imp_ident = ident!(impl_name);
         let imp_call = match method.return_type.clone() {
             AstType::Void => quote! {
                 let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);

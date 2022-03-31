@@ -2,10 +2,11 @@ use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
 use crate::bridge::file::*;
+use crate::common::*;
 use crate::errors::*;
+use crate::ident;
 use crate::swift::mapping::RustMapping;
 use proc_macro2::{Ident, Span, TokenStream};
-use rstgen::Tokens;
 use std::path::Path;
 
 ///
@@ -62,7 +63,7 @@ impl FileGenStrategy for CFileGenStrategy {
     fn quote_for_all_cb(&self, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
         let enum_items = callbacks
             .iter()
-            .map(|item| Ident::new(&item.name, Span::call_site()))
+            .map(|item| ident!(&item.name))
             .collect::<Vec<Ident>>();
         let enums = quote! {
             enum CallbackEnum {
@@ -76,12 +77,9 @@ impl FileGenStrategy for CFileGenStrategy {
             let box_to_model_convert_tokens =
                 box_to_model_convert(callback, callbacks, "r_result")?;
             let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, callback.name);
-            let callback_model_ident = Ident::new(callback_model_str, Span::call_site());
-            let callback_ident = Ident::new(&callback.name, Span::call_site());
-            let box_to_model_fn_name = Ident::new(
-                &format!("box_to_model_{}", callback.name),
-                Span::call_site(),
-            );
+            let callback_model_ident = ident!(callback_model_str);
+            let callback_ident = ident!(&callback.name);
+            let box_to_model_fn_name = ident!(&format!("box_to_model_{}", callback.name));
             return_cb_fns = quote! {
                 #return_cb_fns
 
@@ -91,10 +89,7 @@ impl FileGenStrategy for CFileGenStrategy {
             };
 
             let model_to_box_convert_tokens = model_to_box_convert(callback, callbacks)?;
-            let model_to_box_fn_name = Ident::new(
-                &format!("model_to_box_{}", callback.name),
-                Span::call_site(),
-            );
+            let model_to_box_fn_name = ident!(&format!("model_to_box_{}", callback.name));
             arg_cb_fns = quote! {
                 #arg_cb_fns
 
@@ -128,19 +123,19 @@ impl FileGenStrategy for CFileGenStrategy {
     }
 
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream> {
-        let struct_name = Ident::new(&format!("Struct_{}", &struct_desc.name), Span::call_site());
-        let origin_struct_name = Ident::new(&struct_desc.name, Span::call_site());
+        let struct_name = ident!(&format!("Struct_{}", &struct_desc.name));
+        let origin_struct_name = ident!(&struct_desc.name);
         let names = struct_desc
             .fields
             .iter()
-            .map(|field| Ident::new(&field.name, Span::call_site()))
+            .map(|field| ident!(&field.name))
             .collect::<Vec<Ident>>();
         let arg_names = names.clone();
         let origin_arg_names = names.clone();
         let tys = struct_desc
             .fields
             .iter()
-            .map(|field| Ident::new(&field.ty.origin(), Span::call_site()))
+            .map(|field| ident!(&field.ty.origin()))
             .collect::<Vec<Ident>>();
         Ok(quote! {
             #[repr(C)]
@@ -171,19 +166,16 @@ impl FileGenStrategy for CFileGenStrategy {
         callbacks: &[&TraitDesc],
         _structs: &[StructDesc],
     ) -> Result<TokenStream> {
-        let fun_name = Ident::new(
-            &format!(
-                "{}_{}_{}",
-                &trait_desc.mod_name, trait_desc.name, &method.name
-            ),
-            Span::call_site(),
-        );
+        let fun_name = ident!(&format!(
+            "{}_{}_{}",
+            &trait_desc.mod_name, trait_desc.name, &method.name
+        ));
 
         let arg_names = method
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| Ident::new(&arg.name, Span::call_site()))
+            .map(|arg| ident!(&arg.name))
             .collect::<Vec<Ident>>();
 
         let arg_types = method
@@ -237,7 +229,7 @@ impl FileGenStrategy for CFileGenStrategy {
         return_ty: &AstType,
         ret_name: &str,
     ) -> Result<TokenStream> {
-        let ret_name_ident = Ident::new(ret_name, Span::call_site());
+        let ret_name_ident = ident!(ret_name);
         let obtain_index = if let AstType::Callback(_) = return_ty.clone() {
             quote! {
                 let callback_index = {
@@ -261,7 +253,7 @@ impl FileGenStrategy for CFileGenStrategy {
             crate::swift::bridge_s2r::quote_return_convert(return_ty, callbacks, ret_name)?;
 
         let insert_callback = if let AstType::Callback(ref origin) = return_ty.clone() {
-            let callback_ident = Ident::new(origin, Span::call_site());
+            let callback_ident = ident!(origin);
             quote! {
                 (*CALLBACK_HASHMAP.write().unwrap()).insert(callback_index, CallbackEnum::#callback_ident(result));
             }
@@ -288,7 +280,7 @@ fn model_to_box_convert(
     callbacks: &[&TraitDesc],
 ) -> Result<TokenStream> {
     let struct_name = &format!("{}_struct", &callback_desc.name);
-    let struct_ident = Ident::new(struct_name, Span::call_site());
+    let struct_ident = ident!(struct_name);
 
     let mut method_names = Vec::new();
     let mut callback_methods = TokenStream::new();
@@ -303,9 +295,9 @@ fn model_to_box_convert(
         // arguments converting in callback
         let mut args_convert = TokenStream::new();
         for cb_arg in method.args.iter() {
-            let origin_cb_arg_name = Ident::new(&cb_arg.name, Span::call_site());
+            let origin_cb_arg_name = ident!(&cb_arg.name);
             let obtain_index = if let AstType::Callback(ref origin) = cb_arg.ty.clone() {
-                let callback_ident = Ident::new(origin, Span::call_site());
+                let callback_ident = ident!(origin);
                 quote! {
                     let callback_index = {
                         let mut global_index = CALLBACK_INDEX.write().unwrap();
@@ -338,7 +330,7 @@ fn model_to_box_convert(
                 | AstType::Vec(AstBaseType::String)
                 | AstType::Vec(AstBaseType::Struct(_))
                 | AstType::Struct(_) => {
-                    let cb_arg_name = Ident::new(&format!("c_{}", cb_arg.name), Span::call_site());
+                    let cb_arg_name = ident!(&format!("c_{}", cb_arg.name));
                     strs_to_release.push(cb_arg_name.clone());
                 }
                 _ => {}
@@ -355,14 +347,14 @@ fn model_to_box_convert(
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| Ident::new(&arg.name, Span::call_site()))
+            .map(|arg| ident!(&arg.name))
             .collect::<Vec<Ident>>();
 
         let convert_arg_names = &method
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| Ident::new(&format!("c_{}", &arg.name), Span::call_site()))
+            .map(|arg| ident!(&format!("c_{}", &arg.name)))
             .collect::<Vec<Ident>>();
 
         let mut has_callback_arg = false;
@@ -372,16 +364,16 @@ fn model_to_box_convert(
             .filter(|arg| !matches!(arg.ty, AstType::Void))
             .map(|arg| match arg.ty.clone() {
                 AstType::Vec(vec_inner_name) => {
-                    let vec_innder_ident = Ident::new(&vec_inner_name.origin(), Span::call_site());
+                    let vec_innder_ident = ident!(&vec_inner_name.origin());
                     quote!(Vec<#vec_innder_ident>)
                 }
                 AstType::Callback(origin) => {
                     has_callback_arg = true;
-                    let origin_ident = Ident::new(&origin, Span::call_site());
+                    let origin_ident = ident!(&origin);
                     quote!(Box<dyn #origin_ident>)
                 }
                 _ => {
-                    let ident = Ident::new(&arg.ty.origin(), Span::call_site());
+                    let ident = ident!(&arg.ty.origin());
                     quote!(#ident)
                 }
             })
@@ -390,15 +382,15 @@ fn model_to_box_convert(
         let ret_ty_tokens = match method.return_type {
             AstType::Void => quote!(()),
             AstType::Vec(ref base) => {
-                let ident = Ident::new(&base.origin(), Span::call_site());
+                let ident = ident!(&base.origin());
                 quote!(Vec<#ident>)
             }
             AstType::Callback(ref origin) => {
-                let origin_ident = Ident::new(origin, Span::call_site());
+                let origin_ident = ident!(origin);
                 quote!(Box<dyn #origin_ident>)
             }
             _ => {
-                let ident = Ident::new(&method.return_type.origin(), Span::call_site());
+                let ident = ident!(&method.return_type.origin());
                 quote!(#ident)
             }
         };
@@ -413,8 +405,8 @@ fn model_to_box_convert(
         };
 
         // methods calls on impl
-        let method_name = Ident::new(&method.name, Span::call_site());
-        let fn_method_name = Ident::new(&format!("fn_{}", method.name), Span::call_site());
+        let method_name = ident!(&method.name);
+        let fn_method_name = ident!(&format!("fn_{}", method.name));
         let each_method_tokens = quote! {
             fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
                 #args_convert
@@ -440,7 +432,7 @@ fn model_to_box_convert(
 
     // xxxx : arg.xxxx
     // assign values from arg to struct
-    let callback_ty = Ident::new(&callback_desc.name, Span::call_site());
+    let callback_ty = ident!(&callback_desc.name);
     let mut method_assign_tokens = TokenStream::new();
     for method_name in method_names.iter() {
         method_assign_tokens = quote! {
@@ -480,8 +472,8 @@ pub(crate) fn box_to_model_convert(
     ret_name: &str,
 ) -> Result<TokenStream> {
     let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
-    let callback_model_ident = Ident::new(callback_model_str, Span::call_site());
-    let callback_ident = Ident::new(&callback.name, Span::call_site());
+    let callback_model_ident = ident!(callback_model_str);
+    let callback_ident = ident!(&callback.name);
 
     let mut method_names = vec![];
     let mut ret_method_names = vec![];
@@ -490,27 +482,27 @@ pub(crate) fn box_to_model_convert(
     method_names = callback
         .methods
         .iter()
-        .map(|method| Ident::new(&method.name, Span::call_site()))
+        .map(|method| ident!(&method.name))
         .collect::<Vec<Ident>>();
     ret_method_names = callback
         .methods
         .iter()
-        .map(|method| Ident::new(&format!("ret_{}", &method.name), Span::call_site()))
+        .map(|method| ident!(&format!("ret_{}", &method.name)))
         .collect::<Vec<Ident>>();
 
     for method in callback.methods.iter() {
-        let method_name = Ident::new(&method.name, Span::call_site());
+        let method_name = ident!(&method.name);
         let arg_names = &method
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| Ident::new(&arg.name, Span::call_site()))
+            .map(|arg| ident!(&arg.name))
             .collect::<Vec<Ident>>();
         let r_arg_names = &method
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| Ident::new(&format!("r_{}", &arg.name), Span::call_site()))
+            .map(|arg| ident!(&format!("r_{}", &arg.name)))
             .collect::<Vec<Ident>>();
         let arg_types = &method
             .args
@@ -532,10 +524,10 @@ pub(crate) fn box_to_model_convert(
             callbacks,
             "result",
         )?;
-        let ret_method_name = Ident::new(&format!("ret_{}", &method.name), Span::call_site());
+        let ret_method_name = ident!(&format!("ret_{}", &method.name));
 
         if let AstType::Callback(ref origin) = method.return_type.clone() {
-            let return_callback_ident = Ident::new(origin, Span::call_site());
+            let return_callback_ident = ident!(origin);
             method_result = quote! {
                 #method_result
 
@@ -605,10 +597,7 @@ pub(crate) fn box_to_model_convert(
         }
     }
 
-    let free_fn_ident = Ident::new(
-        &format!("{}_free_rust", &callback.crate_name),
-        Span::call_site(),
-    );
+    let free_fn_ident = ident!(&format!("{}_free_rust", &callback.crate_name));
     method_result = quote! {
         #method_result
 
@@ -621,7 +610,7 @@ pub(crate) fn box_to_model_convert(
         }
     };
 
-    let r_result = Ident::new(ret_name, Span::call_site());
+    let r_result = ident!(ret_name);
     Ok(quote! {
         impl #callback_model_ident {
             #method_result

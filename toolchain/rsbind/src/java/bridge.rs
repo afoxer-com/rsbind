@@ -8,6 +8,7 @@ use crate::ast::imp::desc::*;
 use crate::ast::types::*;
 use crate::bridge::file::*;
 use crate::errors::*;
+use crate::ident;
 
 ///
 /// create a new generator for java bridge files.
@@ -36,7 +37,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn gen_sdk_file(&self, mod_names: &[String]) -> Result<TokenStream> {
         let mod_idents = mod_names
             .iter()
-            .map(|name| Ident::new(name, Span::call_site()))
+            .map(|name| ident!(name))
             .collect::<Vec<Ident>>();
         Ok(quote! {
             use jni::sys::JNI_VERSION_1_6;
@@ -101,7 +102,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn quote_for_all_cb(&self, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
         let enum_items = callbacks
             .iter()
-            .map(|item| Ident::new(&item.name, Span::call_site()))
+            .map(|item| ident!(&item.name))
             .collect::<Vec<Ident>>();
 
         let enum_tokens = quote! {
@@ -124,11 +125,9 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         let mut cb_to_index_fns = quote!();
 
         for callback in callbacks.iter() {
-            let index_to_cb_fn_name = Ident::new(
-                &format!("index_to_callback_{}", &callback.name),
-                Span::call_site(),
-            );
-            let callback_ident = Ident::new(&callback.name, Span::call_site());
+            let index_to_cb_fn_name = ident!(&format!("index_to_callback_{}", &callback.name));
+
+            let callback_ident = ident!(&callback.name);
             let index_to_cb_fn_body = index_to_callback(callback, &self.java_namespace)?;
             let index_to_cb_fn = quote! {
                 fn #index_to_cb_fn_name(index: i64) -> Box<dyn #callback_ident> {
@@ -142,10 +141,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
                 #index_to_cb_fn
             };
 
-            let cb_to_index_fn_name = Ident::new(
-                &format!("callback_to_index_{}", &callback.name),
-                Span::call_site(),
-            );
+            let cb_to_index_fn_name = ident!(&format!("callback_to_index_{}", &callback.name));
             cb_to_index_fns = quote! {
                 #cb_to_index_fns
                 fn #cb_to_index_fn_name(callback: Box<dyn #callback_ident>) -> i64 {
@@ -189,19 +185,19 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     }
 
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream> {
-        let struct_name = Ident::new(&format!("Struct_{}", &struct_desc.name), Span::call_site());
-        let origin_struct_name = Ident::new(&struct_desc.name, Span::call_site());
+        let struct_name = ident!(&format!("Struct_{}", &struct_desc.name));
+        let origin_struct_name = ident!(&struct_desc.name);
         let names = struct_desc
             .fields
             .iter()
-            .map(|field| Ident::new(&field.name, Span::call_site()))
+            .map(|field| ident!(&field.name))
             .collect::<Vec<Ident>>();
         let arg_names = names.clone();
         let origin_arg_names = names.clone();
         let tys = struct_desc
             .fields
             .iter()
-            .map(|field| Ident::new(&field.ty.origin(), Span::call_site()))
+            .map(|field| ident!(&field.ty.origin()))
             .collect::<Vec<Ident>>();
         Ok(quote! {
             #[derive(Serialize, Deserialize)]
@@ -245,11 +241,11 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             trait_desc.name.clone(),
             &method.name.to_upper_camel_case().replace('_', "_1")
         );
-        let method_name_ident = Ident::new(&method_name, Span::call_site());
+        let method_name_ident = ident!(&method_name);
         let arg_names = method
             .args
             .iter()
-            .map(|arg| Ident::new(&arg.name, Span::call_site()))
+            .map(|arg| ident!(&arg.name))
             .collect::<Vec<Ident>>();
 
         let arg_types = method
@@ -350,7 +346,7 @@ impl<'a> JniFileGenStrategy<'a> {
         callback: &TraitDesc,
         callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
-        let callback_ident = Ident::new(&callback.name, Span::call_site());
+        let callback_ident = ident!(&callback.name);
 
         let mut body = TokenStream::new();
 
@@ -362,12 +358,12 @@ impl<'a> JniFileGenStrategy<'a> {
                 callback.name.clone(),
                 &method.name.to_upper_camel_case().replace('_', "_1")
             );
-            let origin_method_name = Ident::new(&method.name, Span::call_site());
-            let method_name_ident = Ident::new(&method_name, Span::call_site());
+            let origin_method_name = ident!(&method.name);
+            let method_name_ident = ident!(&method_name);
             let arg_names = method
                 .args
                 .iter()
-                .map(|arg| Ident::new(&arg.name, Span::call_site()))
+                .map(|arg| ident!(&arg.name))
                 .collect::<Vec<Ident>>();
 
             let arg_types = method
@@ -395,7 +391,7 @@ impl<'a> JniFileGenStrategy<'a> {
                 .args
                 .iter()
                 .filter(|arg| !matches!(arg.ty, AstType::Void))
-                .map(|arg| Ident::new(&format!("r_{}", &arg.name), Span::call_site()))
+                .map(|arg| ident!(&format!("r_{}", &arg.name)))
                 .collect::<Vec<Ident>>();
 
             let return_convert = crate::java::bridge_j2r::quote_return_convert(
@@ -406,7 +402,7 @@ impl<'a> JniFileGenStrategy<'a> {
             )?;
 
             if let AstType::Callback(ref origin) = method.return_type.clone() {
-                let return_callback_ident = Ident::new(origin, Span::call_site());
+                let return_callback_ident = ident!(origin);
 
                 body = quote! {
                     #body
@@ -478,14 +474,11 @@ impl<'a> JniFileGenStrategy<'a> {
             }
         }
 
-        let free_method_name = Ident::new(
-            &format!(
-                "Java_{}_Internal{}_j2rFreeCallback",
-                &namespace,
-                callback.name.clone(),
-            ),
-            Span::call_site(),
-        );
+        let free_method_name = ident!(&format!(
+            "Java_{}_Internal{}_j2rFreeCallback",
+            &namespace,
+            callback.name.clone(),
+        ));
 
         body = quote! {
             #body
@@ -525,7 +518,7 @@ pub(crate) fn index_to_callback(
         let mut method_java_sig = "(J".to_owned();
         let mut cb_arg_array = quote!(JValue::Long(self.index),);
         for cb_arg in method.args.iter() {
-            let cb_arg_name = Ident::new(&format!("j_{}", cb_arg.name), Span::call_site());
+            let cb_arg_name = ident!(&format!("j_{}", cb_arg.name));
             method_java_sig = format!("{}{}", &method_java_sig, cb_arg.ty.to_java_sig());
 
             let args_convert_each = crate::java::bridge_r2j::arg_convert(cb_arg)?;
@@ -593,22 +586,22 @@ pub(crate) fn index_to_callback(
         let arg_names = &method
             .args
             .iter()
-            .map(|arg| Ident::new(&arg.name, Span::call_site()))
+            .map(|arg| ident!(&arg.name))
             .collect::<Vec<Ident>>();
         let arg_types = &method
             .args
             .iter()
             .map(|arg| match arg.ty.clone() {
                 AstType::Vec(vec_inner_name) => {
-                    let vec_innder_ident = Ident::new(&vec_inner_name.origin(), Span::call_site());
+                    let vec_innder_ident = ident!(&vec_inner_name.origin());
                     quote!(Vec<#vec_innder_ident>)
                 }
                 AstType::Callback(ref origin) => {
-                    let callback_ident = Ident::new(origin, Span::call_site());
+                    let callback_ident = ident!(origin);
                     quote!(Box<dyn #callback_ident>)
                 }
                 _ => {
-                    let ident = Ident::new(&arg.ty.origin(), Span::call_site());
+                    let ident = ident!(&arg.ty.origin());
                     quote!(#ident)
                 }
             })
@@ -621,15 +614,15 @@ pub(crate) fn index_to_callback(
         let ret_ty_tokens = match method.return_type {
             AstType::Void => quote!(()),
             AstType::Vec(ref base) => {
-                let origin_ident = Ident::new(&base.origin(), Span::call_site());
+                let origin_ident = ident!(&base.origin());
                 quote!(Vec<#origin_ident>)
             }
             AstType::Callback(ref origin) => {
-                let callback_ident = Ident::new(origin, Span::call_site());
+                let callback_ident = ident!(origin);
                 quote!(Box<dyn #callback_ident>)
             }
             _ => {
-                let ident = Ident::new(&method.return_type.origin(), Span::call_site());
+                let ident = ident!(&method.return_type.origin());
                 quote!(#ident)
             }
         };
@@ -646,7 +639,7 @@ pub(crate) fn index_to_callback(
         };
 
         // methods calls on impl
-        let method_name = Ident::new(&method.name, Span::call_site());
+        let method_name = ident!(&method.name);
         let java_method_name = format!("r2j{}", &method.name.to_upper_camel_case());
 
         all_method_tokens = quote! {
@@ -679,7 +672,7 @@ pub(crate) fn index_to_callback(
         );
     }
 
-    let callback_ident = Ident::new(&callback_desc.name, Span::call_site());
+    let callback_ident = ident!(&callback_desc.name);
     let result = quote! {
         #index_struct
 

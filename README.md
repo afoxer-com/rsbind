@@ -90,6 +90,7 @@ rsbind . ios all
 
 Then with iOS library, you can invoke service from swift directly.
 ```swift
+let loginService = RustLib.newServices().getLoginService();
 let future = loginService.login(user_name: "sidney.wang", pwd: "88888888")
 let result = future.get();
 print("login result = \(result)")

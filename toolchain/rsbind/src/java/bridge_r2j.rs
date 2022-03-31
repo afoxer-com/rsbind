@@ -25,7 +25,8 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
             }
         }
         AstType::Callback(ref origin) => {
-            let cb_to_index_fn = Ident::new(&format!("callback_to_index_{}", origin), Span::call_site());
+            let cb_to_index_fn =
+                Ident::new(&format!("callback_to_index_{}", origin), Span::call_site());
             quote! {
                 let #cb_arg_name = #cb_to_index_fn(#cb_origin_arg_name);
             }
@@ -243,7 +244,8 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Callback(ref origin) => {
-            let index_to_callback_fn = Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
+            let index_to_callback_fn =
+                Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
 
             quote! {
                 let mut r_result = None;

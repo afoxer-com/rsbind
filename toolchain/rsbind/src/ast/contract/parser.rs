@@ -172,7 +172,7 @@ fn parse_methods(items: &[syn::TraitItem]) -> Result<(Vec<MethodDesc>, bool)> {
                 name: method_name,
                 return_type,
                 args,
-                swallow_self
+                swallow_self,
             };
             method_descs.push(method_desc);
         }

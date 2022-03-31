@@ -69,21 +69,7 @@ pub(crate) trait FileGenStrategy {
     fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream>;
 }
 
-pub(crate) trait CallbackGenStrategy {
-    fn arg_convert(
-        &self,
-        arg: &ArgDesc,
-        trait_desc: &TraitDesc,
-        callbacks: &[&TraitDesc],
-    ) -> Result<TokenStream>;
-
-    fn return_convert(
-        &self,
-        ret_ty: &AstType,
-        trait_desc: &TraitDesc,
-        callbacks: &[&TraitDesc],
-    ) -> Result<TokenStream>;
-}
+pub(crate) trait CallbackGenStrategy {}
 
 impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
     ///
@@ -179,7 +165,6 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                     ),
                 });
             }
-
         }
 
         let tokens = self.strategy.quote_for_all_cb(&callbacks);

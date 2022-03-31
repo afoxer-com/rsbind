@@ -11,7 +11,7 @@ pub(crate) struct MethodDesc {
     pub name: String,
     pub return_type: AstType,
     pub args: Vec<ArgDesc>,
-    pub swallow_self: bool
+    pub swallow_self: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone)]

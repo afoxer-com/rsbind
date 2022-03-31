@@ -3,7 +3,6 @@ use rstgen::{java, Java, Tokens};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc};
 use crate::ast::types::{AstBaseType, AstType};
-/// Java to rust data convert in Java.
 use crate::errors::*;
 use crate::java::types::JavaType;
 

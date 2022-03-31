@@ -85,7 +85,8 @@ pub(crate) fn quote_arg_convert(
             }
         }
         AstType::Callback(ref origin) => {
-            let index_to_cb_fn_name = Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
+            let index_to_cb_fn_name =
+                Ident::new(&format!("index_to_callback_{}", origin), Span::call_site());
             quote! {
                 let #rust_arg_name = #index_to_cb_fn_name(#arg_name_ident);
             }
@@ -166,10 +167,8 @@ pub(crate) fn quote_return_convert(
             }
         }
         AstType::Callback(ref origin) => {
-            let cb_to_index_fn_name = Ident::new(
-                &format!("callback_to_index_{}", origin),
-                Span::call_site(),
-            );
+            let cb_to_index_fn_name =
+                Ident::new(&format!("callback_to_index_{}", origin), Span::call_site());
             quote! {
                 #cb_to_index_fn_name(#ret_name_ident)
             }

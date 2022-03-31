@@ -2,7 +2,6 @@ use rstgen::{java, Java, Tokens};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc};
 use crate::ast::types::{AstBaseType, AstType};
-/// Java to Rust data convert in Java.
 use crate::errors::*;
 use crate::java::types::JavaType;
 
@@ -65,7 +64,16 @@ pub(crate) fn fill_arg_convert(arg: &ArgDesc, cb_body: &mut Tokens<Java>, pkg: &
         AstType::Callback(ref origin) => {
             let java = JavaType::new(arg.ty.clone(), pkg.to_string());
             cb_body.push(toks!(
-                Java::from(java), " j_", arg.name.clone(), " = new Internal", origin.to_string(), ".J2R", origin.to_string(), "Wrapper(", arg.name.clone(), ");"
+                Java::from(java),
+                " j_",
+                arg.name.clone(),
+                " = new Internal",
+                origin.to_string(),
+                ".J2R",
+                origin.to_string(),
+                "Wrapper(",
+                arg.name.clone(),
+                ");"
             ));
         }
         _ => {
@@ -101,7 +109,9 @@ pub(crate) fn fill_return_convert(
         AstType::Void => (),
         AstType::Callback(ref origin) => {
             cb_body.push(toks!(
-                "return Internal", origin.to_string(), ".pushGlobalCallback(result);"
+                "return Internal",
+                origin.to_string(),
+                ".pushGlobalCallback(result);"
             ));
         }
         _ => {

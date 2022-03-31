@@ -9,8 +9,6 @@ use crate::ast::types::*;
 use crate::bridge::file::*;
 use crate::errors::*;
 
-use super::bridge_cb::*;
-
 ///
 /// create a new generator for java bridge files.
 ///
@@ -26,18 +24,12 @@ pub(crate) fn new_gen<'a>(
         trait_descs,
         struct_descs,
         imp_desc,
-        strategy: JniFileGenStrategy {
-            java_namespace,
-            java_callback_strategy: JavaCallbackStrategy {
-                java_namespace: java_namespace.to_owned(),
-            },
-        },
+        strategy: JniFileGenStrategy { java_namespace },
     }
 }
 
 pub(crate) struct JniFileGenStrategy<'a> {
     java_namespace: &'a str,
-    java_callback_strategy: JavaCallbackStrategy,
 }
 
 impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
@@ -314,12 +306,8 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             &arg.name,
             &arg.ty.origin()
         );
-        let result = match arg.clone().ty {
-            AstType::Callback(_) => self
-                .java_callback_strategy
-                .arg_convert(arg, trait_desc, callbacks),
-            _ => crate::java::bridge_j2r::quote_arg_convert(arg, self.java_namespace, trait_desc),
-        };
+        let result =
+            crate::java::bridge_j2r::quote_arg_convert(arg, self.java_namespace, trait_desc);
         println!(
             "[bridge] ✅ end quote jni bridge method argument convert => {}:{}",
             &arg.name,
@@ -340,14 +328,9 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             return_ty.origin()
         );
 
-        let result = match return_ty.clone() {
-            AstType::Callback(_) => self
-                .java_callback_strategy
-                .return_convert(return_ty, trait_desc, callbacks),
-            _ => crate::java::bridge_j2r::quote_return_convert(
-                return_ty, trait_desc, callbacks, ret_name,
-            ),
-        };
+        let result = crate::java::bridge_j2r::quote_return_convert(
+            return_ty, trait_desc, callbacks, ret_name,
+        );
         println!(
             "[bridge]  ✅  end quote jni bridge method return convert => {}",
             return_ty.origin()

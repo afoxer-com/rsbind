@@ -8,8 +8,6 @@ use proc_macro2::{Ident, Span, TokenStream};
 use rstgen::Tokens;
 use std::path::Path;
 
-use super::bridge_cb::*;
-
 ///
 /// create a new c bridges generator.
 ///
@@ -24,18 +22,14 @@ pub(crate) fn new_gen<'a>(
         trait_descs,
         struct_descs,
         imp_desc,
-        strategy: CFileGenStrategy {
-            callback_strategy: CCallbackStrategy {},
-        },
+        strategy: CFileGenStrategy {},
     }
 }
 
 ///
 /// c bridge file generate strategy.
 ///
-pub struct CFileGenStrategy {
-    pub callback_strategy: CCallbackStrategy,
-}
+pub struct CFileGenStrategy {}
 
 impl CFileGenStrategy {}
 
@@ -79,7 +73,8 @@ impl FileGenStrategy for CFileGenStrategy {
         let mut return_cb_fns = TokenStream::new();
         let mut arg_cb_fns = TokenStream::new();
         for callback in callbacks.iter() {
-            let box_to_model_convert_tokens = box_to_model_convert(callback, callbacks, "r_result")?;
+            let box_to_model_convert_tokens =
+                box_to_model_convert(callback, callbacks, "r_result")?;
             let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, callback.name);
             let callback_model_ident = Ident::new(callback_model_str, Span::call_site());
             let callback_ident = Ident::new(&callback.name, Span::call_site());
@@ -125,8 +120,7 @@ impl FileGenStrategy for CFileGenStrategy {
     ) -> Result<TokenStream> {
         let callback_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
         let callback_struct =
-            self.callback_strategy
-                .quote_callback_struct(callback, callbacks, callback_str)?;
+            crate::swift::bridge_s2r::quote_callback_struct(callback, callbacks, callback_str)?;
         Ok(quote! {
             #[repr(C)]
             #callback_struct
@@ -421,13 +415,8 @@ fn model_to_box_convert(
         // methods calls on impl
         let method_name = Ident::new(&method.name, Span::call_site());
         let fn_method_name = Ident::new(&format!("fn_{}", method.name), Span::call_site());
-        let self_token = if method.swallow_self {
-            quote!(self)
-        } else {
-            quote!(&self)
-        };
         let each_method_tokens = quote! {
-            fn #method_name(#self_token, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
+            fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
                 #args_convert
                 let #fn_method_name = self.#method_name;
                 let result = #fn_method_name(self.index, #(#convert_arg_names),*);
@@ -445,7 +434,9 @@ fn model_to_box_convert(
         method_names.push(method_name);
     }
 
-    callback_struct = crate::swift::bridge_s2r::quote_callback_struct(callback_desc, callbacks, struct_name).unwrap();
+    callback_struct =
+        crate::swift::bridge_s2r::quote_callback_struct(callback_desc, callbacks, struct_name)
+            .unwrap();
 
     // xxxx : arg.xxxx
     // assign values from arg to struct
@@ -550,9 +541,8 @@ pub(crate) fn box_to_model_convert(
 
                 pub extern "C" fn #ret_method_name(index: i64, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
                     #args_convert
-
                     let mut callback_index = 0;
-                    let mut result: Option<Box<dyn #return_callback_ident>> = None;
+                    let mut result: Option<Box<dyn #return_callback_ident >> = None;
                     let final_result = {
                         let callback_hashmap = &*CALLBACK_HASHMAP.read().unwrap();
                         let ret_callback = callback_hashmap.get(&index);
@@ -645,4 +635,3 @@ pub(crate) fn box_to_model_convert(
         }
     })
 }
-

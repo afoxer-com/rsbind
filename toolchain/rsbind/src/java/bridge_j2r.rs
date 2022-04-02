@@ -67,7 +67,7 @@ pub(crate) fn quote_arg_convert(
         AstType::Vec(AstBaseType::Struct(origin)) => {
             let json_arg_ident = ident!(&format!("json_{}", &arg.name));
             let tmp_arg_ident = ident!(&format!("tmp_{}", &arg.name));
-            let struct_name = ident!(&format!("Struct_{}", &origin));
+            let struct_name = ident!(&format!("Proxy{}", &origin));
             let real_struct_name = ident!(&origin);
             quote! {
                 let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
@@ -91,7 +91,7 @@ pub(crate) fn quote_arg_convert(
         AstType::Struct(origin) => {
             let json_arg_ident = ident!(&format!("json_{}", &arg.name));
             let tmp_arg_ident = ident!(&format!("tmp_{}", &arg.name));
-            let struct_name = ident!(&format!("Struct_{}", &origin));
+            let struct_name = ident!(&format!("Proxy{}", &origin));
             let real_struct_name = ident!(&origin);
             quote! {
                 let #json_arg_ident: String = env.get_string(#arg_name_ident).expect("Couldn't get java string!").into();
@@ -125,7 +125,7 @@ pub(crate) fn quote_return_convert(
             env.new_string(#ret_name_ident).expect("Couldn't create java string").into_inner()
         },
         AstType::Vec(AstBaseType::Struct(struct_name)) => {
-            let struct_ident = ident!(&format!("Struct_{}", &struct_name));
+            let struct_ident = ident!(&format!("Proxy{}", &struct_name));
             quote! {
                 let r_result = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
                 let json_ret = serde_json::to_string(&r_result);
@@ -157,7 +157,7 @@ pub(crate) fn quote_return_convert(
             }
         }
         AstType::Struct(name) => {
-            let struct_copy_name = ident!(&format!("Struct_{}", name));
+            let struct_copy_name = ident!(&format!("Proxy{}", name));
             quote! {
                 let json_ret = serde_json::to_string(&#struct_copy_name::from(#ret_name_ident));
                 env.new_string(json_ret.unwrap()).expect("Couldn't create java string").into_inner()

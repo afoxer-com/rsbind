@@ -531,6 +531,17 @@ fn new_struct() -> DemoStruct {
         arg8_false: false,
         arg9: 9.0,
         arg10: 10.0,
+        arg11: vec![11],
+        arg12: vec![12],
+        arg13: vec![13],
+        arg14: vec![14],
+        arg15: vec![15.0],
+        arg16: vec![16.0],
+        arg17: vec![17],
+        arg18: vec![18],
+        arg19: vec![19],
+        arg20: vec![20],
+        arg21_true: vec![true]
     }
 }
 

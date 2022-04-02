@@ -4,7 +4,7 @@ use rstgen::Tokens;
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::errors::*;
-use crate::swift::mapping::SwiftMapping;
+use crate::swift::mapping::{RustMapping, SwiftMapping};
 use crate::swift::types::SwiftType;
 
 ///
@@ -66,35 +66,25 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
             )
         }
         AstType::Vec(AstBaseType::Struct(_)) => {
-            push!(method_body, "var ", format!("s_{}", &arg.name), ": String?");
-            push!(method_body, "autoreleasepool {");
-            let encoder_name = format!("{}_encoder", &arg.name);
-            nested!(
+            let transfer_ty = SwiftMapping::map_transfer_type(&arg.ty, callbacks);
+            let arg_buffer_name = format!("{}_buffer", &arg.name);
+            push!(
                 method_body,
-                "let ",
-                encoder_name.clone(),
-                " = JSONEncoder()"
+                format!("let s_{}", &arg.name),
+                " = ",
+                transfer_ty, "(ptr: ",arg_buffer_name, ".baseAddress", ", len: Int32(", arg_buffer_name, ".count))"
             );
-            nested!(
-                method_body,
-                "let ",
-                format!("data_{}", &arg.name),
-                " = try! ",
-                encoder_name,
-                ".encode(",
-                arg.name.clone(),
-                ")"
-            );
-            nested!(
-                method_body,
-                format!("s_{}", &arg.name),
-                " = String(data: ",
-                format!("data_{}", &arg.name),
-                ", encoding: .utf8)!"
-            );
-            push!(method_body, "}");
         }
-        AstType::Vec(_) | AstType::Struct(_) => {
+        AstType::Struct(_) => {
+            push!(
+                method_body,
+                format!("let s_{}", &arg.name),
+                " = ",
+                arg.name.clone(),
+                ".intoProxy()"
+            );
+        }
+        AstType::Vec(_) => {
             push!(method_body, "var ", format!("s_{}", &arg.name), ": String?");
             push!(method_body, "autoreleasepool {");
             let encoder_name = format!("{}_encoder", &arg.name);
@@ -230,6 +220,19 @@ pub(crate) fn fill_return_type_convert<'a, 'b>(
             );
             push!(method_body, "}");
         }
+        AstType::Vec(AstBaseType::Struct(ref origin)) => {
+            let proxy_ty = format!("Proxy{}", origin);
+            let c_array_ty = format!("C{}Array", origin);
+            push!(method_body, "let r_result = { () -> [", origin.clone(), "] in");
+            nested!(
+                method_body,
+                "let proxy_array = [", proxy_ty,"](UnsafeBufferPointer(start: result.ptr, count: Int(result.len)))",
+            );
+            nested!(method_body, "let struct_result = proxy_array.map { proxy in DemoStruct(proxy: proxy) }");
+            nested!(method_body, "free_", c_array_ty, "(result)");
+            nested!(method_body, "return struct_result");
+            push!(method_body, "}()");
+        }
         AstType::Vec(_) => {
             let return_ty = SwiftType::new(return_type.clone());
             push!(method_body, "let ret_str = String(cString:result!)");
@@ -267,26 +270,8 @@ pub(crate) fn fill_return_type_convert<'a, 'b>(
             );
         }
         AstType::Struct(struct_name) => {
-            push!(method_body, "let ret_str = String(cString:result!)");
-            method_body.push(toks!(format!(
-                "{}_free_str(UnsafeMutablePointer(mutating: result!))",
-                &crate_name
-            )));
-            push!(method_body, "var s_tmp_result: ", struct_name.clone(), "?");
-            push!(method_body, "autoreleasepool {");
-            nested!(
-                method_body,
-                "let ret_str_json = ret_str.data(using: .utf8)!"
-            );
-            nested!(method_body, "let decoder = JSONDecoder()");
-            nested!(
-                method_body,
-                "s_tmp_result = try! decoder.decode(",
-                struct_name,
-                ".self, from: ret_str_json)"
-            );
-            push!(method_body, "}");
-            push!(method_body, "let r_result = s_tmp_result!");
+            let return_ty = SwiftType::new(return_type.clone());
+            push!(method_body, "let r_result = ", Swift::from(return_ty), "(proxy: result)");
         }
     }
 

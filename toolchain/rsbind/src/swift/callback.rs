@@ -119,10 +119,20 @@ impl<'a> InternalCallbackGen<'a> {
                             "_buffer in"
                         );
                     }
+                    AstType::Vec(AstBaseType::Struct(_)) => {
+                        byte_count += 1;
+                        push!(
+                            method_body,
+                            arg.name.clone(),
+                            ".map { each in each.intoProxy() }.withUnsafeBufferPointer { ",
+                            arg.name.clone(),
+                            "_buffer in"
+                        )
+                    }
                     _ => {}
                 }
-            }
 
+            }
             // argument convert
             for arg in method.args.iter() {
                 crate::swift::artifact_s2r::fill_arg_convert(

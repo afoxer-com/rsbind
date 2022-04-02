@@ -136,6 +136,17 @@ class demo_ios_ExampleTests: XCTestCase {
         XCTAssertEqual(demoStruct.arg8_false, false)
         XCTAssertTrue(demoStruct.arg9 > 0)
         XCTAssertTrue(demoStruct.arg10 > 0)
+        XCTAssertEqual(demoStruct.arg11[0], 11)
+        XCTAssertEqual(demoStruct.arg12[0], 12)
+        XCTAssertEqual(demoStruct.arg13[0], 13)
+        XCTAssertEqual(demoStruct.arg14[0], 14)
+        XCTAssertTrue(demoStruct.arg15[0] > 0)
+        XCTAssertTrue(demoStruct.arg16[0] > 0)
+        XCTAssertEqual(demoStruct.arg17[0], 17)
+        XCTAssertEqual(demoStruct.arg18[0], 18)
+        XCTAssertEqual(demoStruct.arg19[0], 19)
+        XCTAssertEqual(demoStruct.arg20[0], 20)
+        XCTAssertTrue(demoStruct.arg21_true[0])
     }
     
     func newStruct() -> DemoStruct {
@@ -149,7 +160,18 @@ class demo_ios_ExampleTests: XCTestCase {
             arg7_str: "Hello world",
             arg8_false: false,
             arg9: 100.0,
-            arg10: 101.0
+            arg10: 101.0,
+            arg11: [11],
+            arg12: [12],
+            arg13: [13],
+            arg14: [14],
+            arg15: [15.0],
+            arg16: [16.0],
+            arg17: [17],
+            arg18: [18],
+            arg19: [19],
+            arg20: [20],
+            arg21_true: [true]
         )
         return demoStruct
     }

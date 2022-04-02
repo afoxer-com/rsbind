@@ -35,7 +35,7 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
             let cb_tmp_arg_name = ident!(&format!("j_tmp_{}", cb_arg.name));
             match base_ty {
                 AstBaseType::Struct(struct_name) => {
-                    let struct_ident = ident!(&format!("Struct_{}", &struct_name));
+                    let struct_ident = ident!(&format!("Proxy{}", &struct_name));
                     let cb_tmp_vec_arg_name = ident!(&format!("j_tmp_vec_{}", cb_arg.name));
                     quote! {
                         let #cb_tmp_vec_arg_name = #cb_origin_arg_name.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
@@ -69,7 +69,7 @@ pub(crate) fn arg_convert(cb_arg: &ArgDesc) -> Result<TokenStream> {
             }
         }
         AstType::Struct(struct_name) => {
-            let struct_copy_name = ident!(&format!("Struct_{}", &struct_name));
+            let struct_copy_name = ident!(&format!("Proxy{}", &struct_name));
             let cb_tmp_arg_name = ident!(&format!("r_tmp_{}", cb_arg.name));
             quote! {
                 let #cb_tmp_arg_name = serde_json::to_string(&#struct_copy_name::from(#cb_origin_arg_name));
@@ -225,7 +225,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Vec(AstBaseType::Struct(ref origin)) => {
-            let struct_ident = ident!(&format!("Struct_{}", origin));
+            let struct_ident = ident!(&format!("Proxy{}", origin));
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {
@@ -252,7 +252,7 @@ pub(crate) fn return_convert(method: &MethodDesc) -> Result<TokenStream> {
             }
         }
         AstType::Struct(ref origin) => {
-            let struct_ident = ident!(&format!("Struct_{}", origin));
+            let struct_ident = ident!(&format!("Proxy{}", origin));
             quote! {
                 let mut r_result = None;
                 match result.unwrap() {

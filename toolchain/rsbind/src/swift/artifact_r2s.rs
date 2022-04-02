@@ -90,6 +90,19 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
                 ".len)))"
             );
         }
+        AstType::Vec(AstBaseType::Struct(ref origin)) => {
+            let proxy_ty = format!("Proxy{}", origin);
+            let c_array_ty = format!("C{}Array", origin);
+            push!(method_body, "let ", format!("c_{}", &cb_arg.name) ," = { () -> [", origin.clone(), "] in");
+            nested!(
+                method_body,
+                "let proxy_array = [", proxy_ty,"](UnsafeBufferPointer(start: ", cb_arg.name.clone() ,".ptr, count: Int(", cb_arg.name.clone() ,".len)))",
+            );
+            nested!(method_body, "let struct_arg = proxy_array.map { proxy in DemoStruct(proxy: proxy) }");
+            nested!(method_body, "free_", c_array_ty, "(", cb_arg.name.clone(),")");
+            nested!(method_body, "return struct_arg");
+            push!(method_body, "}()");
+        }
         AstType::Vec(_) => {
             nested!(
                 fn_body,
@@ -142,53 +155,14 @@ pub(crate) fn fill_arg_convert<'a, 'b>(
             );
         }
         AstType::Struct(_) => {
-            nested!(
-                fn_body,
-                "let ",
-                format!("c_tmp_{}", &cb_arg.name),
-                " = String(cString:",
-                cb_arg.name.clone(),
-                "!)"
-            );
-            nested!(
-                fn_body,
-                "var ",
-                format!("c_option_{}", &cb_arg.name),
-                " : ",
-                cb_arg_str.clone(),
-                "?"
-            );
-            nested!(fn_body, "autoreleasepool {");
-            fn_body.nested({
-                let mut body = toks!();
-                nested!(
-                    body,
-                    "let ",
-                    format!("c_tmp_json_{}", &cb_arg.name),
-                    " = ",
-                    format!("c_tmp_{}", &cb_arg.name),
-                    ".data(using: .utf8)!"
-                );
-                nested!(body, "let decoder = JSONDecoder()");
-                nested!(
-                    body,
-                    format!("c_option_{}", &cb_arg.name),
-                    " = try! decoder.decode(",
-                    cb_arg_str,
-                    ".self, from: ",
-                    format!("c_tmp_json_{}", &cb_arg.name),
-                    ")"
-                );
-                body
-            });
-            nested!(fn_body, "}");
+            let ty = SwiftType::new(cb_arg.ty.clone());
             nested!(
                 fn_body,
                 "let ",
                 format!("c_{}", &cb_arg.name),
                 " = ",
-                format!("c_option_{}", &cb_arg.name),
-                "!"
+                Swift::from(ty),
+                "(proxy: ", cb_arg.name.clone(), ")"
             );
         }
     }
@@ -246,7 +220,41 @@ pub(crate) fn fill_return_convert(
                 "(ptr: tmp_ptr, len: Int32(result.count))"
             );
         }
-        AstType::Vec(_) | AstType::Struct(_) => {
+        AstType::Vec(AstBaseType::Struct(_)) => {
+            let transfer_ty = SwiftMapping::map_transfer_type(&cb_method.return_type, callbacks);
+            let base_ty = match cb_method.return_type.clone() {
+                AstType::Vec(base) => {
+                    SwiftMapping::map_transfer_type(&AstType::from(base), callbacks)
+                }
+                _ => "".to_string(),
+            };
+
+            nested!(method_body, "let proxy_result = result.map { each in each.intoProxy() }");
+            nested!(
+                method_body,
+                "let tmp_ptr = UnsafeMutablePointer<",
+                base_ty,
+                ">.allocate(capacity: result.count)"
+            );
+            nested!(
+                method_body,
+                "tmp_ptr.initialize(from: proxy_result, count: proxy_result.count)"
+            );
+
+            nested!(
+                method_body,
+                "return ",
+                transfer_ty,
+                "(ptr: tmp_ptr, len: Int32(proxy_result.count))"
+            );
+        }
+        AstType::Struct(_) => {
+            push!(
+                method_body,
+                "return result.intoProxy()"
+            );
+        }
+        AstType::Vec(_) => {
             push!(
                 method_body,
                 "return autoreleasepool { () -> UnsafePointer<Int8>? in",

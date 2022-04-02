@@ -99,18 +99,30 @@ pub(crate) fn parse_from_str(
                         _ => "".to_owned(),
                     };
 
-                    let field_ty = match field.ty {
+                    let mut field_ty = None;
+                    match field.ty {
                         syn::Type::Path(ref type_path) => {
                             let segments = &(type_path.path.segments);
-                            let ident = &(segments[segments.len() - 1].ident);
-                            let origin = ident.to_string();
-                            AstType::new(&origin, &origin)
+                            let ident = (&segments[segments.len() - 1].ident).to_string();
+                            if ident == "Box" {
+                                println!("found Box argument.");
+                                field_ty = Some(parse_boxed_ast(type_path));
+                            } else if ident == "Vec" {
+                                println!("found Vec argument.");
+                                field_ty = Some(parse_vec_ast(type_path));
+                            } else {
+                                // normal arguments
+                                field_ty = Some(AstType::new(&ident, &ident));
+                                println!("found args type => {:?}", ident);
+                            }
                         }
-                        _ => AstType::Void,
+                        _ => {
+                            field_ty = Some(AstType::Void);
+                        }
                     };
                     let field_desc = ArgDesc {
                         name: field_name,
-                        ty: field_ty,
+                        ty: field_ty.unwrap(),
                     };
                     field_descs.push(field_desc);
                 }

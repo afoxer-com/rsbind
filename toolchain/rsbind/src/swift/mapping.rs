@@ -32,6 +32,7 @@ impl<'a> SwiftMapping {
 
     /// Get the swift argument types for transferring to C.
     pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> String {
+        let mut buffer_str = "".to_string();
         match &ty {
             AstType::Void => "()",
             AstType::Byte(_) => "Int8",
@@ -41,14 +42,21 @@ impl<'a> SwiftMapping {
             AstType::Float(_) => "Float",
             AstType::Double(_) => "Double",
             AstType::Boolean => "Int32",
-            AstType::String => "UnsafePointer<Int8>?",
+            AstType::String => "CInt8Array",
             AstType::Vec(AstBaseType::Byte(_)) => "CInt8Array",
             AstType::Vec(AstBaseType::Short(_)) => "CInt16Array",
             AstType::Vec(AstBaseType::Int(_)) => "CInt32Array",
             AstType::Vec(AstBaseType::Long(_)) => "CInt64Array",
+            AstType::Vec(AstBaseType::Struct(ref origin)) => {
+                buffer_str = format!("C{}Array", origin);
+                buffer_str.as_ref()
+            }
             AstType::Vec(_) => "UnsafePointer<Int8>?",
             AstType::Callback(origin) => origin,
-            AstType::Struct(_) => "UnsafePointer<Int8>?",
+            AstType::Struct(origin) => {
+                buffer_str = format!("Proxy{}", origin);
+                buffer_str.as_str()
+            },
         }
         .to_string()
     }
@@ -87,14 +95,21 @@ impl<'a> RustMapping {
             AstType::Float(_) => quote!(f32),
             AstType::Double(_) => quote!(f64),
             AstType::Boolean => quote!(i32),
-            AstType::String => quote!(*const c_char),
+            AstType::String => quote!(CInt8Array),
             AstType::Vec(AstBaseType::Byte(_)) => quote!(CInt8Array),
             AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),
             AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
             AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
+            AstType::Vec(AstBaseType::Struct(origin)) => {
+                let struct_array_name = ident!(&format!("C{}Array", origin));
+                quote!(#struct_array_name)
+            }
             AstType::Vec(_) => quote!(*const c_char),
             AstType::Callback(_) => quote!(()), // not expected to call here!
-            AstType::Struct(_) => quote!(*const c_char),
+            AstType::Struct(ref origin) => {
+                let struct_ident = ident!(&format!("Proxy{}", origin));
+                quote!(#struct_ident)
+            }
         }
     }
 

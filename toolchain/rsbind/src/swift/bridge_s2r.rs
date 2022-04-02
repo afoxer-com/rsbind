@@ -1,3 +1,7 @@
+///!
+///! Swift to Rust data convert.
+///!
+///
 use proc_macro2::{Ident, Span, TokenStream};
 
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
@@ -7,9 +11,6 @@ use crate::ident;
 use crate::swift::mapping::RustMapping;
 use crate::ErrorKind::GenerateError;
 
-///
-/// C to Rust data convert.
-///
 pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
     let rust_arg_name = ident!(&format!("r_{}", &arg.name));
     let arg_name_ident = ident!(&arg.name);
@@ -32,69 +33,30 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
             }
         }
         AstType::String => {
-            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
-            let c_slice_ident = ident!(&format!("c_str_{}", &arg.name));
             quote! {
-                let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
-                let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
-                let #rust_arg_name: String = #c_slice_ident.to_owned();
+                let #rust_arg_name = {
+                    let slice = unsafe {std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u8), #arg_name_ident.len as usize)};
+                    let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(slice)};
+                    cstr.to_string_lossy().to_string()
+                };
             }
         }
-        AstType::Vec(AstBaseType::Byte(origin)) => {
-            if origin.contains("i8") {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i8), #arg_name_ident.len as usize).to_vec() };
-                }
-            } else {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u8), #arg_name_ident.len as usize).to_vec() };
-                }
-            }
-        }
-        AstType::Vec(AstBaseType::Short(origin)) => {
-            if origin.contains("i16") {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i16), #arg_name_ident.len as usize).to_vec() };
-                }
-            } else {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u16), #arg_name_ident.len as usize).to_vec() };
-                }
-            }
-        }
-        AstType::Vec(AstBaseType::Int(origin)) => {
-            if origin.starts_with('i') {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i32), #arg_name_ident.len as usize).to_vec() };
-                }
-            } else {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u32), #arg_name_ident.len as usize).to_vec() };
-                }
-            }
-        }
-        AstType::Vec(AstBaseType::Long(origin)) => {
-            if origin.starts_with('i') {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const i64), #arg_name_ident.len as usize).to_vec() };
-                }
-            } else {
-                quote! {
-                    let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const u64), #arg_name_ident.len as usize).to_vec() };
-                }
+        AstType::Vec(AstBaseType::Byte(origin))
+        | AstType::Vec(AstBaseType::Short(origin))
+        | AstType::Vec(AstBaseType::Int(origin))
+        | AstType::Vec(AstBaseType::Long(origin)) => {
+            let base_ident = ident!(&origin);
+            quote! {
+                let #rust_arg_name = unsafe { std::slice::from_raw_parts(#arg_name_ident.ptr as (*const #base_ident), #arg_name_ident.len as usize).to_vec() };
             }
         }
         AstType::Vec(AstBaseType::Struct(origin)) => {
-            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
-            let c_slice_ident = ident!(&format!("c_slice_{}", &arg.name));
-            let tmp_ident = ident!(&format!("c_tmp_{}", &arg.name));
-            let struct_name = ident!(&format!("Struct_{}", &origin));
+            let tmp_ident = ident!(&format!("vec_tmp_{}", &arg.name));
+            let struct_name = ident!(&format!("Proxy{}", &origin));
             let origin_struct_name = ident!(&origin);
             quote! {
-                let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
-                let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
-                let #tmp_ident: Vec<#struct_name> = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
-                let #rust_arg_name = #tmp_ident.into_iter().map(|each| #origin_struct_name::from(each)).collect();
+                let #tmp_ident: Vec<#struct_name> = unsafe {Vec::from_raw_parts(#arg_name_ident.ptr as *mut #struct_name, #arg_name_ident.len as usize, #arg_name_ident.len as usize)};
+                let #rust_arg_name: Vec<#origin_struct_name> = #tmp_ident.into_iter().map(|each| each.into()).collect();
             }
         }
         AstType::Vec(_) => {
@@ -113,15 +75,8 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
             }
         }
         AstType::Struct(origin) => {
-            let c_str_ident = ident!(&format!("c_str_{}", &arg.name));
-            let c_slice_ident = ident!(&format!("c_slice_{}", &arg.name));
-            let tmp_struct = ident!(&format!("c_tmp_{}", &arg.name));
-            let struct_name = ident!(&format!("Struct_{}", &origin));
             quote! {
-                let #c_str_ident: &CStr = unsafe{CStr::from_ptr(#arg_name_ident)};
-                let #c_slice_ident: &str = #c_str_ident.to_str().unwrap();
-                let #tmp_struct: #struct_name = serde_json::from_str(&#c_slice_ident.to_owned()).unwrap();
-                let #rust_arg_name = #tmp_struct.into();
+                let #rust_arg_name = #arg_name_ident.into();
             }
         }
         AstType::Void => {
@@ -190,14 +145,28 @@ pub(crate) fn quote_return_convert(
             let r_result = if #ret_name_ident {1} else {0};
         },
         AstType::String => quote! {
-            let r_result = CString::new(#ret_name_ident).unwrap().into_raw();
+            let r_result = {
+                let cstr = CString::new(#ret_name_ident).unwrap();
+                let bytes = cstr.as_bytes_with_nul();
+                let array = CInt8Array {
+                    ptr: bytes.as_ptr() as (*const i8),
+                    len: bytes.len() as i32
+                };
+                std::mem::forget(cstr);
+                array
+            };
         },
-        AstType::Vec(AstBaseType::Struct(struct_name)) => {
-            let struct_ident = ident!(&format!("Struct_{}", &struct_name));
+        AstType::Vec(AstBaseType::Struct(origin)) => {
+            let struct_ident = ident!(&format!("Proxy{}", &origin));
+            let origin_struct_name = ident!(&origin);
+            let struct_array_name = ident!(&format!("C{}Array", &origin));
             quote! {
-                let #ret_name_ident = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
-                let json_ret = serde_json::to_string(&#ret_name_ident);
-                let r_result = CString::new(json_ret.unwrap()).unwrap().into_raw();
+                let mut #ret_name_ident = #ret_name_ident.into_iter().map(|each| #struct_ident::from(each)).collect::<Vec<#struct_ident>>();
+                #ret_name_ident.shrink_to_fit();
+                let r_result = #struct_array_name {
+                    ptr: result.as_ptr(),
+                    len: result.len() as i32
+                };
             }
         }
         AstType::Vec(AstBaseType::Byte(_))
@@ -233,10 +202,8 @@ pub(crate) fn quote_return_convert(
             }
         }
         AstType::Struct(origin) => {
-            let struct_copy_name = ident!(&format!("Struct_{}", &origin));
             quote! {
-                let json_ret = serde_json::to_string(&#struct_copy_name::from(#ret_name_ident));
-                let r_result = CString::new(json_ret.unwrap()).unwrap().into_raw();
+                let r_result = #ret_name_ident.into();
             }
         }
         AstType::Callback(ref origin) => {

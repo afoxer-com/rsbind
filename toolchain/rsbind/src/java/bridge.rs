@@ -185,7 +185,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     }
 
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream> {
-        let struct_name = ident!(&format!("Struct_{}", &struct_desc.name));
+        let struct_name = ident!(&format!("Proxy{}", &struct_desc.name));
         let origin_struct_name = ident!(&struct_desc.name);
         let names = struct_desc
             .fields

@@ -8,6 +8,8 @@ use crate::ident;
 use crate::swift::mapping::RustMapping;
 use proc_macro2::{Ident, Span, TokenStream};
 use std::path::Path;
+use std::process::id;
+use syn::token::Token;
 
 ///
 /// create a new c bridges generator.
@@ -48,6 +50,7 @@ impl FileGenStrategy for CFileGenStrategy {
             use std::collections::HashMap;
             use std::sync::RwLock;
             use std::sync::Arc;
+            use std::panic::*;
         })
     }
 
@@ -123,7 +126,8 @@ impl FileGenStrategy for CFileGenStrategy {
     }
 
     fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream> {
-        let struct_name = ident!(&format!("Struct_{}", &struct_desc.name));
+        let proxy_struct_str = format!("Proxy{}", &struct_desc.name);
+        let proxy_struct_name = ident!(&proxy_struct_str);
         let origin_struct_name = ident!(&struct_desc.name);
         let names = struct_desc
             .fields
@@ -135,26 +139,209 @@ impl FileGenStrategy for CFileGenStrategy {
         let tys = struct_desc
             .fields
             .iter()
-            .map(|field| ident!(&field.ty.origin()))
-            .collect::<Vec<Ident>>();
+            .map(|field| RustMapping::map_base_transfer_type(&field.ty))
+            .collect::<Vec<TokenStream>>();
+
+        let struct_array_str = format!("C{}Array", &struct_desc.name);
+        let struct_array_name = ident!(&struct_array_str);
+
+        fn origin_to_proxy_convert(field: &ArgDesc) -> TokenStream {
+            let field_name = ident!(&field.name);
+            let proxy_type = RustMapping::map_base_transfer_type(&field.ty);
+            match field.ty.clone() {
+                AstType::Void => {
+                    quote! {#field_name : origin.#field_name}
+                }
+                AstType::Byte(_)
+                | AstType::Int(_)
+                | AstType::Short(_)
+                | AstType::Long(_)
+                | AstType::Float(_)
+                | AstType::Double(_) => {
+                    quote! {#field_name : origin.#field_name as #proxy_type}
+                }
+                AstType::Boolean => {
+                    quote! {#field_name : {if origin.#field_name {1} else {0} }}
+                }
+                AstType::String => {
+                    quote! {
+                        #field_name : {
+                        let cstr = CString::new(origin.#field_name).unwrap();
+                        let bytes = cstr.as_bytes_with_nul();
+                        let array = CInt8Array {
+                            ptr: bytes.as_ptr() as (*const i8),
+                            len: bytes.len() as i32
+                        };
+                        std::mem::forget(cstr);
+                        array
+                    }}
+                }
+                AstType::Vec(AstBaseType::Byte(_))
+                | AstType::Vec(AstBaseType::Short(_))
+                | AstType::Vec(AstBaseType::Int(_))
+                | AstType::Vec(AstBaseType::Long(_)) => {
+                    let array_ty = RustMapping::map_base_transfer_type(&field.ty);
+                    let inner_ty = match field.ty.clone() {
+                        AstType::Vec(base) => {
+                            RustMapping::map_base_transfer_type(&AstType::from(base))
+                        }
+                        _ => quote!(),
+                    };
+                    quote! {#field_name : {
+                        let mut copy_field = origin.#field_name.as_slice().to_vec();
+                        copy_field.shrink_to_fit();
+                        let ptr = copy_field.as_ptr();
+                        let len = copy_field.len();
+                        unsafe {
+                            std::mem::forget(copy_field);
+                            #array_ty {
+                                ptr: ptr as (*const #inner_ty),
+                                len: len as i32
+                            }
+                        }
+                    }}
+                }
+                AstType::Vec(_) => {
+                    quote! {#field_name : {
+                        let json_ret = serde_json::to_string(&origin.#field_name);
+                        CString::new(json_ret.unwrap()).unwrap().into_raw()
+                    }}
+                }
+                AstType::Callback(_) => {
+                    quote! {}
+                }
+                AstType::Struct(_) => {
+                    quote! {}
+                }
+            }
+        }
+
+        fn proxy_to_origin_convert(field: &ArgDesc) -> TokenStream {
+            let field_name = ident!(&field.name);
+            match field.ty.clone() {
+                AstType::Void => {
+                    quote! {#field_name : proxy.#field_name}
+                }
+                AstType::Byte(ref origin)
+                | AstType::Int(ref origin)
+                | AstType::Short(ref origin)
+                | AstType::Long(ref origin)
+                | AstType::Float(ref origin)
+                | AstType::Double(ref origin) => {
+                    let origin_ty = ident!(origin);
+                    quote! {#field_name : {proxy.#field_name as #origin_ty}}
+                }
+                AstType::Boolean => {
+                    quote! {
+                        #field_name : {if proxy.#field_name > 0 {true} else {false}}
+                    }
+                }
+                AstType::String => {
+                    quote! {#field_name : {
+                        let slice = unsafe {std::slice::from_raw_parts(proxy.#field_name.ptr as (*const u8), proxy.#field_name.len as usize)};
+                        let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(slice)};
+                        cstr.to_string_lossy().to_string()
+                    }}
+                }
+                AstType::Vec(AstBaseType::Byte(origin))
+                | AstType::Vec(AstBaseType::Short(origin))
+                | AstType::Vec(AstBaseType::Int(origin))
+                | AstType::Vec(AstBaseType::Long(origin)) => {
+                    let base_ident = ident!(&origin);
+                    quote! {
+                        #field_name : unsafe { std::slice::from_raw_parts(proxy.#field_name.ptr as (*const #base_ident), proxy.#field_name.len as usize).to_vec() }
+                    }
+                }
+                AstType::Vec(_) => {
+                    quote! {#field_name : {
+                        let cstr: &CStr = unsafe{CStr::from_ptr(proxy.#field_name)};
+                        let c_slice: &str = cstr.to_str().unwrap();
+                        serde_json::from_str(&c_slice.to_owned()).unwrap()
+                    }}
+                }
+                AstType::Callback(_) => {
+                    quote! {}
+                }
+                AstType::Struct(_) => {
+                    quote! {}
+                }
+            }
+        }
+
+        let origin_to_proxy_convert_tokens = struct_desc
+            .fields
+            .iter()
+            .map(|each| origin_to_proxy_convert(each))
+            .collect::<Vec<TokenStream>>();
+
+        let proxy_to_origin_convert_tokens = struct_desc
+            .fields
+            .iter()
+            .map(|each| proxy_to_origin_convert(each))
+            .collect::<Vec<TokenStream>>();
+
+        let free_proxy_struct_array_fn = ident!(&format!("free_{}", &struct_array_str));
+        let free_proxy_struct_fn = ident!(&format!("free_{}", &proxy_struct_str));
+
         Ok(quote! {
             #[repr(C)]
-            #[derive(Serialize, Deserialize)]
-            pub struct #struct_name {
+            pub struct #proxy_struct_name {
                 #(pub #names: #tys),*
             }
 
-            impl From<#origin_struct_name> for #struct_name {
+            impl From<#origin_struct_name> for #proxy_struct_name {
                 fn from(origin: #origin_struct_name) -> Self {
-                    #struct_name{#(#origin_arg_names: origin.#arg_names),*}
+                    #proxy_struct_name{
+                        #(#origin_to_proxy_convert_tokens),*
+                    }
                 }
             }
 
-            impl From<#struct_name> for #origin_struct_name {
-                fn from(origin: #struct_name) -> Self {
-                    #origin_struct_name{#(#origin_arg_names: origin.#arg_names),*}
+            impl From<#proxy_struct_name> for #origin_struct_name {
+                fn from(proxy: #proxy_struct_name) -> Self {
+                    #origin_struct_name{
+                        #(#proxy_to_origin_convert_tokens),*
+                    }
                 }
             }
+            #[no_mangle]
+            pub extern "C" fn #free_proxy_struct_fn(proxy: #proxy_struct_name) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    #origin_struct_name::from(proxy);
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free proxy struct` error: {:?}", e);
+                    }
+                };
+            }
+
+            #[repr(C)]
+            pub struct #struct_array_name {
+                pub ptr: *const #proxy_struct_name,
+                pub len: i32,
+            }
+
+            #[no_mangle]
+            pub extern "C" fn #free_proxy_struct_array_fn(array: #struct_array_name) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    unsafe {
+                        let proxy_vec = Vec::from_raw_parts(
+                            array.ptr as *mut #proxy_struct_name,
+                            array.len as usize,
+                            array.len as usize);
+                        proxy_vec.into_iter().for_each(|each| {#origin_struct_name::from(each);});
+                    }
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free proxy struct` error: {:?}", e);
+                    }
+                };
+            }
+
         })
     }
 
@@ -229,7 +416,6 @@ impl FileGenStrategy for CFileGenStrategy {
         return_ty: &AstType,
         ret_name: &str,
     ) -> Result<TokenStream> {
-        let ret_name_ident = ident!(ret_name);
         let obtain_index = if let AstType::Callback(_) = return_ty.clone() {
             quote! {
                 let callback_index = {
@@ -291,7 +477,7 @@ fn model_to_box_convert(
             method.name, callback_desc.name
         );
 
-        let mut strs_to_release: Vec<Ident> = vec![];
+        let mut strs_to_release: Vec<TokenStream> = vec![];
         // arguments converting in callback
         let mut args_convert = TokenStream::new();
         for cb_arg in method.args.iter() {
@@ -323,15 +509,16 @@ fn model_to_box_convert(
             let args_convert_each = crate::swift::bridge_r2s::arg_convert(cb_arg, callbacks)?;
 
             match cb_arg.ty.clone() {
-                AstType::String
+                AstType::String => {
+                    let ptr_arg = ident!(&format!("ptr_{}", cb_arg.name));
+                    strs_to_release.push( quote!(#ptr_arg as (*mut c_char)));
+                }
                 | AstType::Vec(AstBaseType::Float(_))
                 | AstType::Vec(AstBaseType::Double(_))
                 | AstType::Vec(AstBaseType::Boolean)
-                | AstType::Vec(AstBaseType::String)
-                | AstType::Vec(AstBaseType::Struct(_))
-                | AstType::Struct(_) => {
+                | AstType::Vec(AstBaseType::String) => {
                     let cb_arg_name = ident!(&format!("c_{}", cb_arg.name));
-                    strs_to_release.push(cb_arg_name.clone());
+                    strs_to_release.push(quote!(#cb_arg_name));
                 }
                 _ => {}
             }

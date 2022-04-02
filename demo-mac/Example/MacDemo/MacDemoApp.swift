@@ -39,7 +39,14 @@ struct MacDemoApp: App {
                     demoTrait.testTwoVecArg15(arg: [100], arg1: [101])
                     let demoStruct = demoTrait.testReturnStruct()
                     demoTrait.testArgStruct(arg: demoStruct)
+                
+                
+                
+                    print("run once")
                     demoTrait.testArgVecStruct14(arg: [demoStruct])
+                
+                
+                
 
                     demoTrait.testReturnVecStr()
                     demoTrait.testReturnVecU8()
@@ -70,7 +77,18 @@ struct MacDemoApp: App {
             arg7_str: "Hello world",
             arg8_false: false,
             arg9: 100.0,
-            arg10: 101.0
+            arg10: 101.0,
+            arg11: [11],
+            arg12: [12],
+            arg13: [13],
+            arg14: [14],
+            arg15: [15.0],
+            arg16: [16.0],
+            arg17: [17],
+            arg18: [18],
+            arg19: [19],
+            arg20: [20],
+            arg21_true: [true]
         )
         return demoStruct
     }

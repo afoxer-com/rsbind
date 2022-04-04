@@ -30,35 +30,6 @@ impl<'a> TraitGen<'a> {
             let mut method_body: Tokens<Swift> = Tokens::new();
 
             let mut byte_count = 0;
-            for arg in method.args.iter() {
-                match arg.ty.clone() {
-                    AstType::Vec(AstBaseType::Byte(_))
-                    | AstType::Vec(AstBaseType::Short(_))
-                    | AstType::Vec(AstBaseType::Int(_))
-                    | AstType::Vec(AstBaseType::Long(_)) => {
-                        byte_count += 1;
-                        push!(
-                            method_body,
-                            arg.name.clone(),
-                            ".withUnsafeBufferPointer { ",
-                            arg.name.clone(),
-                            "_buffer in"
-                        );
-                    }
-                    AstType::Vec(AstBaseType::Struct(_)) => {
-                        byte_count += 1;
-                        push!(
-                            method_body,
-                            arg.name.clone(),
-                            ".map { each in each.intoProxy() }.withUnsafeBufferPointer { ",
-                            arg.name.clone(),
-                            "_buffer in"
-                        )
-                    }
-                    _ => {}
-                }
-            }
-
             self.fill_arg_convert(&mut method_body, method)?;
             self.fill_call_native_method(&mut method_body, method)?;
             self.fill_return_type_convert(&mut method_body, method, self.callbacks)?;
@@ -116,15 +87,8 @@ impl<'a> TraitGen<'a> {
             "{}_{}_{}",
             &self.desc.mod_name, &self.desc.name, &method.name
         );
-        match method.return_type.clone() {
-            AstType::Void => {
-                push!(method_body, method_name, "(");
-            }
-            _ => {
-                println!("quote method call for {}", method_name);
-                push!(method_body, "let result = ", method_name, "(");
-            }
-        }
+        println!("quote method call for {}", method_name);
+        push!(method_body, "let result = ", method_name, "(");
 
         for (index, item) in method.args.clone().into_iter().enumerate() {
             let converted = format!("s_{}", &item.name);

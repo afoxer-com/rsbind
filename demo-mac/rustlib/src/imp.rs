@@ -38,17 +38,17 @@ impl DemoTrait2 for TestContract1Imp {
 
 impl DemoTrait for TestContract1Imp {
     fn setup() {
-        error!("We call setup");
+        println!("We call setup");
     }
 
     fn test_u8_1(arg: u8, arg2: u8) -> u8 {
-        error!("We call test_u8_1");
+        println!("We call test_u8_1");
         assert(arg == 100 && arg2 == 101, "test_u8_1");
         1
     }
 
     fn test_i8_2(arg: i8, arg2: i8) -> i8 {
-        error!("We call test_i8_2");
+        println!("We call test_i8_2");
         assert(arg == 100 && arg2 == 101, "test_u8_1");
         2
     }
@@ -243,72 +243,87 @@ impl DemoTrait for TestContract1Imp {
 }
 
 fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
-    error!("We call handle_callback test_u8_1");
+    println!("ssssss");
+    println!("We call handle_callback test_u8_1");
     assert_eq(&arg.test_u8_1(100, 101), &1, "handle_callback");
-    error!("We call handle_callback test_i8_2");
+    println!("We call handle_callback test_i8_2");
     assert_eq(&arg.test_i8_2(100, 101), &2, "handle_callback");
-    error!("We call handle_callback test_i16_3");
+    println!("We call handle_callback test_i16_3");
     assert_eq(&arg.test_i16_3(100, 101), &3, "handle_callback");
-    error!("We call handle_callback test_u16_4");
+    println!("We call handle_callback test_u16_4");
     assert_eq(&arg.test_u16_4(100, 101), &4, "handle_callback");
-    error!("We call handle_callback test_i32_5");
+    println!("We call handle_callback test_i32_5");
     assert_eq(&arg.test_i32_5(100, 101), &5, "handle_callback");
-    error!("We call handle_callback test_u32_6");
+    println!("We call handle_callback test_u32_6");
     assert_eq(&arg.test_u32_6(100, 101), &6, "handle_callback");
-    error!("We call handle_callback test_bool_false");
+    println!("We call handle_callback test_bool_false");
     assert_eq(&arg.test_bool_false(true, false), &false, "handle_callback");
-    error!("We call handle_callback test_f32_30");
+    println!("We call handle_callback test_f32_30");
     assert(arg.test_f32_30(100.0, 101.0) > 29.0, "test_f32_30");
-    error!("We call handle_callback test_f64_31");
+    println!("We call handle_callback test_f64_31");
     assert(arg.test_f64_31(100.0, 101.0) > 30.0, "test_f64_31");
-    error!("We call handle_callback test_arg_vec_str_18");
+    println!("We call handle_callback test_str");
     assert_eq(&arg.test_str("Hello world".to_string()), &"Hello world".to_string(), "test_str");
+    println!("We call handle_callback test_arg_vec_str_18");
     assert_eq(
         &arg.test_arg_vec_str_18(vec!["Hello world".to_string()]),
         &18i32,
         "handle_callback"
     );
-    error!("We call handle_callback test_arg_vec_u8_7");
+    println!("We call handle_callback test_arg_vec_u8_7");
     assert_eq(&arg.test_arg_vec_u8_7(vec![100u8]), &7, "handle_callback");
-    error!("We call handle_callback test_arg_vec_i8_8");
+    println!("We call handle_callback test_arg_vec_i8_8");
     assert_eq(&arg.test_arg_vec_i8_8(vec![100i8]), &8, "handle_callback");
-    error!("We call handle_callback test_arg_vec_i16_9");
+    println!("We call handle_callback test_arg_vec_i16_9");
     assert_eq(&arg.test_arg_vec_i16_9(vec![100i16]), &9, "handle_callback");
-    error!("We call handle_callback test_arg_vec_u16_10");
+    println!("We call handle_callback test_arg_vec_u16_10");
     assert_eq(&arg.test_arg_vec_u16_10(vec![100u16]), &10, "handle_callback");
-    error!("We call handle_callback test_arg_vec_i32_11");
+    println!("We call handle_callback test_arg_vec_i32_11");
     assert_eq(&arg.test_arg_vec_i32_11(vec![100i32]), &11, "handle_callback");
-    error!("We call handle_callback test_arg_vec_u32_12");
+    println!("We call handle_callback test_arg_vec_u32_12");
     assert_eq(&arg.test_arg_vec_u32_12(vec![100u32]), &12, "handle_callback");
-    error!("We call handle_callback test_arg_vec_bool_true");
+    println!("We call handle_callback test_arg_vec_bool_true");
     assert_eq(&arg.test_arg_vec_bool_true(vec![true]), &true, "handle_callback");
-    error!("We call handle_callback test_arg_vec_struct_17");
+    println!("We call handle_callback test_arg_vec_struct_17");
     assert_eq(&arg.test_arg_vec_struct_17(vec![new_struct()]), &17, "handle_callback");
-    error!("We call handle_callback test_two_vec_arg_13");
+    println!("We call handle_callback test_two_vec_arg_13");
     assert_eq(&arg.test_two_vec_arg_13(vec![100i32], vec![101u32]), &13, "handle_callback");
-    error!("We call handle_callback test_arg_struct_14");
+    println!("We call handle_callback test_arg_struct_14");
     let r = arg.test_arg_struct_14(new_struct());
     assert_eq(&r, &14, "handle_callback");
-    error!("We call handle_callback test_two_arg_struct_15");
+    println!("We call handle_callback test_two_arg_struct_15");
     let r = arg.test_two_arg_struct_15(new_struct(), new_struct());
     assert_eq(&r, &15, "handle_callback");
-    error!("We call handle_callback test_no_return");
+    println!("We call handle_callback test_no_return");
     arg.test_no_return();
+    println!("We call handle_callback test_i64_7");
     assert_eq(&arg.test_i64_7(100, 101), &7, "assert_eq");
+    println!("We call handle_callback test_u64_7");
     assert_eq(&arg.test_u64_7(100, 101), &7, "test_u64_7");
+    println!("We call handle_callback test_arg_vec_i64_11");
     assert_eq(&arg.test_arg_vec_i64_11(vec![100]), &11, "test_arg_vec_i64_11");
+    println!("We call handle_callback test_arg_vec_u64_12");
     assert_eq(&arg.test_arg_vec_u64_12(vec![100]), &12, "test_arg_vec_u64_12");
 
     // assert_eq(&arg.test_return_vec_str(), &vec!["Hello world".to_string()], "test_return_vec_str");
+    println!("We call handle_callback test_return_vec_u8");
     assert_eq(&arg.test_return_vec_u8(), &vec![100], "test_return_vec_u8");
+    println!("We call handle_callback test_return_vec_i8");
     assert_eq(&arg.test_return_vec_i8(), &vec![100], "test_return_vec_i8");
+    println!("We call handle_callback test_return_vec_i16");
     assert_eq(&arg.test_return_vec_i16(), &vec![100], "test_return_vec_i16");
+    println!("We call handle_callback test_return_vec_u16");
     assert_eq(&arg.test_return_vec_u16(), &vec![100], "test_return_vec_u16");
+    println!("We call handle_callback test_return_vec_i32");
     assert_eq(&arg.test_return_vec_i32(), &vec![100], "test_return_vec_i32");
+    println!("We call handle_callback test_return_vec_u32");
     assert_eq(&arg.test_return_vec_u32(), &vec![100], "test_return_vec_u32");
+    println!("We call handle_callback test_return_vec_i64");
     assert_eq(&arg.test_return_vec_i64(), &vec![100], "test_return_vec_i64");
+    println!("We call handle_callback test_return_vec_u64");
     assert_eq(&arg.test_return_vec_u64(), &vec![100], "test_return_vec_u64");
     // assert_eq(&arg.test_return_vec_bool_true(), &vec![true], "test_return_vec_bool_true");
+    println!("We call handle_callback test_two_vec_u8");
     assert_eq(&arg.test_two_vec_u8(vec![100]), &vec![100], "test_two_vec_u8");
     // assert_struct(&arg.test_return_vec_struct()[0], "test_return_vec_struct");
 
@@ -564,14 +579,14 @@ fn assert_struct(arg: &DemoStruct, fn_name: &str) {
 
 fn assert(condition: bool, fn_name: &str) {
     if !condition {
-        error!("{} failed!", fn_name);
+        println!("{} failed!", fn_name);
         panic!("{} failed!", fn_name);
     }
 }
 
 fn assert_eq<T : PartialEq + std::fmt::Debug + ?Sized>(expected: &T, actual: &T, fn_name: &str) {
     if expected != actual {
-        error!("Need {:?}, actual is {:?} in {:?}", expected, actual, fn_name);
+        println!("Need {:?}, actual is {:?} in {:?}", expected, actual, fn_name);
         // panic!("Need {}, actual is {} in {}", expected, actual, fn_name);
     }
 }

@@ -1,11 +1,15 @@
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
+use crate::base::Convertible;
 use crate::bridge::file::*;
 use crate::common::*;
 use crate::errors::*;
 use crate::ident;
 use crate::swift::mapping::RustMapping;
+use crate::swift::ty::basic::quote_free_swift_ptr;
+use crate::swift::ty::str::Str;
+use crate::swift::ty::vec_default::VecDefault;
 use proc_macro2::{Ident, Span, TokenStream};
 use std::path::Path;
 use std::process::id;
@@ -36,6 +40,25 @@ pub struct CFileGenStrategy {}
 
 impl CFileGenStrategy {}
 
+impl CFileGenStrategy {
+    fn quote_free_rust_array(fn_name: String, ty: TokenStream) -> TokenStream {
+        let fn_name_ident = ident!(&fn_name);
+        quote! {
+            #[no_mangle]
+            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    let len: usize = length as usize;
+                    unsafe { Vec::from_raw_parts(ptr, len, len); }
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => { println!("catch_unwind of `rsbind free_rust` error: {:?}", e); }
+                };
+            }
+        }
+    }
+}
+
 impl FileGenStrategy for CFileGenStrategy {
     fn gen_sdk_file(&self, _mod_names: &[String]) -> Result<TokenStream> {
         Ok(quote!())
@@ -55,10 +78,71 @@ impl FileGenStrategy for CFileGenStrategy {
     }
 
     fn quote_common_part(&self, _traits: &[TraitDesc]) -> Result<TokenStream> {
+        let int8_free_fn =
+            CFileGenStrategy::quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
+        let int16_free_fn =
+            CFileGenStrategy::quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
+        let int32_free_fn =
+            CFileGenStrategy::quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
+        let int64_free_fn =
+            CFileGenStrategy::quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
+
         Ok(quote! {
             lazy_static! {
                 static ref CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));
                 static ref CALLBACK_INDEX : Arc<RwLock<i64>> = Arc::new(RwLock::new(0));
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt8Array {
+                pub ptr: * const i8,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i8, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt16Array {
+                pub ptr: * const i16,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i16, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt32Array {
+                pub ptr: * const i32,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i32, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt64Array {
+                pub ptr: * const i64,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i64, i32),
+            }
+
+            #int8_free_fn
+            #int16_free_fn
+            #int32_free_fn
+            #int64_free_fn
+
+            #[no_mangle]
+            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
+                    let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
+                    let cstr = CStr::from_bytes_with_nul_unchecked(slice);
+                    CString::from(cstr);
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free_str` error: {:?}", e);
+                    }
+                };
             }
         })
     }
@@ -147,124 +231,17 @@ impl FileGenStrategy for CFileGenStrategy {
 
         fn origin_to_proxy_convert(field: &ArgDesc) -> TokenStream {
             let field_name = ident!(&field.name);
-            let proxy_type = RustMapping::map_base_transfer_type(&field.ty);
-            match field.ty.clone() {
-                AstType::Void => {
-                    quote! {#field_name : origin.#field_name}
-                }
-                AstType::Byte(_)
-                | AstType::Int(_)
-                | AstType::Short(_)
-                | AstType::Long(_)
-                | AstType::Float(_)
-                | AstType::Double(_) => {
-                    quote! {#field_name : origin.#field_name as #proxy_type}
-                }
-                AstType::Boolean => {
-                    quote! {#field_name : {if origin.#field_name {1} else {0} }}
-                }
-                AstType::String => {
-                    quote! {
-                        #field_name : {
-                        let cstr = CString::new(origin.#field_name).unwrap();
-                        let bytes = cstr.as_bytes_with_nul();
-                        let array = CInt8Array {
-                            ptr: bytes.as_ptr() as (*const i8),
-                            len: bytes.len() as i32
-                        };
-                        std::mem::forget(cstr);
-                        array
-                    }}
-                }
-                AstType::Vec(AstBaseType::Byte(_))
-                | AstType::Vec(AstBaseType::Short(_))
-                | AstType::Vec(AstBaseType::Int(_))
-                | AstType::Vec(AstBaseType::Long(_)) => {
-                    let array_ty = RustMapping::map_base_transfer_type(&field.ty);
-                    let inner_ty = match field.ty.clone() {
-                        AstType::Vec(base) => {
-                            RustMapping::map_base_transfer_type(&AstType::from(base))
-                        }
-                        _ => quote!(),
-                    };
-                    quote! {#field_name : {
-                        let mut copy_field = origin.#field_name.as_slice().to_vec();
-                        copy_field.shrink_to_fit();
-                        let ptr = copy_field.as_ptr();
-                        let len = copy_field.len();
-                        unsafe {
-                            std::mem::forget(copy_field);
-                            #array_ty {
-                                ptr: ptr as (*const #inner_ty),
-                                len: len as i32
-                            }
-                        }
-                    }}
-                }
-                AstType::Vec(_) => {
-                    quote! {#field_name : {
-                        let json_ret = serde_json::to_string(&origin.#field_name);
-                        CString::new(json_ret.unwrap()).unwrap().into_raw()
-                    }}
-                }
-                AstType::Callback(_) => {
-                    quote! {}
-                }
-                AstType::Struct(_) => {
-                    quote! {}
-                }
+            let convert = field.ty.rust_to_transfer(quote! {origin.#field_name});
+            quote! {
+                #field_name : #convert
             }
         }
 
         fn proxy_to_origin_convert(field: &ArgDesc) -> TokenStream {
             let field_name = ident!(&field.name);
-            match field.ty.clone() {
-                AstType::Void => {
-                    quote! {#field_name : proxy.#field_name}
-                }
-                AstType::Byte(ref origin)
-                | AstType::Int(ref origin)
-                | AstType::Short(ref origin)
-                | AstType::Long(ref origin)
-                | AstType::Float(ref origin)
-                | AstType::Double(ref origin) => {
-                    let origin_ty = ident!(origin);
-                    quote! {#field_name : {proxy.#field_name as #origin_ty}}
-                }
-                AstType::Boolean => {
-                    quote! {
-                        #field_name : {if proxy.#field_name > 0 {true} else {false}}
-                    }
-                }
-                AstType::String => {
-                    quote! {#field_name : {
-                        let slice = unsafe {std::slice::from_raw_parts(proxy.#field_name.ptr as (*const u8), proxy.#field_name.len as usize)};
-                        let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(slice)};
-                        cstr.to_string_lossy().to_string()
-                    }}
-                }
-                AstType::Vec(AstBaseType::Byte(origin))
-                | AstType::Vec(AstBaseType::Short(origin))
-                | AstType::Vec(AstBaseType::Int(origin))
-                | AstType::Vec(AstBaseType::Long(origin)) => {
-                    let base_ident = ident!(&origin);
-                    quote! {
-                        #field_name : unsafe { std::slice::from_raw_parts(proxy.#field_name.ptr as (*const #base_ident), proxy.#field_name.len as usize).to_vec() }
-                    }
-                }
-                AstType::Vec(_) => {
-                    quote! {#field_name : {
-                        let cstr: &CStr = unsafe{CStr::from_ptr(proxy.#field_name)};
-                        let c_slice: &str = cstr.to_str().unwrap();
-                        serde_json::from_str(&c_slice.to_owned()).unwrap()
-                    }}
-                }
-                AstType::Callback(_) => {
-                    quote! {}
-                }
-                AstType::Struct(_) => {
-                    quote! {}
-                }
+            let convert = field.ty.transfer_to_rust(quote! {proxy.#field_name});
+            quote! {
+                #field_name : #convert
             }
         }
 
@@ -285,6 +262,7 @@ impl FileGenStrategy for CFileGenStrategy {
 
         Ok(quote! {
             #[repr(C)]
+            #[derive(Clone)]
             pub struct #proxy_struct_name {
                 #(pub #names: #tys),*
             }
@@ -321,17 +299,19 @@ impl FileGenStrategy for CFileGenStrategy {
             pub struct #struct_array_name {
                 pub ptr: *const #proxy_struct_name,
                 pub len: i32,
+                pub free_ptr: extern "C" fn(*mut #proxy_struct_name, i32),
             }
 
             #[no_mangle]
-            pub extern "C" fn #free_proxy_struct_array_fn(array: #struct_array_name) {
+            pub extern "C" fn #free_proxy_struct_array_fn(ptr: *mut #proxy_struct_name, len: i32) {
                 let catch_result = catch_unwind(AssertUnwindSafe(|| {
                     unsafe {
-                        let proxy_vec = Vec::from_raw_parts(
-                            array.ptr as *mut #proxy_struct_name,
-                            array.len as usize,
-                            array.len as usize);
-                        proxy_vec.into_iter().for_each(|each| {#origin_struct_name::from(each);});
+                        // let proxy_vec =
+                        Vec::from_raw_parts(
+                            ptr as *mut #proxy_struct_name,
+                            len as usize,
+                            len as usize);
+                        // proxy_vec.into_iter().for_each(|each| {#origin_struct_name::from(each);});
                     }
                 }));
                 match catch_result {
@@ -477,7 +457,6 @@ fn model_to_box_convert(
             method.name, callback_desc.name
         );
 
-        let mut strs_to_release: Vec<TokenStream> = vec![];
         // arguments converting in callback
         let mut args_convert = TokenStream::new();
         for cb_arg in method.args.iter() {
@@ -507,22 +486,6 @@ fn model_to_box_convert(
             };
 
             let args_convert_each = crate::swift::bridge_r2s::arg_convert(cb_arg, callbacks)?;
-
-            match cb_arg.ty.clone() {
-                AstType::String => {
-                    let ptr_arg = ident!(&format!("ptr_{}", cb_arg.name));
-                    strs_to_release.push( quote!(#ptr_arg as (*mut c_char)));
-                }
-                | AstType::Vec(AstBaseType::Float(_))
-                | AstType::Vec(AstBaseType::Double(_))
-                | AstType::Vec(AstBaseType::Boolean)
-                | AstType::Vec(AstBaseType::String) => {
-                    let cb_arg_name = ident!(&format!("c_{}", cb_arg.name));
-                    strs_to_release.push(quote!(#cb_arg_name));
-                }
-                _ => {}
-            }
-
             args_convert = quote! {
                 #obtain_index
                 #args_convert
@@ -598,8 +561,8 @@ fn model_to_box_convert(
             fn #method_name(&self, #(#arg_names: #arg_types),*) -> #ret_ty_tokens {
                 #args_convert
                 let #fn_method_name = self.#method_name;
+                let fn_free_ptr = self.free_ptr;
                 let result = #fn_method_name(self.index, #(#convert_arg_names),*);
-                #(unsafe {CString::from_raw(#strs_to_release)};)*
                 #return_convert
                 #return_var_name
             }
@@ -617,8 +580,6 @@ fn model_to_box_convert(
         crate::swift::bridge_s2r::quote_callback_struct(callback_desc, callbacks, struct_name)
             .unwrap();
 
-    // xxxx : arg.xxxx
-    // assign values from arg to struct
     let callback_ty = ident!(&callback_desc.name);
     let mut method_assign_tokens = TokenStream::new();
     for method_name in method_names.iter() {

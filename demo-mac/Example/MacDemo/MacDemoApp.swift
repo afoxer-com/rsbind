@@ -43,7 +43,7 @@ struct MacDemoApp: App {
                 
                 
                     print("run once")
-                    demoTrait.testArgVecStruct14(arg: [demoStruct])
+//                    demoTrait.testArgVecStruct14(arg: [demoStruct])
                 
                 
                 
@@ -57,7 +57,7 @@ struct MacDemoApp: App {
                     demoTrait.testReturnVecU32()
                     demoTrait.testReturnVecBoolTrue()
                     demoTrait.testTwoVecU8(input: [100])
-                    demoTrait.testReturnVecStruct()
+//                    demoTrait.testReturnVecStruct()
                     
 //                    demoTrait.testArgCallback16(arg: createCallback())
 //                    demoTrait.testTwoArgCallback20(arg: createCallback(), arg1: createCallback())

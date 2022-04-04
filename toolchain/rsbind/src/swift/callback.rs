@@ -131,7 +131,6 @@ impl<'a> InternalCallbackGen<'a> {
                     }
                     _ => {}
                 }
-
             }
             // argument convert
             for arg in method.args.iter() {
@@ -174,15 +173,8 @@ impl<'a> InternalCallbackGen<'a> {
         method: &MethodDesc,
     ) -> Result<()> {
         let method_name = method.name.clone();
-        match method.return_type.clone() {
-            AstType::Void => {
-                push!(method_body, "self.model.", method_name, "(");
-            }
-            _ => {
-                println!("quote method call for {}", method_name);
-                push!(method_body, "let result = self.model.", method_name, "(");
-            }
-        }
+        println!("quote method call for {}", method_name);
+        push!(method_body, "let result = self.model.", method_name, "(");
 
         method_body.append(toks!("self.model.index"));
         if !method.args.is_empty() {
@@ -235,6 +227,7 @@ impl<'a> InternalCallbackGen<'a> {
 
             self.fill_cb_closure_return_convert(cb_method, self.callbacks, &mut method_body)?;
 
+            push!(method_body, "return r_result");
             push!(method_body, "}");
 
             cb_args_model = format!(
@@ -303,7 +296,7 @@ impl<'a> InternalCallbackGen<'a> {
         callbacks: &'a [&'a TraitDesc],
         method_body: &'b mut Tokens<'a, Swift<'a>>,
     ) -> Result<()> {
-        crate::swift::artifact_r2s::fill_arg_convert(cb_arg, callbacks, method_body)
+        crate::swift::artifact_r2s::fill_arg_convert(cb_arg, self.desc, method_body)
     }
 
     fn fill_cb_closure_call(
@@ -321,24 +314,12 @@ impl<'a> InternalCallbackGen<'a> {
 
         cb_method_call = format!("{})", &cb_method_call);
 
-        match cb_method.return_type.clone() {
-            AstType::Void => {
-                nested!(
-                    method_body,
-                    "origin_callback.",
-                    cb_method.name.to_lower_camel_case(),
-                    cb_method_call
-                );
-            }
-            _ => {
-                nested!(
-                    method_body,
-                    "let result = origin_callback.",
-                    cb_method.name.to_lower_camel_case(),
-                    cb_method_call
-                );
-            }
-        }
+        nested!(
+            method_body,
+            "let result = origin_callback.",
+            cb_method.name.to_lower_camel_case(),
+            cb_method_call
+        );
 
         Ok(())
     }

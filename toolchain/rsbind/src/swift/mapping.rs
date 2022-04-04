@@ -30,6 +30,38 @@ impl<'a> SwiftMapping {
         }
     }
 
+    /// Get the swift method signature argument types.
+    pub(crate) fn map_swift_sig_type_str(ty: &'a AstType) -> String {
+        let mut buffer_str = "".to_string();
+        match &ty {
+            AstType::Void => "()",
+            AstType::Byte(_) => "Int8",
+            AstType::Short(_) => "Int16",
+            AstType::Int(_) => "Int32",
+            AstType::Long(_) => "Int64",
+            AstType::Float(_) => "Float",
+            AstType::Double(_) => "Double",
+            AstType::Boolean => "Bool", // Bool
+            AstType::String => "String",
+            AstType::Vec(AstBaseType::Byte(ref origin)) => "[Int8]",
+            AstType::Vec(AstBaseType::Short(ref origin)) => "[Int16]",
+            AstType::Vec(AstBaseType::Int(ref origin)) => "[Int32]",
+            AstType::Vec(AstBaseType::Long(ref origin)) => "[Int64]",
+            AstType::Vec(AstBaseType::Struct(ref origin)) => {
+                buffer_str = format!("[{}]", origin);
+                buffer_str.as_str()
+            }
+            AstType::Vec(ref base) => {
+                let sub = SwiftMapping::map_swift_sig_type_str(&AstType::from(base.clone()));
+                buffer_str = format!("[{}]", sub);
+                buffer_str.as_str()
+            }
+            AstType::Callback(ref origin) => origin,
+            AstType::Struct(ref origin) => origin,
+        }
+        .to_string()
+    }
+
     /// Get the swift argument types for transferring to C.
     pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> String {
         let mut buffer_str = "".to_string();
@@ -51,12 +83,12 @@ impl<'a> SwiftMapping {
                 buffer_str = format!("C{}Array", origin);
                 buffer_str.as_ref()
             }
-            AstType::Vec(_) => "UnsafePointer<Int8>?",
+            AstType::Vec(_) => "CInt8Array",
             AstType::Callback(origin) => origin,
             AstType::Struct(origin) => {
                 buffer_str = format!("Proxy{}", origin);
                 buffer_str.as_str()
-            },
+            }
         }
         .to_string()
     }
@@ -104,7 +136,7 @@ impl<'a> RustMapping {
                 let struct_array_name = ident!(&format!("C{}Array", origin));
                 quote!(#struct_array_name)
             }
-            AstType::Vec(_) => quote!(*const c_char),
+            AstType::Vec(_) => quote!(CInt8Array),
             AstType::Callback(_) => quote!(()), // not expected to call here!
             AstType::Struct(ref origin) => {
                 let struct_ident = ident!(&format!("Proxy{}", origin));

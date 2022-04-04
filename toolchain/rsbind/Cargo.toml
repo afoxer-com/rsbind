@@ -19,7 +19,7 @@ fs_extra = "1.1.0"
 toml = "0.5.1"
 error-chain = "0.12.1"
 ndk-build = "0.4.3"
-rstgen = "0.1.1"
+rstgen = "0.1.2"
 ndk-tool = "0.1.0"
 heck = "0.4.0"
 

@@ -1,16 +1,21 @@
-use crate::ast::types::AstType;
-use crate::base::Convertible;
-use crate::ident;
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use rstgen::Tokens;
+
+use crate::ast::types::AstType;
+use crate::base::{Convertible, Direction};
+use crate::ident;
 
 pub(crate) struct Callback {
     pub(crate) ty: AstType,
 }
 
 impl<'a> Convertible<Swift<'a>> for Callback {
-    fn swift_to_transfer(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn artifact_to_transfer(
+        &self,
+        origin: String,
+        direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         match self.ty.clone() {
             AstType::Callback(base) => {
@@ -26,7 +31,11 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         body
     }
 
-    fn transfer_to_swift(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn transfer_to_artifact(
+        &self,
+        origin: String,
+        direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         match self.ty.clone() {
             AstType::Callback(base) => {
@@ -37,14 +46,14 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream) -> TokenStream {
+    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         let box_to_model_fn_name = ident!(&format!("box_to_model_{}", self.ty.origin()));
         quote! {
             #box_to_model_fn_name(#origin)
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream) -> TokenStream {
+    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         let model_to_box_fn = ident!(&format!("model_to_box_{}", self.ty.origin()));
         quote! {
              #model_to_box_fn(#origin)

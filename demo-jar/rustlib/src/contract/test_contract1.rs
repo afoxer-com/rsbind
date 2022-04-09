@@ -1,4 +1,4 @@
-pub trait DemoTrait : Sync + Send {
+pub trait DemoTrait: Sync + Send {
     fn setup();
 
     // Base types
@@ -56,7 +56,7 @@ pub trait DemoTrait : Sync + Send {
     fn test_no_return();
 }
 
-pub trait DemoTrait2 : Send + Sync {
+pub trait DemoTrait2: Send + Sync {
     fn test_return_callback2(arg: i8) -> Box<dyn DemoCallback2>;
     fn test_arg_callback3(arg: Box<dyn DemoCallback2>) -> u8;
 }
@@ -113,7 +113,7 @@ pub trait DemoCallback: Sync + Send {
     fn test_no_return(&self);
 }
 
-pub trait DemoCallback2 : Send + Sync {
+pub trait DemoCallback2: Send + Sync {
     fn test_return_callback2(&self, arg: i8) -> Box<dyn DemoCallback>;
     fn test_arg_callback3(&self, arg: Box<dyn DemoCallback>) -> u8;
 }

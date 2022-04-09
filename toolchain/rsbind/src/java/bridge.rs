@@ -1,7 +1,7 @@
 use std::path::Path;
 
 use heck::ToUpperCamelCase;
-use proc_macro2::{Ident, Literal, Span, TokenStream};
+use proc_macro2::{Ident, Literal, TokenStream};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use crate::ast::imp::desc::*;
@@ -77,7 +77,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         })
     }
 
-    fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream> {
+    fn quote_common_part(&self, _trait_desc: &[TraitDesc]) -> Result<TokenStream> {
         // let class_names = trait_desc
         //     .iter()
         //     .map(|desc| {
@@ -128,7 +128,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             let index_to_cb_fn_name = ident!(&format!("index_to_callback_{}", &callback.name));
 
             let callback_ident = ident!(&callback.name);
-            let index_to_cb_fn_body = index_to_callback(callback, &self.java_namespace)?;
+            let index_to_cb_fn_body = index_to_callback(callback, self.java_namespace)?;
             let index_to_cb_fn = quote! {
                 fn #index_to_cb_fn_name(index: i64) -> Box<dyn #callback_ident> {
                     #index_to_cb_fn_body
@@ -179,7 +179,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     fn quote_callback_structures(
         &self,
         _trait_desc: &TraitDesc,
-        callbacks: &[&TraitDesc],
+        _callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
         Ok(quote! {})
     }
@@ -295,7 +295,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
         &self,
         trait_desc: &TraitDesc,
         arg: &ArgDesc,
-        callbacks: &[&TraitDesc],
+        _callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
         println!(
             "[bridge]  🔆  begin quote jni bridge method argument convert => {}:{}",

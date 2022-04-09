@@ -1,19 +1,14 @@
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::base::Convertible;
+use crate::base::{Convertible, Direction};
 use crate::bridge::file::*;
-use crate::common::*;
 use crate::errors::*;
 use crate::ident;
+use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::RustMapping;
-use crate::swift::ty::basic::quote_free_swift_ptr;
-use crate::swift::ty::str::Str;
-use crate::swift::ty::vec_default::VecDefault;
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Ident, TokenStream};
 use std::path::Path;
-use std::process::id;
-use syn::token::Token;
 
 ///
 /// create a new c bridges generator.
@@ -218,8 +213,6 @@ impl FileGenStrategy for CFileGenStrategy {
             .iter()
             .map(|field| ident!(&field.name))
             .collect::<Vec<Ident>>();
-        let arg_names = names.clone();
-        let origin_arg_names = names.clone();
         let tys = struct_desc
             .fields
             .iter()
@@ -231,7 +224,10 @@ impl FileGenStrategy for CFileGenStrategy {
 
         fn origin_to_proxy_convert(field: &ArgDesc) -> TokenStream {
             let field_name = ident!(&field.name);
-            let convert = field.ty.rust_to_transfer(quote! {origin.#field_name});
+            let convert = SwiftConvert {
+                ty: field.ty.clone(),
+            }
+            .rust_to_transfer(quote! {origin.#field_name}, Direction::Invoke);
             quote! {
                 #field_name : #convert
             }
@@ -239,7 +235,10 @@ impl FileGenStrategy for CFileGenStrategy {
 
         fn proxy_to_origin_convert(field: &ArgDesc) -> TokenStream {
             let field_name = ident!(&field.name);
-            let convert = field.ty.transfer_to_rust(quote! {proxy.#field_name});
+            let convert = SwiftConvert {
+                ty: field.ty.clone(),
+            }
+            .transfer_to_rust(quote! {proxy.#field_name}, Direction::Invoke);
             quote! {
                 #field_name : #convert
             }
@@ -248,13 +247,13 @@ impl FileGenStrategy for CFileGenStrategy {
         let origin_to_proxy_convert_tokens = struct_desc
             .fields
             .iter()
-            .map(|each| origin_to_proxy_convert(each))
+            .map(origin_to_proxy_convert)
             .collect::<Vec<TokenStream>>();
 
         let proxy_to_origin_convert_tokens = struct_desc
             .fields
             .iter()
-            .map(|each| proxy_to_origin_convert(each))
+            .map(proxy_to_origin_convert)
             .collect::<Vec<TokenStream>>();
 
         let free_proxy_struct_array_fn = ident!(&format!("free_{}", &struct_array_str));
@@ -382,7 +381,7 @@ impl FileGenStrategy for CFileGenStrategy {
 
     fn quote_arg_convert(
         &self,
-        trait_desc: &TraitDesc,
+        _trait_desc: &TraitDesc,
         arg: &ArgDesc,
         callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
@@ -391,7 +390,7 @@ impl FileGenStrategy for CFileGenStrategy {
 
     fn quote_return_convert(
         &self,
-        trait_desc: &TraitDesc,
+        _trait_desc: &TraitDesc,
         callbacks: &[&TraitDesc],
         return_ty: &AstType,
         ret_name: &str,
@@ -758,7 +757,6 @@ pub(crate) fn box_to_model_convert(
         }
     };
 
-    let r_result = ident!(ret_name);
     Ok(quote! {
         impl #callback_model_ident {
             #method_result

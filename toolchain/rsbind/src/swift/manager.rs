@@ -1,8 +1,9 @@
+use rstgen::swift::{Class, Method, Modifier, Swift};
+use rstgen::{swift, IntoTokens, Tokens};
+
 use crate::errors::*;
 use crate::swift::types::to_swift_file;
 use crate::AstResult;
-use rstgen::swift::{Class, Method, Modifier, Swift};
-use rstgen::{swift, IntoTokens, Tokens};
 
 pub(crate) struct ManagerGen<'a> {
     pub ast: &'a AstResult,

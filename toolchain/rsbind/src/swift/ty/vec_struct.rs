@@ -1,16 +1,21 @@
-use crate::base::Convertible;
-use crate::ident;
-use crate::swift::ty::basic::quote_free_swift_ptr;
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use rstgen::Tokens;
+
+use crate::base::{Convertible, Direction};
+use crate::ident;
+use crate::swift::ty::basic::quote_free_swift_ptr;
 
 pub(crate) struct VecStruct {
     pub(crate) struct_name: String,
 }
 
 impl<'a> Convertible<Swift<'a>> for VecStruct {
-    fn swift_to_transfer(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn artifact_to_transfer(
+        &self,
+        origin: String,
+        direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push_f!(body, "{{ () -> C{}Array in", self.struct_name);
         nested_f!(body, |t| {
@@ -47,7 +52,11 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         body
     }
 
-    fn transfer_to_swift(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn transfer_to_artifact(
+        &self,
+        origin: String,
+        direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         let proxy_ty = format!("Proxy{}", &self.struct_name);
         let c_array_ty = format!("C{}Array", &self.struct_name);
@@ -62,13 +71,19 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
             body,
             "let struct_arg = proxy_array.map { proxy in DemoStruct(proxy: proxy) }"
         );
-        nested_f!(body, "({}.free_ptr)(UnsafeMutablePointer(mutating:{}.ptr!), {}.len)", origin, origin, origin);
+        nested_f!(
+            body,
+            "({}.free_ptr)(UnsafeMutablePointer(mutating:{}.ptr!), {}.len)",
+            origin,
+            origin,
+            origin
+        );
         nested_f!(body, "return struct_arg");
         push_f!(body, "}()");
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream) -> TokenStream {
+    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         let proxy_struct = ident!(&format!("Proxy{}", &self.struct_name));
         let struct_array_str = format!("C{}Array", &self.struct_name);
         let struct_array_name = ident!(&struct_array_str);
@@ -89,7 +104,7 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream) -> TokenStream {
+    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         let proxy_struct = ident!(&format!("Proxy{}", &self.struct_name));
         quote! {
             {

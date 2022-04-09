@@ -1,33 +1,42 @@
-use crate::ast::types::AstType;
-use crate::base::Convertible;
-use crate::ident;
-use crate::swift::mapping::{RustMapping, SwiftMapping};
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use rstgen::Tokens;
 
+use crate::ast::types::AstType;
+use crate::base::{Convertible, Direction};
+use crate::ident;
+use crate::swift::mapping::{RustMapping, SwiftMapping};
+
 pub(crate) struct Bool {}
 
 impl<'a> Convertible<Swift<'a>> for Bool {
-    fn swift_to_transfer(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn artifact_to_transfer(
+        &self,
+        origin: String,
+        _direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push_f!(body, "{} ? Int32(1) : Int32(0)", origin);
         body
     }
 
-    fn transfer_to_swift(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn transfer_to_artifact(
+        &self,
+        origin: String,
+        _direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         nested_f!(body, "{} > 0 ? true : false", origin);
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream) -> TokenStream {
+    fn rust_to_transfer(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         quote! {
             if #origin {1} else {0}
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream) -> TokenStream {
+    fn transfer_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         quote! {
             if #origin > 0 {true} else {false}
         }
@@ -47,28 +56,36 @@ pub(crate) struct Basic {
 }
 
 impl<'a> Convertible<Swift<'a>> for Basic {
-    fn swift_to_transfer(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn artifact_to_transfer(
+        &self,
+        origin: String,
+        _direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         let ty = SwiftMapping::map_swift_sig_type_str(&self.ty);
         push_f!(body, "{}({})", ty, origin);
         body
     }
 
-    fn transfer_to_swift(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn transfer_to_artifact(
+        &self,
+        origin: String,
+        _direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         let ty = SwiftMapping::map_base_transfer_type(&self.ty);
         nested_f!(body, "{}({})", ty, origin);
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream) -> TokenStream {
+    fn rust_to_transfer(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         let ty_ident = RustMapping::map_base_transfer_type(&self.ty);
         quote! {
             #origin as #ty_ident
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream) -> TokenStream {
+    fn transfer_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         let origin_type_ident = ident!(&self.ty.origin());
         quote! {
             #origin as #origin_type_ident

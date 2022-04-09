@@ -1,10 +1,10 @@
-use crate::ast::contract::desc::TraitDesc;
-use crate::errors::*;
 use proc_macro2::{Ident, Span, TokenStream};
 use rstgen::swift;
 use rstgen::swift::Swift;
 
+use crate::ast::contract::desc::TraitDesc;
 use crate::ast::types::{AstBaseType, AstType};
+use crate::errors::*;
 use crate::ident;
 
 pub(crate) struct SwiftMapping {}

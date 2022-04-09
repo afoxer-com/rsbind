@@ -1,13 +1,18 @@
-use crate::base::Convertible;
-use crate::swift::ty::basic::quote_free_swift_ptr;
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use rstgen::Tokens;
 
+use crate::base::{Convertible, Direction};
+use crate::swift::ty::basic::quote_free_swift_ptr;
+
 pub(crate) struct Str {}
 
 impl<'a> Convertible<Swift<'a>> for Str {
-    fn swift_to_transfer(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn artifact_to_transfer(
+        &self,
+        origin: String,
+        direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push_f!(body, " { () -> CInt8Array in");
         nested_f!(body, |t| {
@@ -38,11 +43,18 @@ impl<'a> Convertible<Swift<'a>> for Str {
         body
     }
 
-    fn transfer_to_swift(&self, origin: String) -> Tokens<'static, Swift<'a>> {
+    fn transfer_to_artifact(
+        &self,
+        origin: String,
+        direction: Direction,
+    ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push_f!(body, "{ () -> String in");
         nested_f!(body, "let str = String(cString: {}.ptr!)", origin);
-        nested_f!(body, "print(\"begin free str from swift: transfer_to_swift\")");
+        nested_f!(
+            body,
+            "print(\"begin free str from swift: transfer_to_swift\")"
+        );
         nested_f!(
             body,
             "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr!), Int32({}.len))",
@@ -55,7 +67,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream) -> TokenStream {
+    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         quote! {
             {
                 let cstr = CString::new(#origin).unwrap();
@@ -71,7 +83,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream) -> TokenStream {
+    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         quote! {
             {
                 let slice = unsafe {std::slice::from_raw_parts(#origin.ptr as (*const u8), #origin.len as usize).to_vec()};

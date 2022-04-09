@@ -1,12 +1,14 @@
+use std::fmt::format;
+
 use rstgen::swift::{local, Argument, Constructor, Field, Method, Modifier, Swift};
 use rstgen::{swift, IntoTokens};
-use std::fmt::format;
 use syn::__private::str;
 
 use crate::ast::contract::desc::StructDesc;
 use crate::ast::types::{AstBaseType, AstType};
-use crate::base::Convertible;
+use crate::base::{Convertible, Direction};
 use crate::errors::*;
+use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::ty::str::Str;
 use crate::swift::ty::vec_default::VecDefault;
@@ -56,9 +58,12 @@ impl<'a> StructGen<'a> {
         push_f!(method.body, "return Proxy{} (", self.desc.name);
         for (index, field) in self.desc.fields.iter().enumerate() {
             nested_f!(method.body, "{} : ", field.name);
-            method
-                .body
-                .append(field.ty.swift_to_transfer(format!("self.{}", &field.name)));
+            method.body.append(
+                SwiftConvert {
+                    ty: field.ty.clone(),
+                }
+                .artifact_to_transfer(format!("self.{}", &field.name), Direction::Invoke),
+            );
             if index != self.desc.fields.len() - 1 {
                 method.body.append(",")
             }
@@ -78,9 +83,12 @@ impl<'a> StructGen<'a> {
 
         for field in self.desc.fields.iter() {
             push_f!(constructor2.body, "self.{} = ", field.name);
-            constructor2
-                .body
-                .append(field.ty.transfer_to_swift(format!("proxy.{}", &field.name)));
+            constructor2.body.append(
+                SwiftConvert {
+                    ty: field.ty.clone(),
+                }
+                .transfer_to_artifact(format!("proxy.{}", &field.name), Direction::Invoke),
+            );
         }
 
         constructor2

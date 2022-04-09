@@ -1,3 +1,6 @@
+use std::fs;
+use std::path::PathBuf;
+
 use crate::ast::AstResult;
 use crate::errors::*;
 use crate::swift::callback::{CallbackGen, InternalCallbackGen};
@@ -6,8 +9,6 @@ use crate::swift::manager::ManagerGen;
 use crate::swift::protocol::ProtocolGen;
 use crate::swift::struct_::StructGen;
 use crate::swift::wrapper::WrapperGen;
-use std::fs;
-use std::path::PathBuf;
 
 pub(crate) struct SwiftCodeGen<'a> {
     pub swift_gen_dir: &'a PathBuf,

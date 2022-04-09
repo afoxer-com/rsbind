@@ -1,8 +1,9 @@
+use rstgen::java::{Class, Modifier};
+use rstgen::{java, IntoTokens, Java, Tokens};
+
 use crate::errors::*;
 use crate::java::types::to_java_file;
 use crate::AstResult;
-use rstgen::java::{Class, Modifier};
-use rstgen::{java, IntoTokens, Java, Tokens};
 
 pub(crate) struct ManagerGen<'a> {
     pub ast: &'a AstResult,

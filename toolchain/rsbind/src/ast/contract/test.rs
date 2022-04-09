@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use syn::token::As;
+
     use crate::ast::contract::parser::parse_from_str;
     use crate::ast::types::{AstBaseType, AstType};
-    use syn::token::As;
 
     #[test]
     fn parse_contract_works() {

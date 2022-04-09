@@ -6,10 +6,10 @@ use proc_macro2::{Ident, Span, TokenStream};
 
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
+use crate::base::{Convertible, Direction};
 use crate::errors::*;
 use crate::ident;
-
-use crate::base::Convertible;
+use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::RustMapping;
 use crate::swift::ty::basic::{Basic, Bool};
 use crate::swift::ty::str::Str;
@@ -23,7 +23,8 @@ pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Resu
     let rust_arg_name = ident!(&format!("r_{}", &arg.name));
     let arg_name_ident = ident!(&arg.name);
 
-    let convert = arg.ty.transfer_to_rust(quote! {#arg_name_ident});
+    let convert = SwiftConvert { ty: arg.ty.clone() }
+        .transfer_to_rust(quote! {#arg_name_ident}, Direction::Invoke);
     let convert = quote! {
         let #rust_arg_name = #convert;
     };
@@ -79,7 +80,8 @@ pub(crate) fn quote_return_convert(
 ) -> Result<TokenStream> {
     let ret_name_ident = ident!(ret_name);
 
-    let convert = ty.rust_to_transfer(quote! {#ret_name_ident});
+    let convert = SwiftConvert { ty: ty.clone() }
+        .rust_to_transfer(quote! {#ret_name_ident}, Direction::Invoke);
     let convert = quote! {
         let r_result = #convert;
     };

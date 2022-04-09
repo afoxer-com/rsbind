@@ -1,11 +1,12 @@
+use heck::ToLowerCamelCase;
+use rstgen::swift::{self, *};
+use rstgen::{IntoTokens, Tokens};
+
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
 use crate::errors::*;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::to_swift_file;
-use heck::ToLowerCamelCase;
-use rstgen::swift::{self, *};
-use rstgen::{IntoTokens, Tokens};
 
 pub(crate) struct WrapperGen<'a> {
     pub desc: &'a TraitDesc,

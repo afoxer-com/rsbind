@@ -532,7 +532,11 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
         "test_arg_vec_u64_12",
     );
 
-    assert_eq(&arg.test_return_vec_str(), &vec!["Hello world".to_string()], "test_return_vec_str");
+    assert_eq(
+        &arg.test_return_vec_str(),
+        &vec!["Hello world".to_string()],
+        "test_return_vec_str",
+    );
     assert_eq(&arg.test_return_vec_u8(), &vec![100], "test_return_vec_u8");
     assert_eq(&arg.test_return_vec_i8(), &vec![100], "test_return_vec_i8");
     assert_eq(
@@ -577,7 +581,7 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
 }
 
 fn create_callback() -> Box<dyn DemoCallback> {
-    struct CallbackStruct{};
+    struct CallbackStruct {};
     impl DemoCallback for CallbackStruct {
         fn test_u8_1(&self, arg: u8, arg2: u8) -> u8 {
             assert_eq!(arg, 100);
@@ -772,12 +776,10 @@ fn create_callback() -> Box<dyn DemoCallback> {
             new_struct()
         }
 
-        fn test_no_return(&self) {
-
-        }
+        fn test_no_return(&self) {}
     }
 
-    Box::new(CallbackStruct{})
+    Box::new(CallbackStruct {})
 }
 
 fn new_struct() -> DemoStruct {

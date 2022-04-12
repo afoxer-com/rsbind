@@ -5,3 +5,4 @@ pub(crate) mod struct_;
 pub(crate) mod vec_byte;
 pub(crate) mod vec_default;
 pub(crate) mod vec_struct;
+pub(crate) mod void;

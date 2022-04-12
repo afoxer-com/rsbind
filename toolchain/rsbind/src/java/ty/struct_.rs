@@ -10,10 +10,10 @@ pub(crate) struct Struct {
 }
 
 impl<'a> Convertible<Java<'a>> for Struct {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         let json_cls = java::imported("com.google.gson", "Gson");
@@ -21,10 +21,10 @@ impl<'a> Convertible<Java<'a>> for Struct {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         let json_cls = java::imported("com.google.gson", "Gson");
@@ -41,18 +41,18 @@ impl<'a> Convertible<Java<'a>> for Struct {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Struct(ref base) => {
                 let proxy_struct = ident!(&format!("Proxy{}", base));
                 match direction {
-                    Direction::Invoke => {
+                    Direction::Down => {
                         quote! {{
                             let json = serde_json::to_string(&#proxy_struct::from(#origin));
                             env.new_string(json.unwrap()).expect("Couldn't create java string").into_inner()
                         }}
                     }
-                    Direction::Push => {
+                    Direction::Up => {
                         quote! {{
                             let json = serde_json::to_string(&#proxy_struct::from(#origin));
                             env.new_string(json.unwrap()).expect("Couldn't create java string").into()
@@ -66,12 +66,12 @@ impl<'a> Convertible<Java<'a>> for Struct {
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         let value_get = match direction {
-            Direction::Invoke => {
+            Direction::Down => {
                 quote! {}
             }
-            Direction::Push => {
+            Direction::Up => {
                 quote! {
                     let #origin = match #origin {
                         Ok(JValue::Object(value)) => JString::from(value),
@@ -94,6 +94,13 @@ impl<'a> Convertible<Java<'a>> for Struct {
             _ => {
                 quote! {}
             }
+        }
+    }
+
+    fn native_type(&self) -> Java<'a> {
+        match self.ty.clone() {
+            AstType::Struct(ref origin) => java::local(origin.to_string()),
+            _ => java::local(""),
         }
     }
 

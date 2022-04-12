@@ -42,7 +42,7 @@ impl<'a> WrapperGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = java::Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Public];
-        let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
+        let return_ty = JavaType::new(method.return_type.clone());
         m.returns = Java::from(return_ty);
 
         for arg in method.args.clone().into_iter() {
@@ -50,7 +50,7 @@ impl<'a> WrapperGen<'a> {
             match arg.ty {
                 AstType::Void => (),
                 _ => {
-                    let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                    let java = JavaType::new(arg.ty.clone());
                     let mut argument = Argument::new(java, arg.name.clone());
                     argument.modifiers = vec![];
                     m.arguments.push(argument);

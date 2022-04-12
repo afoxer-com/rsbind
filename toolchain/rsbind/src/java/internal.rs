@@ -6,7 +6,9 @@ use rstgen::Tokens;
 use crate::ast::contract::desc::MethodDesc;
 use crate::ast::contract::desc::TraitDesc;
 use crate::ast::types::AstType;
+use crate::base::{Convertible, Direction};
 use crate::errors::*;
+use crate::java::converter::JavaConvert;
 use crate::java::types::{to_java_file, JavaType};
 
 pub(crate) struct InnerTraitGen<'a> {
@@ -64,7 +66,7 @@ impl<'a> InnerTraitGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = java::Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Static];
-        let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
+        let return_ty = JavaType::new(method.return_type.clone());
         m.returns = Java::from(return_ty);
 
         for arg in method.args.clone().into_iter() {
@@ -72,7 +74,7 @@ impl<'a> InnerTraitGen<'a> {
             match arg.ty {
                 AstType::Void => (),
                 _ => {
-                    let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                    let java = JavaType::new(arg.ty.clone());
                     let mut argument = Argument::new(java, arg.name.clone());
                     argument.modifiers = vec![];
                     m.arguments.push(argument);
@@ -84,7 +86,15 @@ impl<'a> InnerTraitGen<'a> {
 
     fn fill_arg_convert(&self, method_body: &mut Tokens<Java>, method: &MethodDesc) -> Result<()> {
         for arg in method.args.iter() {
-            crate::java::artifact_j2r::fill_arg_convert(method_body, arg, &self.pkg)?;
+            if let AstType::Void = arg.ty.clone() {
+                continue;
+            }
+
+            let java = JavaType::new(arg.ty.clone()).to_transfer();
+            let converted = format!("r_{}", &arg.name);
+            let convert = JavaConvert { ty: arg.ty.clone() }
+                .native_to_transferable(arg.name.clone(), Direction::Down);
+            push!(method_body, java, "  ", converted, " = ", convert, ";");
         }
 
         Ok(())
@@ -95,7 +105,7 @@ impl<'a> InnerTraitGen<'a> {
         method_body: &mut Tokens<Java>,
         method: &MethodDesc,
     ) -> Result<()> {
-        let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
+        let return_ty = JavaType::new(method.return_type.clone());
 
         let return_java_ty = return_ty.to_transfer();
         match return_ty.ast_type.clone() {
@@ -135,7 +145,16 @@ impl<'a> InnerTraitGen<'a> {
         method_body: &mut Tokens<Java>,
         method: &MethodDesc,
     ) -> Result<()> {
-        crate::java::artifact_j2r::fill_return_convert(method_body, method, &self.pkg)
+        if let AstType::Void = method.return_type.clone() {
+            return Ok(());
+        }
+
+        let convert = JavaConvert {
+            ty: method.return_type.clone(),
+        }
+            .transferable_to_native("ret".to_string(), Direction::Down);
+        push!(method_body, "return ", convert, ";");
+        Ok(())
     }
 
     ///
@@ -150,7 +169,7 @@ impl<'a> InnerTraitGen<'a> {
             match method.return_type.clone() {
                 AstType::Void => (),
                 _ => {
-                    let java = JavaType::new(method.return_type.clone(), self.pkg.clone());
+                    let java = JavaType::new(method.return_type.clone());
                     m.returns = java.to_transfer();
                 }
             }
@@ -160,7 +179,7 @@ impl<'a> InnerTraitGen<'a> {
                 match arg.ty.clone() {
                     AstType::Void => (),
                     _ => {
-                        let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                        let java = JavaType::new(arg.ty.clone());
                         let mut argument = Argument::new(java.to_transfer(), arg.name.clone());
                         argument.modifiers = vec![];
                         m.arguments.push(argument);

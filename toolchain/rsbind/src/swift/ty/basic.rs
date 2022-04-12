@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
-use rstgen::Tokens;
+use rstgen::{swift, Tokens};
 
 use crate::ast::types::AstType;
 use crate::base::{Convertible, Direction};
@@ -10,7 +10,7 @@ use crate::swift::mapping::{RustMapping, SwiftMapping};
 pub(crate) struct Bool {}
 
 impl<'a> Convertible<Swift<'a>> for Bool {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
         _direction: Direction,
@@ -20,7 +20,7 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
         _direction: Direction,
@@ -30,16 +30,20 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         quote! {
             if #origin {1} else {0}
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         quote! {
             if #origin > 0 {true} else {false}
         }
+    }
+
+    fn native_type(&self) -> Swift<'a> {
+        swift::BOOLEAN
     }
 
     fn quote_common_bridge(&self) -> TokenStream {
@@ -55,41 +59,59 @@ pub(crate) struct Basic {
     pub(crate) ty: AstType,
 }
 
+impl Basic {
+    fn native_type_str(&self) -> String {
+        match self.ty.clone() {
+            AstType::Void => "()",
+            AstType::Byte(_) => "Int8",
+            AstType::Short(_) => "Int16",
+            AstType::Int(_) => "Int32",
+            AstType::Long(_) => "Int64",
+            AstType::Float(_) => "Float",
+            AstType::Double(_) => "Double",
+            _ => "",
+        }
+        .to_string()
+    }
+}
+
 impl<'a> Convertible<Swift<'a>> for Basic {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        let ty = SwiftMapping::map_swift_sig_type_str(&self.ty);
-        push_f!(body, "{}({})", ty, origin);
+        push_f!(body, "{}({})", self.native_type_str(), origin);
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        let ty = SwiftMapping::map_base_transfer_type(&self.ty);
-        nested_f!(body, "{}({})", ty, origin);
+        nested_f!(body, "{}({})", self.native_type_str(), origin);
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         let ty_ident = RustMapping::map_base_transfer_type(&self.ty);
         quote! {
             #origin as #ty_ident
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         let origin_type_ident = ident!(&self.ty.origin());
         quote! {
             #origin as #origin_type_ident
         }
+    }
+
+    fn native_type(&self) -> Swift<'a> {
+        swift::local(self.native_type_str())
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

@@ -11,10 +11,10 @@ pub(crate) struct VecStruct {
 }
 
 impl<'a> Convertible<Java<'a>> for VecStruct {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let json_cls = java::imported("com.google.gson", "Gson");
         let mut body = Tokens::new();
@@ -22,54 +22,47 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         let json = java::imported("com.google.gson", "Gson");
-        match self.ty.clone() {
-            AstType::Vec(AstBaseType::Struct(ref base)) => {
-                push!(
-                    body,
-                    "new ",
-                    json,
-                    "().fromJson(",
-                    origin,
-                    ", ",
-                    base.to_string(),
-                    "[].class)"
-                );
-            }
-            _ => {}
+        if let AstType::Vec(AstBaseType::Struct(ref base)) = self.ty.clone() {
+            push!(
+                body,
+                "new ",
+                json,
+                "().fromJson(",
+                origin,
+                ", ",
+                base.to_string(),
+                "[].class)"
+            );
         }
 
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Struct(ref base)) => {
                 let proxy_struct = ident!(&format!("Proxy{}", base));
                 match direction {
-                    Direction::Invoke => {
-                        quote! {
-                            {
-                                let proxies = #origin.into_iter().map(|each| #proxy_struct::from(each)).collect::<Vec<#proxy_struct>>();
-                                let json = serde_json::to_string(&proxies);
-                                env.new_string(json.unwrap()).expect("Couldn't create java string").into_inner()
-                            }
-                        }
+                    Direction::Down => {
+                        quote! {{
+                            let proxies = #origin.into_iter().map(|each| #proxy_struct::from(each)).collect::<Vec<#proxy_struct>>();
+                            let json = serde_json::to_string(&proxies);
+                            env.new_string(json.unwrap()).expect("Couldn't create java string").into_inner()
+                        }}
                     }
-                    Direction::Push => {
-                        quote! {
-                            {
-                                let proxies = #origin.into_iter().map(|each| #proxy_struct::from(each)).collect::<Vec<#proxy_struct>>();
-                                let json = serde_json::to_string(&proxies);
-                                env.new_string(json.unwrap()).expect("Couldn't create java string").into()
-                            }
-                        }
+                    Direction::Up => {
+                        quote! {{
+                            let proxies = #origin.into_iter().map(|each| #proxy_struct::from(each)).collect::<Vec<#proxy_struct>>();
+                            let json = serde_json::to_string(&proxies);
+                            env.new_string(json.unwrap()).expect("Couldn't create java string").into()
+                        }}
                     }
                 }
             }
@@ -79,12 +72,12 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         let value_get = match direction {
-            Direction::Invoke => {
+            Direction::Down => {
                 quote! {}
             }
-            Direction::Push => {
+            Direction::Up => {
                 quote! {
                     let #origin = match #origin {
                         Ok(JValue::Object(value)) => JString::from(value),
@@ -97,20 +90,25 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Struct(ref base)) => {
                 let proxy_struct_name = ident!(&format!("Proxy{}", &base));
-                let real_struct_name = ident!(&base);
-                quote! {
-                    {
-                        #value_get
-                        let json: String = env.get_string(#origin).expect("Couldn't get java string!").into();
-                        let vec: Vec<#proxy_struct_name> = serde_json::from_str(&json).unwrap();
-                        let result: Vec<#real_struct_name> = vec.into_iter().map(|each| #real_struct_name::from(each)).collect();
-                        result
-                    }
-                }
+                let real_struct_name = ident!(base);
+                quote! {{
+                    #value_get
+                    let json: String = env.get_string(#origin).expect("Couldn't get java string!").into();
+                    let vec: Vec<#proxy_struct_name> = serde_json::from_str(&json).unwrap();
+                    let result: Vec<#real_struct_name> = vec.into_iter().map(|each| #real_struct_name::from(each)).collect();
+                    result
+                }}
             }
             _ => {
                 quote! {}
             }
+        }
+    }
+
+    fn native_type(&self) -> Java<'a> {
+        match self.ty.clone() {
+            AstType::Vec(base) => JavaType::new(AstType::from(base.clone())).to_array(),
+            _ => java::local(""),
         }
     }
 

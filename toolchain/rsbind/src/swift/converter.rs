@@ -1,12 +1,9 @@
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use rstgen::Tokens;
-use syn::token::Token;
 
 use crate::ast::types::{AstBaseType, AstType};
 use crate::base::{Convertible, Direction};
-use crate::ident;
-use crate::swift::mapping::SwiftMapping;
 use crate::swift::ty::basic::{Basic, Bool};
 use crate::swift::ty::callback::Callback;
 use crate::swift::ty::str::Str;
@@ -14,262 +11,112 @@ use crate::swift::ty::struct_::Struct;
 use crate::swift::ty::vec_base::VecBase;
 use crate::swift::ty::vec_default::VecDefault;
 use crate::swift::ty::vec_struct::VecStruct;
-use crate::swift::types::SwiftType;
+use crate::swift::ty::void::Void;
+
+pub(crate) enum ConvertEnum {
+    Void(Void),
+    Basic(Basic),
+    Bool(Bool),
+    Str(Str),
+    Struct(Struct),
+    VecBase(VecBase),
+    VecDefault(VecDefault),
+    VecStruct(VecStruct),
+    Callback(Callback),
+}
+
+impl<'a> ConvertEnum {
+    fn handle<R, F>(&self, f: F) -> R
+    where
+        F: Fn(&dyn Convertible<Swift<'a>>) -> R,
+    {
+        match self {
+            ConvertEnum::Void(c) => f(c),
+            ConvertEnum::Basic(c) => f(c),
+            ConvertEnum::Bool(c) => f(c),
+            ConvertEnum::Str(c) => f(c),
+            ConvertEnum::Struct(c) => f(c),
+            ConvertEnum::VecBase(c) => f(c),
+            ConvertEnum::VecDefault(c) => f(c),
+            ConvertEnum::VecStruct(c) => f(c),
+            ConvertEnum::Callback(c) => f(c),
+        }
+    }
+}
 
 pub(crate) struct SwiftConvert {
     pub(crate) ty: AstType,
 }
 
+impl<'a> SwiftConvert {
+    fn get_convert(&self, ty: &AstType) -> ConvertEnum {
+        match ty.clone() {
+            AstType::Void => ConvertEnum::Void(Void {}),
+            AstType::Byte(_)
+            | AstType::Int(_)
+            | AstType::Short(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_) => ConvertEnum::Basic(Basic { ty: ty.clone() }),
+            AstType::Boolean => ConvertEnum::Bool(Bool {}),
+            AstType::String => ConvertEnum::Str(Str {}),
+            AstType::Vec(AstBaseType::Byte(_))
+            | AstType::Vec(AstBaseType::Short(_))
+            | AstType::Vec(AstBaseType::Int(_))
+            | AstType::Vec(AstBaseType::Long(_)) => {
+                ConvertEnum::VecBase(VecBase { ty: ty.clone() })
+            }
+            AstType::Vec(AstBaseType::Struct(ref base)) => {
+                ConvertEnum::VecStruct(VecStruct { ty: ty.clone() })
+            }
+            AstType::Vec(_) => ConvertEnum::VecDefault(VecDefault { ty: ty.clone() }),
+            AstType::Callback(_) => ConvertEnum::Callback(Callback { ty: ty.clone() }),
+            AstType::Struct(_) => ConvertEnum::Struct(Struct { ty: ty.clone() }),
+        }
+    }
+
+    fn handle<R, F>(&self, f: F) -> R
+    where
+        F: Fn(&dyn Convertible<Swift<'a>>) -> R,
+    {
+        self.get_convert(&self.ty).handle(f)
+    }
+}
+
 impl<'a> Convertible<Swift<'a>> for SwiftConvert {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
         direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        match self.ty.clone() {
-            AstType::Void => push_f!(body, origin),
-            AstType::Byte(_)
-            | AstType::Int(_)
-            | AstType::Short(_)
-            | AstType::Long(_)
-            | AstType::Float(_)
-            | AstType::Double(_) => {
-                push!(
-                    body,
-                    Basic {
-                        ty: self.ty.clone()
-                    }
-                    .artifact_to_transfer(origin, direction)
-                );
-            }
-            AstType::Boolean => {
-                push!(body, Bool {}.artifact_to_transfer(origin, direction));
-            }
-            AstType::String => {
-                push!(body, Str {}.artifact_to_transfer(origin, direction));
-            }
-            AstType::Vec(AstBaseType::Byte(_))
-            | AstType::Vec(AstBaseType::Short(_))
-            | AstType::Vec(AstBaseType::Int(_))
-            | AstType::Vec(AstBaseType::Long(_)) => {
-                push!(
-                    body,
-                    VecBase {
-                        ty: self.ty.clone()
-                    }
-                    .artifact_to_transfer(origin, direction)
-                );
-            }
-            AstType::Vec(AstBaseType::Struct(ref base)) => {
-                push!(
-                    body,
-                    VecStruct {
-                        struct_name: base.to_string(),
-                    }
-                    .artifact_to_transfer(origin, direction)
-                );
-            }
-            AstType::Vec(_) => {
-                push!(
-                    body,
-                    VecDefault {
-                        ty: self.ty.clone()
-                    }
-                    .artifact_to_transfer(origin, direction)
-                );
-            }
-            AstType::Callback(ref base) => {
-                push!(
-                    body,
-                    Callback {
-                        ty: self.ty.clone()
-                    }
-                    .artifact_to_transfer(origin, direction)
-                );
-            }
-            AstType::Struct(_) => {
-                push!(
-                    body,
-                    Struct {
-                        ty: self.ty.clone()
-                    }
-                    .artifact_to_transfer(origin, direction)
-                );
-            }
-        }
-        body
+        self.handle(|c| c.native_to_transferable(origin.clone(), direction.clone()))
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
         direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        match self.ty.clone() {
-            AstType::Void => push_f!(body, origin),
-            AstType::Byte(_)
-            | AstType::Int(_)
-            | AstType::Short(_)
-            | AstType::Long(_)
-            | AstType::Float(_)
-            | AstType::Double(_) => {
-                push!(
-                    body,
-                    Basic {
-                        ty: self.ty.clone()
-                    }
-                    .transfer_to_artifact(origin, direction)
-                );
-            }
-            AstType::Boolean => {
-                push!(body, Bool {}.transfer_to_artifact(origin, direction));
-            }
-            AstType::String => push!(body, Str {}.transfer_to_artifact(origin, direction)),
-            AstType::Vec(AstBaseType::Byte(_))
-            | AstType::Vec(AstBaseType::Short(_))
-            | AstType::Vec(AstBaseType::Int(_))
-            | AstType::Vec(AstBaseType::Long(_)) => {
-                push!(
-                    body,
-                    VecBase {
-                        ty: self.ty.clone()
-                    }
-                    .transfer_to_artifact(origin, direction)
-                );
-            }
-            AstType::Vec(AstBaseType::Struct(ref base)) => {
-                push!(
-                    body,
-                    VecStruct {
-                        struct_name: base.to_string(),
-                    }
-                    .transfer_to_artifact(origin, direction)
-                );
-            }
-            AstType::Vec(_) => push!(
-                body,
-                VecDefault {
-                    ty: self.ty.clone()
-                }
-                .transfer_to_artifact(origin, direction)
-            ),
-
-            AstType::Callback(ref base) => {
-                push!(
-                    body,
-                    Callback {
-                        ty: self.ty.clone()
-                    }
-                    .transfer_to_artifact(origin, direction)
-                );
-            }
-
-            AstType::Struct(ref base) => {
-                push!(
-                    body,
-                    Struct {
-                        ty: self.ty.clone()
-                    }
-                    .transfer_to_artifact(origin, direction)
-                );
-            }
-        }
-        body
+        self.handle(|c| c.transferable_to_native(origin.clone(), direction.clone()))
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
-        match self.ty.clone() {
-            AstType::Void => {
-                quote! {
-                    #origin;
-                }
-            }
-            AstType::Byte(_)
-            | AstType::Int(_)
-            | AstType::Short(_)
-            | AstType::Long(_)
-            | AstType::Float(_)
-            | AstType::Double(_) => Basic {
-                ty: self.ty.clone(),
-            }
-            .rust_to_transfer(quote!(#origin), direction),
-            AstType::Boolean => Bool {}.rust_to_transfer(quote!(#origin), direction),
-            AstType::String => Str {}.rust_to_transfer(quote!(#origin), direction),
-            AstType::Vec(AstBaseType::Struct(base)) => VecStruct {
-                struct_name: base.to_string(),
-            }
-            .rust_to_transfer(quote!(#origin), direction),
-            AstType::Vec(AstBaseType::Byte(_))
-            | AstType::Vec(AstBaseType::Short(_))
-            | AstType::Vec(AstBaseType::Int(_))
-            | AstType::Vec(AstBaseType::Long(_)) => VecBase {
-                ty: self.ty.clone(),
-            }
-            .rust_to_transfer(quote!(#origin), direction),
-            AstType::Vec(_) => VecDefault {
-                ty: self.ty.clone(),
-            }
-            .rust_to_transfer(quote!(#origin), direction),
-            AstType::Callback(_) => Callback {
-                ty: self.ty.clone(),
-            }
-            .rust_to_transfer(quote! {callback_index}, direction),
-            AstType::Struct(_) => Struct {
-                ty: self.ty.clone(),
-            }
-            .rust_to_transfer(quote!(#origin), direction),
-        }
+    fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+        self.handle(|c| c.rust_to_transferable(origin.clone(), direction.clone()))
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
-        match self.ty.clone() {
-            AstType::Void => {
-                quote! {#origin}
-            }
-            AstType::Byte(_)
-            | AstType::Int(_)
-            | AstType::Short(_)
-            | AstType::Long(_)
-            | AstType::Float(_)
-            | AstType::Double(_) => Basic {
-                ty: self.ty.clone(),
-            }
-            .transfer_to_rust(quote!(#origin), direction),
-            AstType::Boolean => Bool {}.transfer_to_rust(quote!(#origin), direction),
-            AstType::String => Str {}.transfer_to_rust(quote!(#origin), direction),
-            AstType::Vec(AstBaseType::Byte(ref base))
-            | AstType::Vec(AstBaseType::Short(ref base))
-            | AstType::Vec(AstBaseType::Int(ref base))
-            | AstType::Vec(AstBaseType::Long(ref base)) => VecBase {
-                ty: self.ty.clone(),
-            }
-            .transfer_to_rust(quote!(#origin), direction),
-            AstType::Vec(AstBaseType::Struct(ref base)) => VecStruct {
-                struct_name: base.to_string(),
-            }
-            .transfer_to_rust(quote!(#origin), direction),
-            AstType::Vec(_) => VecDefault {
-                ty: self.ty.clone(),
-            }
-            .transfer_to_rust(quote!(#origin), direction),
-            AstType::Callback(_) => Callback {
-                ty: self.ty.clone(),
-            }
-            .transfer_to_rust(quote! {#origin}, direction),
-            AstType::Struct(_) => Struct {
-                ty: self.ty.clone(),
-            }
-            .transfer_to_rust(quote! {#origin}, direction),
-        }
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+        self.handle(|c| c.transferable_to_rust(origin.clone(), direction.clone()))
+    }
+
+    fn native_type(&self) -> Swift<'a> {
+        self.handle(|c| c.native_type())
     }
 
     fn quote_common_bridge(&self) -> TokenStream {
-        quote! {}
+        self.handle(|c| c.quote_common_bridge())
     }
 
     fn quote_common_artifact(&self) -> Tokens<'static, Swift<'a>> {
-        Tokens::new()
+        self.handle(|c| c.quote_common_artifact())
     }
 }

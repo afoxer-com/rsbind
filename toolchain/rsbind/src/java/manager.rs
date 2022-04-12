@@ -16,7 +16,7 @@ impl<'a> ManagerGen<'a> {
     pub(crate) fn gen(&self) -> Result<String> {
         let mut class = Class::new("RustLib");
         class.modifiers = vec![Modifier::Public];
-        for desc in self.ast.trait_descs.iter() {
+        for desc in self.ast.traits.iter() {
             let descs = desc.1;
             for each in descs.iter() {
                 if !each.is_callback {

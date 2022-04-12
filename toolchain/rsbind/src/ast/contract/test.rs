@@ -1,8 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use syn::token::As;
-
-    use crate::ast::contract::parser::parse_from_str;
+    use crate::ast::contract::parser::{parse_from_str, ContractResult};
     use crate::ast::types::{AstBaseType, AstType};
 
     #[test]
@@ -45,8 +43,10 @@ mod tests {
             }
         ";
 
-        let (trait_desc, struct_desc) =
+        let ContractResult { traits, structs } =
             parse_from_str("demo_crate", "demo_mod", contract_str, "contract").unwrap();
+        let trait_desc = traits;
+        let struct_desc = structs;
         assert_eq!(trait_desc.len(), 2);
         assert_eq!(struct_desc.len(), 1);
 

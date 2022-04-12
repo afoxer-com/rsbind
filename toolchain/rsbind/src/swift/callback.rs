@@ -4,7 +4,9 @@ use rstgen::{swift, IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
+use crate::base::{Convertible, Direction};
 use crate::errors::*;
+use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::{to_swift_file, SwiftType};
 
@@ -94,12 +96,17 @@ impl<'a> InternalCallbackGen<'a> {
             let mut cls_method = swift::Method::new(method.name.to_lower_camel_case());
             for arg in method.args.iter() {
                 let cls_method_arg = swift::Argument::new(
-                    SwiftMapping::map_swift_sig_type(&arg.ty),
+                    SwiftConvert { ty: arg.ty.clone() }.native_type(),
                     arg.name.clone(),
                 );
                 cls_method.arguments.push(cls_method_arg);
             }
-            cls_method.returns(SwiftMapping::map_swift_sig_type(&method.return_type));
+            cls_method.returns(
+                SwiftConvert {
+                    ty: method.return_type.clone(),
+                }
+                .native_type(),
+            );
 
             let mut method_body = Tokens::new();
 
@@ -134,23 +141,26 @@ impl<'a> InternalCallbackGen<'a> {
             }
             // argument convert
             for arg in method.args.iter() {
-                crate::swift::artifact_s2r::fill_arg_convert(
-                    &mut method_body,
-                    arg,
-                    self.callbacks,
-                )?;
+                println!("quote arg convert for {}", arg.name.clone());
+                push_f!(method_body, "let s_{} = ", arg.name);
+                method_body.append(
+                    SwiftConvert { ty: arg.ty.clone() }
+                        .native_to_transferable(arg.name.clone(), Direction::Down),
+                );
             }
 
             // call native method
             self.fill_call_native_method(&mut method_body, method)?;
 
             // return convert
-            crate::swift::artifact_s2r::fill_return_type_convert(
-                &mut method_body,
-                &method.return_type,
-                &self.desc.crate_name,
-                self.callbacks,
-            )?;
+            push_f!(method_body, "let r_result = ");
+            method_body.append(
+                SwiftConvert {
+                    ty: method.return_type.clone(),
+                }
+                .transferable_to_native("result".to_string(), Direction::Down),
+            );
+            push!(method_body, "return r_result");
 
             for _i in 0..byte_count {
                 method_body.push("}");
@@ -293,10 +303,19 @@ impl<'a> InternalCallbackGen<'a> {
     fn fill_cb_closure_arg_convert<'b>(
         &self,
         cb_arg: &'a ArgDesc,
-        callbacks: &'a [&'a TraitDesc],
+        _callbacks: &'a [&'a TraitDesc],
         method_body: &'b mut Tokens<'a, Swift<'a>>,
     ) -> Result<()> {
-        crate::swift::artifact_r2s::fill_arg_convert(cb_arg, self.desc, method_body)
+        let mut fn_body = toks!();
+        nested_f!(fn_body, "let c_{} = ", cb_arg.name);
+        fn_body.append(
+            SwiftConvert {
+                ty: cb_arg.ty.clone(),
+            }
+            .transferable_to_native(cb_arg.name.clone(), Direction::Up),
+        );
+        method_body.push(fn_body);
+        Ok(())
     }
 
     fn fill_cb_closure_call(
@@ -330,7 +349,14 @@ impl<'a> InternalCallbackGen<'a> {
         callbacks: &[&TraitDesc],
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
-        crate::swift::artifact_r2s::fill_return_convert(cb_method, callbacks, method_body)
+        push!(method_body, "let r_result = ");
+        method_body.append(
+            SwiftConvert {
+                ty: cb_method.return_type.clone(),
+            }
+            .native_to_transferable("result".to_string(), Direction::Up),
+        );
+        Ok(())
     }
 
     fn fill_cb_closure_free_fn(&self, method_body: &mut Tokens<Swift>) -> Result<()> {

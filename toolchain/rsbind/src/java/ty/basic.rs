@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use rstgen::{Java, Tokens};
+use rstgen::{java, Java, Tokens};
 
 use crate::ast::types::AstType;
 use crate::base::{Convertible, Direction};
@@ -8,7 +8,7 @@ use crate::ident;
 pub(crate) struct Bool {}
 
 impl<'a> Convertible<Java<'a>> for Bool {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
         _direction: Direction,
@@ -18,7 +18,7 @@ impl<'a> Convertible<Java<'a>> for Bool {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
         _direction: Direction,
@@ -28,20 +28,20 @@ impl<'a> Convertible<Java<'a>> for Bool {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         quote! {
             if #origin {1} else {0}
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match direction {
-            Direction::Invoke => {
+            Direction::Down => {
                 quote! {
                     if #origin > 0 {true} else {false}
                 }
             }
-            Direction::Push => {
+            Direction::Up => {
                 quote! {
                     match #origin {
                         Ok(JValue::Int(value)) => if value > 0 {true} else {false},
@@ -50,6 +50,10 @@ impl<'a> Convertible<Java<'a>> for Bool {
                 }
             }
         }
+    }
+
+    fn native_type(&self) -> Java<'a> {
+        java::BOOLEAN
     }
 
     fn quote_common_bridge(&self) -> TokenStream {
@@ -66,7 +70,7 @@ pub(crate) struct Basic {
 }
 
 impl<'a> Convertible<Java<'a>> for Basic {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
         _direction: Direction,
@@ -76,7 +80,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
         _direction: Direction,
@@ -86,16 +90,16 @@ impl<'a> Convertible<Java<'a>> for Basic {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         let ty = basic_ty_to_tokens(self.ty.clone());
         quote! {
             #origin as #ty
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match direction {
-            Direction::Invoke => match self.ty.clone() {
+            Direction::Down => match self.ty.clone() {
                 AstType::Byte(ref base)
                 | AstType::Int(ref base)
                 | AstType::Short(ref base)
@@ -111,7 +115,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
                     quote! {}
                 }
             },
-            Direction::Push => {
+            Direction::Up => {
                 let ty = match self.ty.clone() {
                     AstType::Byte(_) => quote! {Byte},
                     AstType::Int(_) => quote! {Int},
@@ -143,6 +147,18 @@ impl<'a> Convertible<Java<'a>> for Basic {
         }
     }
 
+    fn native_type(&self) -> Java<'a> {
+        match self.ty.clone() {
+            AstType::Byte(_) => java::BYTE,
+            AstType::Int(_) => java::INTEGER,
+            AstType::Short(_) => java::SHORT,
+            AstType::Long(_) => java::LONG,
+            AstType::Float(_) => java::FLOAT,
+            AstType::Double(_) => java::DOUBLE,
+            _ => java::local(""),
+        }
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }
@@ -153,7 +169,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
 }
 
 pub(crate) fn basic_ty_to_tokens(ast_type: AstType) -> TokenStream {
-    match ast_type.clone() {
+    match ast_type {
         AstType::Byte(_) => quote!(i8),
         AstType::Short(_) => quote!(i16),
         AstType::Int(_) => quote!(i32),

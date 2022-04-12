@@ -19,28 +19,6 @@ impl SwiftType {
         self.to_swift_array(base_name)
     }
 
-    pub fn to_str(&self) -> String {
-        return match self.ast_type.clone() {
-            AstType::Void => "Void".to_string(),
-            AstType::Byte(_) => "Int8".to_string(),
-            AstType::Short(_) => "Int16".to_string(),
-            AstType::Int(_) => "Int32".to_string(),
-            AstType::Long(_) => "Int64".to_string(),
-            AstType::Float(_) => "Float".to_string(),
-            AstType::Double(_) => "Double".to_string(),
-            AstType::Boolean => "Bool".to_string(),
-            AstType::String => "String".to_string(),
-            AstType::Vec(ref base) => {
-                let base_ty = SwiftType {
-                    ast_type: AstType::from(base.clone()),
-                };
-                format!("[{}]", base_ty.to_str())
-            }
-            AstType::Callback(origin) => origin,
-            AstType::Struct(origin) => origin,
-        };
-    }
-
     fn to_swift_array(&self, swift: Swift<'static>) -> Swift<'static> {
         Swift::Array {
             inner: Box::new(swift),

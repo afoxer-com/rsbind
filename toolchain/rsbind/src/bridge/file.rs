@@ -1,8 +1,9 @@
+use std::cmp::Ordering;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::{Ident, TokenStream};
 
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
@@ -145,22 +146,26 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             println!("imps => {:?}", imps);
             println!("all imps => {:?}", &self.imp_desc);
 
-            if imps.len() > 1 {
-                println!("You have more than one impl for trait {}", desc.name);
-                return Err(GenerateError(format!(
-                    "You have more than one impl for trait {}",
-                    desc.name
-                ))
-                .into());
-            } else if imps.len() == 1 {
-                results.push(GenResult {
-                    result: self.generate_for_one_trait(
-                        desc,
-                        imps[0],
-                        &callbacks,
-                        self.struct_descs,
-                    ),
-                });
+            match imps.len().cmp(&1) {
+                Ordering::Less => {}
+                Ordering::Equal => {
+                    results.push(GenResult {
+                        result: self.generate_for_one_trait(
+                            desc,
+                            imps[0],
+                            &callbacks,
+                            self.struct_descs,
+                        ),
+                    });
+                }
+                Ordering::Greater => {
+                    println!("You have more than one impl for trait {}", desc.name);
+                    return Err(GenerateError(format!(
+                        "You have more than one impl for trait {}",
+                        desc.name
+                    ))
+                    .into());
+                }
             }
         }
 
@@ -233,21 +238,25 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                 .filter(|info| info.contract == trait_desc.name)
                 .collect::<Vec<&ImpDesc>>();
 
-            if imps.len() > 1 {
-                println!("You have more than one impl for trait {}", trait_desc.name);
-                return Err(GenerateError(format!(
-                    "You have more than one impl for trait {}",
-                    trait_desc.name
-                ))
-                .into());
-            } else if imps.len() == 1 {
-                let use_part = self
-                    .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
-                    .unwrap();
-                merge = quote! {
-                   #use_part
-                   #merge
-                };
+            match imps.len().cmp(&1) {
+                Ordering::Less => {}
+                Ordering::Equal => {
+                    let use_part = self
+                        .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
+                        .unwrap();
+                    merge = quote! {
+                       #use_part
+                       #merge
+                    };
+                }
+                Ordering::Greater => {
+                    println!("You have more than one impl for trait {}", trait_desc.name);
+                    return Err(GenerateError(format!(
+                        "You have more than one impl for trait {}",
+                        trait_desc.name
+                    ))
+                    .into());
+                }
             }
         }
         println!("[bridge]  ✅  end quote use part.");

@@ -1,17 +1,12 @@
-use std::fmt::format;
-
 use rstgen::swift::{local, Argument, Constructor, Field, Method, Modifier, Swift};
 use rstgen::{swift, IntoTokens};
-use syn::__private::str;
 
 use crate::ast::contract::desc::StructDesc;
-use crate::ast::types::{AstBaseType, AstType};
+
 use crate::base::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
-use crate::swift::mapping::SwiftMapping;
-use crate::swift::ty::str::Str;
-use crate::swift::ty::vec_default::VecDefault;
+
 use crate::swift::types::{to_swift_file, SwiftType};
 
 pub(crate) struct StructGen<'a> {
@@ -62,7 +57,7 @@ impl<'a> StructGen<'a> {
                 SwiftConvert {
                     ty: field.ty.clone(),
                 }
-                .artifact_to_transfer(format!("self.{}", &field.name), Direction::Invoke),
+                .native_to_transferable(format!("self.{}", &field.name), Direction::Down),
             );
             if index != self.desc.fields.len() - 1 {
                 method.body.append(",")
@@ -87,7 +82,7 @@ impl<'a> StructGen<'a> {
                 SwiftConvert {
                     ty: field.ty.clone(),
                 }
-                .transfer_to_artifact(format!("proxy.{}", &field.name), Direction::Invoke),
+                .transferable_to_native(format!("proxy.{}", &field.name), Direction::Down),
             );
         }
 

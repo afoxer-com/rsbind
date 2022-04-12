@@ -4,7 +4,9 @@ use rstgen::{IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
+use crate::base::Convertible;
 use crate::errors::*;
+use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::to_swift_file;
 
@@ -41,12 +43,19 @@ impl<'a> WrapperGen<'a> {
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Public];
-        m.returns(SwiftMapping::map_swift_sig_type(&method.return_type));
+        m.returns(
+            SwiftConvert {
+                ty: method.return_type.clone(),
+            }
+            .native_type(),
+        );
 
         let args = method.args.clone();
         for arg in args.iter() {
-            let argument =
-                swift::Argument::new(SwiftMapping::map_swift_sig_type(&arg.ty), arg.name.clone());
+            let argument = swift::Argument::new(
+                SwiftConvert { ty: arg.ty.clone() }.native_type(),
+                arg.name.clone(),
+            );
             m.arguments.push(argument);
         }
 

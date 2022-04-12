@@ -1,70 +1,17 @@
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::TokenStream;
 use rstgen::swift;
 use rstgen::swift::Swift;
 
 use crate::ast::contract::desc::TraitDesc;
 use crate::ast::types::{AstBaseType, AstType};
-use crate::errors::*;
 use crate::ident;
 
 pub(crate) struct SwiftMapping {}
 
 impl<'a> SwiftMapping {
-    /// Get the swift method signature argument types.
-    pub(crate) fn map_swift_sig_type(ty: &'a AstType) -> Swift<'static> {
-        match &ty {
-            AstType::Void => swift::local("()"),
-            AstType::Byte(_) => swift::BYTE,     // Int8
-            AstType::Short(_) => swift::SHORT,   // Int16
-            AstType::Int(_) => swift::INTEGER,   // Int32
-            AstType::Long(_) => swift::LONG,     // Int64
-            AstType::Float(_) => swift::FLOAT,   // Float
-            AstType::Double(_) => swift::DOUBLE, // Double
-            AstType::Boolean => swift::BOOLEAN,  // Bool
-            AstType::String => swift::local("String"),
-            AstType::Vec(base) => Swift::Array {
-                inner: Box::new(SwiftMapping::map_swift_sig_type(&base.clone().into())),
-            },
-            AstType::Callback(origin) => swift::local(origin.clone()),
-            AstType::Struct(origin) => swift::local(origin.clone()),
-        }
-    }
-
-    /// Get the swift method signature argument types.
-    pub(crate) fn map_swift_sig_type_str(ty: &'a AstType) -> String {
-        let mut buffer_str = "".to_string();
-        match &ty {
-            AstType::Void => "()",
-            AstType::Byte(_) => "Int8",
-            AstType::Short(_) => "Int16",
-            AstType::Int(_) => "Int32",
-            AstType::Long(_) => "Int64",
-            AstType::Float(_) => "Float",
-            AstType::Double(_) => "Double",
-            AstType::Boolean => "Bool", // Bool
-            AstType::String => "String",
-            AstType::Vec(AstBaseType::Byte(ref origin)) => "[Int8]",
-            AstType::Vec(AstBaseType::Short(ref origin)) => "[Int16]",
-            AstType::Vec(AstBaseType::Int(ref origin)) => "[Int32]",
-            AstType::Vec(AstBaseType::Long(ref origin)) => "[Int64]",
-            AstType::Vec(AstBaseType::Struct(ref origin)) => {
-                buffer_str = format!("[{}]", origin);
-                buffer_str.as_str()
-            }
-            AstType::Vec(ref base) => {
-                let sub = SwiftMapping::map_swift_sig_type_str(&AstType::from(base.clone()));
-                buffer_str = format!("[{}]", sub);
-                buffer_str.as_str()
-            }
-            AstType::Callback(ref origin) => origin,
-            AstType::Struct(ref origin) => origin,
-        }
-        .to_string()
-    }
-
     /// Get the swift argument types for transferring to C.
     pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> String {
-        let mut buffer_str = "".to_string();
+        let buffer_str;
         match &ty {
             AstType::Void => "()",
             AstType::Byte(_) => "Int8",

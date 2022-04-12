@@ -2,7 +2,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use proc_macro2::{Ident, Span};
+use proc_macro2::Ident;
 
 use crate::ast::contract::desc::{StructDesc, TraitDesc};
 use crate::ast::imp::desc::ImpDesc;
@@ -43,9 +43,9 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
     pub(crate) fn gen_bridges(&self) -> Result<()> {
         let emtpy_vec = vec![];
 
-        let traits = &self.ast_result.trait_descs;
-        let structs = &self.ast_result.struct_descs;
-        let imp_info = &self.ast_result.imp_desc;
+        let traits = &self.ast_result.traits;
+        let structs = &self.ast_result.structs;
+        let imp_info = &self.ast_result.imps;
 
         let mut bridges: Vec<String> = vec![];
         for each_mod in traits {

@@ -2,29 +2,22 @@
 ///! Swift to Rust data convert.
 ///!
 ///
-use proc_macro2::{Ident, Span, TokenStream};
+use proc_macro2::TokenStream;
 
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
-use crate::ast::types::{AstBaseType, AstType};
+use crate::ast::types::AstType;
 use crate::base::{Convertible, Direction};
 use crate::errors::*;
 use crate::ident;
 use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::RustMapping;
-use crate::swift::ty::basic::{Basic, Bool};
-use crate::swift::ty::str::Str;
-use crate::swift::ty::struct_::Struct;
-use crate::swift::ty::vec_base::VecBase;
-use crate::swift::ty::vec_default::VecDefault;
-use crate::swift::ty::vec_struct::VecStruct;
-use crate::ErrorKind::GenerateError;
 
-pub(crate) fn quote_arg_convert(arg: &ArgDesc, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
+pub(crate) fn quote_arg_convert(arg: &ArgDesc, _callbacks: &[&TraitDesc]) -> Result<TokenStream> {
     let rust_arg_name = ident!(&format!("r_{}", &arg.name));
     let arg_name_ident = ident!(&arg.name);
 
     let convert = SwiftConvert { ty: arg.ty.clone() }
-        .transfer_to_rust(quote! {#arg_name_ident}, Direction::Invoke);
+        .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
     let convert = quote! {
         let #rust_arg_name = #convert;
     };
@@ -75,13 +68,13 @@ pub(crate) fn quote_callback_struct(
 
 pub(crate) fn quote_return_convert(
     ty: &AstType,
-    callbacks: &[&TraitDesc],
+    _callbacks: &[&TraitDesc],
     ret_name: &str,
 ) -> Result<TokenStream> {
     let ret_name_ident = ident!(ret_name);
 
     let convert = SwiftConvert { ty: ty.clone() }
-        .rust_to_transfer(quote! {#ret_name_ident}, Direction::Invoke);
+        .rust_to_transferable(quote! {#ret_name_ident}, Direction::Down);
     let convert = quote! {
         let r_result = #convert;
     };

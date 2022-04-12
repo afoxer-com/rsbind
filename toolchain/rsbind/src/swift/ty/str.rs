@@ -1,6 +1,6 @@
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
-use rstgen::Tokens;
+use rstgen::{swift, Tokens};
 
 use crate::base::{Convertible, Direction};
 use crate::swift::ty::basic::quote_free_swift_ptr;
@@ -8,10 +8,10 @@ use crate::swift::ty::basic::quote_free_swift_ptr;
 pub(crate) struct Str {}
 
 impl<'a> Convertible<Swift<'a>> for Str {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push_f!(body, " { () -> CInt8Array in");
@@ -43,10 +43,10 @@ impl<'a> Convertible<Swift<'a>> for Str {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push_f!(body, "{ () -> String in");
@@ -67,9 +67,8 @@ impl<'a> Convertible<Swift<'a>> for Str {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
-        quote! {
-            {
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+        quote! {{
                 let cstr = CString::new(#origin).unwrap();
                 let bytes = cstr.as_bytes_with_nul();
                 let array = CInt8Array {
@@ -79,21 +78,22 @@ impl<'a> Convertible<Swift<'a>> for Str {
                 };
                 std::mem::forget(cstr);
                 array
-            }
-        }
+        }}
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
-        quote! {
-            {
+    fn transferable_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+        quote! {{
                 let slice = unsafe {std::slice::from_raw_parts(#origin.ptr as (*const u8), #origin.len as usize).to_vec()};
                 let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(&slice)};
                 println!("begin free str from rust");
                 let str = cstr.to_string_lossy().to_string();
                 (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len);
                 str
-            }
-        }
+        }}
+    }
+
+    fn native_type(&self) -> Swift<'a> {
+        swift::local("String")
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

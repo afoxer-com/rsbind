@@ -1,39 +1,39 @@
 use proc_macro2::TokenStream;
-use rstgen::{Java, Tokens};
+use rstgen::{java, Java, Tokens};
 
 use crate::base::{Convertible, Direction};
 
 pub(crate) struct Str {}
 
 impl<'a> Convertible<Java<'a>> for Str {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         push_f!(body, "{}", origin);
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         push_f!(body, "{}", origin);
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match direction {
-            Direction::Invoke => {
+            Direction::Down => {
                 quote! {
                     env.new_string(#origin).expect("Couldn't new java string!").into_inner()
                 }
             }
-            Direction::Push => {
+            Direction::Up => {
                 quote! {
                     env.new_string(#origin).expect("Couldn't new java string!").into()
                 }
@@ -41,14 +41,14 @@ impl<'a> Convertible<Java<'a>> for Str {
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match direction {
-            Direction::Invoke => {
+            Direction::Down => {
                 quote! {
                     env.get_string(#origin).expect("Couldn't get java string!").into()
                 }
             }
-            Direction::Push => {
+            Direction::Up => {
                 quote! {
                     match #origin {
                         Ok(JValue::Object(value)) => {
@@ -60,6 +60,10 @@ impl<'a> Convertible<Java<'a>> for Str {
                 }
             }
         }
+    }
+
+    fn native_type(&self) -> Java<'a> {
+        java::imported("java.lang", "String")
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

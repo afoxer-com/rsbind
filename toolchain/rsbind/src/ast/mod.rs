@@ -27,11 +27,18 @@ pub(crate) struct AstHandler {
 /// The ast result after parsing contract and imp directories.
 pub(crate) struct AstResult {
     /// All the traits in contract directory, key is mod name, value is all traits.
-    pub trait_descs: HashMap<String, Vec<TraitDesc>>,
+    pub traits: HashMap<String, Vec<TraitDesc>>,
     /// All the struct in contract directory, key is mod name , value is all structs.
-    pub struct_descs: HashMap<String, Vec<StructDesc>>,
+    pub structs: HashMap<String, Vec<StructDesc>>,
     /// All the implementations.
-    pub imp_desc: Vec<ImpDesc>,
+    pub imps: Vec<ImpDesc>,
+}
+
+struct IndexedContract {
+    /// All the traits in contract directory, key is mod name, value is all traits.
+    pub traits: HashMap<String, Vec<TraitDesc>>,
+    /// All the struct in contract directory, key is mod name , value is all structs.
+    pub structs: HashMap<String, Vec<StructDesc>>,
 }
 
 impl AstHandler {
@@ -43,14 +50,14 @@ impl AstHandler {
         let imp_dir_path = origin_prj_path.join(IMP_DIR);
         let contract_dir_path = origin_prj_path.join(CONTRACT_DIR);
 
-        let (trait_desc_map, struct_desc_map) =
+        let IndexedContract { traits, structs } =
             if contract_dir_path.is_dir() && contract_dir_path.exists() {
                 self.parse_contract_from_dir(&contract_dir_path)?
             } else {
                 self.parse_from_file(origin_prj_path)?
             };
 
-        let imp_desc = if imp_dir_path.is_dir() && imp_dir_path.exists() {
+        let imps = if imp_dir_path.is_dir() && imp_dir_path.exists() {
             imp::parser::parse_dir(&imp_dir_path, "imp")?
         } else {
             let imp_file = origin_prj_path.join(IMP_FILE);
@@ -58,21 +65,15 @@ impl AstHandler {
         };
 
         Ok(AstResult {
-            trait_descs: trait_desc_map,
-            struct_descs: struct_desc_map,
-            imp_desc,
+            traits,
+            structs,
+            imps,
         })
     }
 
-    fn parse_contract_from_dir(
-        &self,
-        contract_dir_path: &Path,
-    ) -> Result<(
-        HashMap<String, Vec<TraitDesc>>,
-        HashMap<String, Vec<StructDesc>>,
-    )> {
-        let mut trait_desc_map = HashMap::new();
-        let mut struct_desc_map = HashMap::new();
+    fn parse_contract_from_dir(&self, contract_dir_path: &Path) -> Result<IndexedContract> {
+        let mut traits = HashMap::new();
+        let mut structs = HashMap::new();
 
         let contract_dir = fs::read_dir(&contract_dir_path)?;
         for file in contract_dir {
@@ -93,36 +94,30 @@ impl AstHandler {
             let mod_path = format!("contract::{}", &mod_name);
             let results =
                 contract::parser::parse(self.crate_name.clone(), &path, &mod_path).unwrap();
-            trait_desc_map.insert(mod_name.to_owned(), results.0);
-            struct_desc_map.insert(mod_name.to_owned(), results.1);
+            traits.insert(mod_name.to_owned(), results.traits);
+            structs.insert(mod_name.to_owned(), results.structs);
         }
 
-        Ok((trait_desc_map, struct_desc_map))
+        Ok(IndexedContract { traits, structs })
     }
 
-    fn parse_from_file(
-        &self,
-        origin_prj_path: &Path,
-    ) -> Result<(
-        HashMap<String, Vec<TraitDesc>>,
-        HashMap<String, Vec<StructDesc>>,
-    )> {
+    fn parse_from_file(&self, origin_prj_path: &Path) -> Result<IndexedContract> {
         let contract_file = origin_prj_path.join(CONTRACT_FILE);
 
-        let mut trait_desc_map = HashMap::new();
-        let mut struct_desc_map = HashMap::new();
+        let mut traits = HashMap::new();
+        let mut structs = HashMap::new();
 
         let results = contract::parser::parse(self.crate_name.clone(), &contract_file, "contract")?;
-        trait_desc_map.insert("contract".to_owned(), results.0);
-        struct_desc_map.insert("contract".to_owned(), results.1);
+        traits.insert("contract".to_owned(), results.traits);
+        structs.insert("contract".to_owned(), results.structs);
 
-        Ok((trait_desc_map, struct_desc_map))
+        Ok(IndexedContract { traits, structs })
     }
 }
 
 impl AstResult {
     pub(crate) fn flush(self, ast_dir: &Path) -> Result<Self> {
-        for each_mod in self.trait_descs.iter() {
+        for each_mod in self.traits.iter() {
             let trait_desc_list = each_mod.1;
             for trait_desc in trait_desc_list {
                 let json =
@@ -137,7 +132,7 @@ impl AstResult {
             }
         }
 
-        for each_mod in self.struct_descs.iter() {
+        for each_mod in self.structs.iter() {
             let struct_desc_list = each_mod.1;
             for struct_desc in struct_desc_list {
                 let json =

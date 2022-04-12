@@ -1,8 +1,8 @@
 use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
-use rstgen::Tokens;
+use rstgen::{swift, Tokens};
 
-use crate::ast::types::AstType;
+use crate::ast::types::{AstBaseType, AstType};
 use crate::base::{Convertible, Direction};
 use crate::swift::mapping::SwiftMapping;
 use crate::swift::ty::basic::quote_free_swift_ptr;
@@ -11,16 +11,29 @@ pub(crate) struct VecDefault {
     pub(crate) ty: AstType,
 }
 
+impl VecDefault {
+    fn native_type_str(&self) -> String {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Boolean) => "[Bool]",
+            AstType::Vec(AstBaseType::String) => "[String]",
+            AstType::Vec(AstBaseType::Float(_)) => "[Float]",
+            AstType::Vec(AstBaseType::Double(_)) => "[Double]",
+            _ => "",
+        }
+        .to_string()
+    }
+}
+
 impl<'a> Convertible<Swift<'a>> for VecDefault {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         push!(body, "autoreleasepool { () -> CInt8Array in",);
         nested!(body, "let encoder = JSONEncoder()");
-        nested!(body, "let data = try! encoder.encode(", origin.clone(), ")");
+        nested!(body, "let data = try! encoder.encode(", origin, ")");
         nested!(body, "let str = String(data: data, encoding: .utf8)!");
         nested!(body, "var buffer: UnsafeMutablePointer<Int8>? = nil");
         nested!(body, "var count : Int32 = 0");
@@ -47,13 +60,13 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        let swift_ty = SwiftMapping::map_swift_sig_type_str(&self.ty);
+        let swift_ty = self.native_type_str();
         push_f!(body, "{{ () -> {} in", swift_ty);
         push_f!(body, "let str = String(cString:{}.ptr!)", origin);
         push_f!(
@@ -78,34 +91,34 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
-        quote! {
-             {
-                let tmp_json = serde_json::to_string(&#origin);
-                let cstr = CString::new(tmp_json.unwrap()).unwrap();
-                let bytes = cstr.as_bytes_with_nul();
-                let array = CInt8Array {
-                    ptr: bytes.as_ptr() as (*const i8),
-                    len: bytes.len() as i32,
-                    free_ptr: free_str
-                };
-                std::mem::forget(cstr);
-                array
-            }
-        }
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+        quote! {{
+            let tmp_json = serde_json::to_string(&#origin);
+            let cstr = CString::new(tmp_json.unwrap()).unwrap();
+            let bytes = cstr.as_bytes_with_nul();
+            let array = CInt8Array {
+                ptr: bytes.as_ptr() as (*const i8),
+                len: bytes.len() as i32,
+                free_ptr: free_str
+            };
+            std::mem::forget(cstr);
+            array
+        }}
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
-        quote! {
-            {
-                let slice = unsafe {std::slice::from_raw_parts(#origin.ptr as (*const u8), #origin.len as usize).to_vec()};
-                let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(&slice)};
-                let json_str = cstr.to_string_lossy().to_string();
-                let object = serde_json::from_str(&json_str).unwrap();
-                (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len);
-                object
-            }
-        }
+    fn transferable_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
+        quote! {{
+            let slice = unsafe {std::slice::from_raw_parts(#origin.ptr as (*const u8), #origin.len as usize).to_vec()};
+            let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(&slice)};
+            let json_str = cstr.to_string_lossy().to_string();
+            let object = serde_json::from_str(&json_str).unwrap();
+            (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len);
+            object
+        }}
+    }
+
+    fn native_type(&self) -> Swift<'a> {
+        swift::local(self.native_type_str())
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

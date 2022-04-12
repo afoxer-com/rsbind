@@ -8,12 +8,11 @@ use crate::errors::*;
 #[derive(Clone)]
 pub(crate) struct JavaType {
     pub ast_type: AstType,
-    pub pkg: String,
 }
 
 impl JavaType {
-    pub(crate) fn new(ast_type: AstType, pkg: String) -> JavaType {
-        JavaType { ast_type, pkg }
+    pub(crate) fn new(ast_type: AstType) -> JavaType {
+        JavaType { ast_type }
     }
 
     pub(crate) fn to_array(&self) -> Java<'static> {
@@ -33,15 +32,6 @@ impl JavaType {
             AstType::Vec(_) => java::imported("java.lang", "String"),
             AstType::Struct(_) => java::imported("java.lang", "String"),
             AstType::Callback(_) => java::LONG,
-            _ => Java::from(self.clone()),
-        }
-    }
-
-    /// If JavaType is an Vec(base), we will return base, else we will return itself.
-    pub(crate) fn get_base_ty(&self) -> Java<'static> {
-        match self.ast_type.clone() {
-            AstType::Vec(AstBaseType::Struct(origin)) => java::local(origin),
-            AstType::Vec(base) => Java::from(JavaType::new(AstType::from(base), self.pkg.clone())),
             _ => Java::from(self.clone()),
         }
     }
@@ -71,16 +61,12 @@ impl From<JavaType> for Java<'static> {
             AstType::Double(_) => java::DOUBLE,
             AstType::String => java::imported("java.lang", "String"),
             AstType::Vec(ref base) => match base {
-                AstBaseType::Struct(_sub) => {
-                    JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_array()
-                }
+                AstBaseType::Struct(_sub) => JavaType::new(AstType::from(base.clone())).to_array(),
                 // Byte array is not transferred by json, so we don't use boxed array.
-                AstBaseType::Byte(_) => {
-                    JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_array()
-                }
+                AstBaseType::Byte(_) => JavaType::new(AstType::from(base.clone())).to_array(),
                 // Why we use boxed array, because we use json to transfer array,
                 // and it is translated to list, and then we need to change it to array(boxed).
-                _ => JavaType::new(AstType::from(base.clone()), item.pkg.clone()).to_boxed_array(),
+                _ => JavaType::new(AstType::from(base.clone())).to_boxed_array(),
             },
             AstType::Void => java::VOID,
             AstType::Callback(origin) | AstType::Struct(origin) => java::local(origin),

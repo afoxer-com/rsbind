@@ -13,6 +13,11 @@ use crate::errors::*;
 use super::super::types::*;
 use super::desc::*;
 
+pub(crate) struct ContractResult {
+    pub(crate) traits: Vec<TraitDesc>,
+    pub(crate) structs: Vec<StructDesc>,
+}
+
 ///
 /// parse a syn file to TraitDesc which depicting the structure of the trait.
 ///
@@ -20,7 +25,7 @@ pub(crate) fn parse(
     crate_name: String,
     file_path: &Path,
     mod_path: &str,
-) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
+) -> Result<ContractResult> {
     let mut file = File::open(file_path).map_err(|e| ParseError(e.to_string()))?;
 
     let mut src = String::new();
@@ -42,7 +47,7 @@ pub(crate) fn parse_from_str(
     mod_name: &str,
     src: &str,
     mod_path: &str,
-) -> Result<(Vec<TraitDesc>, Vec<StructDesc>)> {
+) -> Result<(ContractResult)> {
     let syn_file = syn::parse_file(src).map_err(|e| ParseError(e.to_string()))?;
 
     let mut trait_descs = vec![];
@@ -99,7 +104,7 @@ pub(crate) fn parse_from_str(
                         _ => "".to_owned(),
                     };
 
-                    let mut field_ty = None;
+                    let field_ty;
                     match field.ty {
                         syn::Type::Path(ref type_path) => {
                             let segments = &(type_path.path.segments);
@@ -143,7 +148,10 @@ pub(crate) fn parse_from_str(
 
     if !trait_descs.is_empty() || !struct_descs.is_empty() {
         println!("final trait desc => {:#?}", trait_descs);
-        Ok((trait_descs, struct_descs))
+        Ok(ContractResult {
+            traits: trait_descs,
+            structs: struct_descs,
+        })
     } else {
         Err(ParseError("Can't find invalid trait and struct.".to_string()).into())
     }
@@ -169,7 +177,7 @@ fn parse_methods(items: &[syn::TraitItem]) -> Result<(Vec<MethodDesc>, bool)> {
             for input in method_inner.sig.inputs.iter() {
                 match input {
                     syn::FnArg::Receiver(ref arg) => {
-                        swallow_self = !arg.reference.is_some();
+                        swallow_self = arg.reference.is_none();
                         is_callback = true;
                         continue;
                     }

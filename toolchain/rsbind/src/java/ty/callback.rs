@@ -1,5 +1,5 @@
 use proc_macro2::TokenStream;
-use rstgen::{Java, Tokens};
+use rstgen::{java, Java, Tokens};
 
 use crate::ast::types::AstType;
 use crate::base::{Convertible, Direction};
@@ -10,10 +10,10 @@ pub(crate) struct Callback {
 }
 
 impl<'a> Convertible<Java<'a>> for Callback {
-    fn artifact_to_transfer(
+    fn native_to_transferable(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         if let AstType::Callback(base) = self.ty.clone() {
@@ -23,10 +23,10 @@ impl<'a> Convertible<Java<'a>> for Callback {
         body
     }
 
-    fn transfer_to_artifact(
+    fn transferable_to_native(
         &self,
         origin: String,
-        direction: Direction,
+        _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let mut body = Tokens::new();
         if let AstType::Callback(base) = self.ty.clone() {
@@ -44,7 +44,7 @@ impl<'a> Convertible<Java<'a>> for Callback {
         body
     }
 
-    fn rust_to_transfer(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Callback(ref base) => {
                 let cb_to_index_fn_name = ident!(&format!("callback_to_index_{}", base));
@@ -58,15 +58,15 @@ impl<'a> Convertible<Java<'a>> for Callback {
         }
     }
 
-    fn transfer_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+    fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Callback(ref base) => {
-                let index_to_callback_fn = ident!(&format!("index_to_callback_{}", base));
+                let _index_to_callback_fn = ident!(&format!("index_to_callback_{}", base));
                 let value_get = match direction {
-                    Direction::Invoke => {
+                    Direction::Down => {
                         quote! {}
                     }
-                    Direction::Push => {
+                    Direction::Up => {
                         quote! {
                             let #origin = match #origin {
                                 Ok(JValue::Long(value)) => value,
@@ -84,6 +84,13 @@ impl<'a> Convertible<Java<'a>> for Callback {
             _ => {
                 quote! {}
             }
+        }
+    }
+
+    fn native_type(&self) -> Java<'a> {
+        match self.ty.clone() {
+            AstType::Callback(ref origin) => java::local(origin.to_string()),
+            _ => java::local(""),
         }
     }
 

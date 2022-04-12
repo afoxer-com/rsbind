@@ -7,7 +7,14 @@
 
 import SwiftUI
 import rustlib
+import Foundation
 
+//@NSApplicationMain
+//class MainApp : NSObject, NSApplicationDelegate {
+//
+//}
+
+@available(OSX 11.0, *)
 @main
 struct MacDemoApp: App {
     private var demoTrait: DemoTrait = RustLib.newDemoTrait()
@@ -39,14 +46,14 @@ struct MacDemoApp: App {
                     demoTrait.testTwoVecArg15(arg: [100], arg1: [101])
                     let demoStruct = demoTrait.testReturnStruct()
                     demoTrait.testArgStruct(arg: demoStruct)
-                
-                
-                
+
+
+
                     print("run once")
 //                    demoTrait.testArgVecStruct14(arg: [demoStruct])
-                
-                
-                
+
+
+
 
                     demoTrait.testReturnVecStr()
                     demoTrait.testReturnVecU8()
@@ -58,14 +65,14 @@ struct MacDemoApp: App {
                     demoTrait.testReturnVecBoolTrue()
                     demoTrait.testTwoVecU8(input: [100])
 //                    demoTrait.testReturnVecStruct()
-                    
+
 //                    demoTrait.testArgCallback16(arg: createCallback())
 //                    demoTrait.testTwoArgCallback20(arg: createCallback(), arg1: createCallback())
 //                }
             })
         }
     }
-    
+
     static func newStruct() -> DemoStruct {
         let demoStruct = DemoStruct(
             arg1: 1,
@@ -92,188 +99,188 @@ struct MacDemoApp: App {
         )
         return demoStruct
     }
-    
+
     private func createCallback() -> DemoCallback {
         class AssertDemoCallback : DemoCallback {
             func testReturnVecStr() -> [String] {
                 ["Hello world"]
             }
-            
+
             func testReturnVecBoolTrue() -> [Bool] {
                 [true]
             }
-            
+
             func testReturnStruct() -> DemoStruct {
                 MacDemoApp.newStruct()
             }
-            
+
             func testReturnVecStruct() -> [DemoStruct] {
                 return [MacDemoApp.newStruct()]
             }
-            
+
             func testTwoVecU8(input: [Int8]) -> [Int8] {
                 [100]
             }
-            
+
             func testReturnVecI8() -> [Int8] {
                 [100]
             }
-            
+
             func testReturnVecI16() -> [Int16] {
                 [100]
             }
-            
+
             func testReturnVecU16() -> [Int16] {
                 [100]
             }
-            
+
             func testReturnVecI32() -> [Int32] {
                 [100]
             }
-            
+
             func testReturnVecU32() -> [Int32] {
                 [100]
             }
-            
+
             func testReturnVecI64() -> [Int64] {
                 [100]
             }
-            
+
             func testReturnVecU64() -> [Int64] {
                 [100]
             }
-            
+
             func testReturnVecU8() -> [Int8] {
                 [100]
             }
-            
+
             func testI647(arg: Int64, arg2: Int64) -> Int64 {
                 return 7
             }
-            
+
             func testU647(arg: Int64, arg2: Int64) -> Int64 {
                 return 7
             }
-            
+
             func testArgVecI6411(arg: [Int64]) -> Int64 {
                 return 11
             }
-            
+
             func testArgVecU6412(arg: [Int64]) -> Int64 {
                 return 12
             }
-            
+
             func testI163(arg: Int16, arg2: Int16) -> Int16 {
                 return 3
             }
-            
+
             func testU164(arg: Int16, arg2: Int16) -> Int16 {
                 return 4
             }
-            
+
             func testArgVecI169(arg: [Int16]) -> Int32 {
                 return 9
             }
-            
+
             func testArgVecU1610(arg: [Int16]) -> Int32 {
                 return 10
             }
-            
+
             func testF3230(arg: Float, arg2: Float) -> Float {
                 return 30.0
             }
-            
+
             func testF6431(arg: Double, arg2: Double) -> Double {
                 return 31.0
             }
-            
-            
+
+
             func testU81(arg: Int8, arg2: Int8) -> Int8 {
                 return 1
             }
-            
+
             func testI82(arg: Int8, arg2: Int8) -> Int8 {
                 return 2
             }
-            
+
             func testI163(arg: Int32, arg2: Int32) -> Int32 {
                 return 3
             }
-            
+
             func testU164(arg: Int32, arg2: Int32) -> Int32 {
                 return 4
             }
-            
+
             func testI325(arg: Int32, arg2: Int32) -> Int32 {
                 return 5
             }
-            
+
             func testU326(arg: Int32, arg2: Int32) -> Int32 {
                 return 6
             }
-            
+
             func testBoolFalse(arg_true: Bool, arg_false: Bool) -> Bool {
                 return false
             }
-            
+
             func testArgVecStr18(arg: [String]) -> Int32 {
                 return 18
             }
-            
+
             func testArgVecU87(arg: [Int8]) -> Int32 {
                 return 7
             }
-            
+
             func testArgVecI88(arg: [Int8]) -> Int32 {
                 return 8
             }
-            
+
             func testArgVecI169(arg: [Int32]) -> Int32 {
                 return 9
             }
-            
+
             func testArgVecU1610(arg: [Int32]) -> Int32 {
                 return 10
             }
-            
+
             func testArgVecI3211(arg: [Int32]) -> Int32 {
                 return 11
             }
-            
+
             func testArgVecU3212(arg: [Int32]) -> Int32 {
                 return 12
             }
-            
+
             func testArgVecBoolTrue(arg_true: [Bool]) -> Bool {
                 return true
             }
-            
+
             func testArgVecStruct17(arg: [DemoStruct]) -> Int32 {
                 return 17
             }
-            
+
             func testTwoVecArg13(arg: [Int32], arg1: [Int32]) -> Int32 {
                 return 13
             }
-            
+
             func testArgStruct14(arg: DemoStruct) -> Int32 {
                 return 14
             }
-            
+
             func testTwoArgStruct15(arg: DemoStruct, arg1: DemoStruct) -> Int32 {
                 return 15
             }
-            
+
             func testNoReturn() {
-                
+
             }
-            
+
             func testStr(arg : String) -> String {
 //                print("arg = \(arg)")
                 return "Hello world"
             }
         }
-        
+
         return AssertDemoCallback()
     }
 }

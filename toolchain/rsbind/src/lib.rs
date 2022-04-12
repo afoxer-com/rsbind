@@ -202,9 +202,9 @@ impl Bind {
             _ => {
                 use std::collections::HashMap;
                 let ast_result = AstResult {
-                    trait_descs: HashMap::new(),
-                    struct_descs: HashMap::new(),
-                    imp_desc: vec![],
+                    traits: HashMap::new(),
+                    structs: HashMap::new(),
+                    imps: vec![],
                 };
                 Ok(ast_result)
             }

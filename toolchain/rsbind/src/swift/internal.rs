@@ -3,9 +3,9 @@ use rstgen::swift::{self, *};
 use rstgen::{IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
-use crate::ast::types::{AstBaseType, AstType};
+use crate::base::{Convertible, Direction};
 use crate::errors::*;
-use crate::swift::mapping::SwiftMapping;
+use crate::swift::converter::SwiftConvert;
 use crate::swift::types::to_swift_file;
 
 pub(crate) struct TraitGen<'a> {
@@ -30,7 +30,7 @@ impl<'a> TraitGen<'a> {
 
             let mut method_body: Tokens<Swift> = Tokens::new();
 
-            let mut byte_count = 0;
+            let byte_count = 0;
             self.fill_arg_convert(&mut method_body, method)?;
             self.fill_call_native_method(&mut method_body, method)?;
             self.fill_return_type_convert(&mut method_body, method, self.callbacks)?;
@@ -48,19 +48,26 @@ impl<'a> TraitGen<'a> {
         to_swift_file(tokens)
     }
 
-    fn fill_global_block(&self, tokens: &mut Tokens<Swift>) -> Result<()> {
+    fn fill_global_block(&self, _tokens: &mut Tokens<Swift>) -> Result<()> {
         Ok(())
     }
 
     fn fill_method_sig(&self, method: &MethodDesc) -> Result<Method> {
         let mut m = Method::new(method.name.to_lower_camel_case());
         m.modifiers = vec![Modifier::Internal, Modifier::Static];
-        m.returns(SwiftMapping::map_swift_sig_type(&method.return_type));
+        m.returns(
+            SwiftConvert {
+                ty: method.return_type.clone(),
+            }
+            .native_type(),
+        );
 
         let args = method.args.clone();
         for arg in args.iter() {
-            let argument =
-                swift::Argument::new(SwiftMapping::map_swift_sig_type(&arg.ty), arg.name.clone());
+            let argument = swift::Argument::new(
+                SwiftConvert { ty: arg.ty.clone() }.native_type(),
+                arg.name.clone(),
+            );
             m.arguments.push(argument);
         }
 
@@ -74,7 +81,12 @@ impl<'a> TraitGen<'a> {
     ) -> Result<()> {
         for arg in method.args.iter() {
             // Argument convert
-            crate::swift::artifact_s2r::fill_arg_convert(method_body, arg, self.callbacks)?;
+            println!("quote arg convert for {}", arg.name.clone());
+            push_f!(method_body, "let s_{} = ", arg.name);
+            method_body.append(
+                SwiftConvert { ty: arg.ty.clone() }
+                    .native_to_transferable(arg.name.clone(), Direction::Down),
+            );
         }
         Ok(())
     }
@@ -110,11 +122,14 @@ impl<'a> TraitGen<'a> {
         method: &'a MethodDesc,
         callbacks: &'a [&'a TraitDesc],
     ) -> Result<()> {
-        crate::swift::artifact_s2r::fill_return_type_convert(
-            method_body,
-            &method.return_type,
-            &self.desc.crate_name,
-            callbacks,
-        )
+        push_f!(method_body, "let r_result = ");
+        method_body.append(
+            SwiftConvert {
+                ty: method.return_type.clone(),
+            }
+            .transferable_to_native("result".to_string(), Direction::Down),
+        );
+        push!(method_body, "return r_result");
+        Ok(())
     }
 }

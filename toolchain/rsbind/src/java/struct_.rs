@@ -19,7 +19,7 @@ impl<'a> StructGen<'a> {
             .push(java::imported("java.io", "Serializable"));
 
         for field in self.desc.fields.iter() {
-            let field_ty = JavaType::new(field.ty.clone(), self.pkg.clone());
+            let field_ty = JavaType::new(field.ty.clone());
             let mut java_field = Field::new(Java::from(field_ty), field.name.clone());
             java_field.modifiers = vec![Modifier::Public];
             class.fields.push(java_field);

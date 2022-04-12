@@ -227,7 +227,7 @@ impl FileGenStrategy for CFileGenStrategy {
             let convert = SwiftConvert {
                 ty: field.ty.clone(),
             }
-            .rust_to_transfer(quote! {origin.#field_name}, Direction::Invoke);
+            .rust_to_transferable(quote! {origin.#field_name}, Direction::Down);
             quote! {
                 #field_name : #convert
             }
@@ -238,7 +238,7 @@ impl FileGenStrategy for CFileGenStrategy {
             let convert = SwiftConvert {
                 ty: field.ty.clone(),
             }
-            .transfer_to_rust(quote! {proxy.#field_name}, Direction::Invoke);
+            .transferable_to_rust(quote! {proxy.#field_name}, Direction::Down);
             quote! {
                 #field_name : #convert
             }
@@ -449,7 +449,6 @@ fn model_to_box_convert(
 
     let mut method_names = Vec::new();
     let mut callback_methods = TokenStream::new();
-    let mut callback_struct = TokenStream::new();
     for method in callback_desc.methods.iter() {
         println!(
             "quote method {} in callback {}",
@@ -575,7 +574,7 @@ fn model_to_box_convert(
         method_names.push(method_name);
     }
 
-    callback_struct =
+    let callback_struct =
         crate::swift::bridge_s2r::quote_callback_struct(callback_desc, callbacks, struct_name)
             .unwrap();
 
@@ -616,22 +615,19 @@ fn model_to_box_convert(
 pub(crate) fn box_to_model_convert(
     callback: &TraitDesc,
     callbacks: &[&TraitDesc],
-    ret_name: &str,
+    _ret_name: &str,
 ) -> Result<TokenStream> {
     let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
     let callback_model_ident = ident!(callback_model_str);
     let callback_ident = ident!(&callback.name);
 
-    let mut method_names = vec![];
-    let mut ret_method_names = vec![];
-
     let mut method_result = TokenStream::new();
-    method_names = callback
+    let method_names = callback
         .methods
         .iter()
         .map(|method| ident!(&method.name))
         .collect::<Vec<Ident>>();
-    ret_method_names = callback
+    let ret_method_names = callback
         .methods
         .iter()
         .map(|method| ident!(&format!("ret_{}", &method.name)))

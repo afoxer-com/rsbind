@@ -26,7 +26,7 @@ impl<'a> JavaCodeGen<'a> {
 
         // collect all the callbacks.
         let mut callbacks = vec![];
-        for desc in self.ast.trait_descs.iter() {
+        for desc in self.ast.traits.iter() {
             let descs = desc.1;
             for each in descs.iter() {
                 if each.is_callback {
@@ -59,7 +59,7 @@ impl<'a> JavaCodeGen<'a> {
         }
 
         // generate all the traits.
-        for desc in self.ast.trait_descs.iter() {
+        for desc in self.ast.traits.iter() {
             let descs = desc.1;
             for each in descs.iter() {
                 if !each.is_callback {
@@ -96,7 +96,7 @@ impl<'a> JavaCodeGen<'a> {
         }
 
         // generate all the structs
-        for (_key, struct_descs) in self.ast.struct_descs.iter() {
+        for (_key, struct_descs) in self.ast.structs.iter() {
             for struct_desc in struct_descs.iter() {
                 let gen = StructGen {
                     desc: struct_desc,

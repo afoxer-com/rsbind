@@ -9,8 +9,8 @@ use proc_macro2::TokenStream;
 
 pub(crate) fn quote_arg_convert(
     arg: &ArgDesc,
-    namespace: &str,
-    trait_desc: &TraitDesc,
+    _namespace: &str,
+    _trait_desc: &TraitDesc,
 ) -> Result<TokenStream> {
     if let AstType::Void = arg.ty.clone() {
         return Ok(quote! {});
@@ -20,7 +20,7 @@ pub(crate) fn quote_arg_convert(
     let rust_arg_name = ident!(&rust_arg_str);
     let arg_name_ident = ident!(&arg.name);
     let convert = JavaConvert { ty: arg.ty.clone() }
-        .transfer_to_rust(quote! {#arg_name_ident}, Direction::Invoke);
+        .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
     let result = quote! {
         let #rust_arg_name = #convert;
     };
@@ -41,13 +41,13 @@ pub(crate) fn quote_return_convert(
     let result = JavaConvert {
         ty: return_ty.clone(),
     }
-    .rust_to_transfer(quote! {#ret_name_ident}, Direction::Invoke);
+    .rust_to_transferable(quote! {#ret_name_ident}, Direction::Down);
 
     Ok(result)
 }
 
 pub(crate) fn basic_ty_to_tokens(ast_type: AstType) -> TokenStream {
-    match ast_type.clone() {
+    match ast_type {
         AstType::Byte(_) => quote!(i8),
         AstType::Short(_) => quote!(i16),
         AstType::Int(_) => quote!(i32),

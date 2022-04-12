@@ -4,7 +4,9 @@ use rstgen::{java, IntoTokens, Java, Tokens};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
+use crate::base::{Convertible, Direction};
 use crate::errors::*;
+use crate::java::converter::JavaConvert;
 use crate::java::types::{to_java_file, JavaType};
 
 pub(crate) struct CallbackGen<'a> {
@@ -21,9 +23,9 @@ impl<'a> CallbackGen<'a> {
         for method in self.desc.methods.iter() {
             let mut m = Method::new(method.name.to_lower_camel_case());
             m.modifiers = vec![];
-            m.returns = Java::from(JavaType::new(method.return_type.clone(), self.pkg.clone()));
+            m.returns = Java::from(JavaType::new(method.return_type.clone()));
             for arg in method.args.iter() {
-                let arg_ty = Java::from(JavaType::new(arg.ty.clone(), self.pkg.clone()));
+                let arg_ty = Java::from(JavaType::new(arg.ty.clone()));
                 let mut argument = java::Argument::new(arg_ty, arg.name.as_ref());
                 argument.modifiers = vec![];
 
@@ -124,7 +126,7 @@ impl<'a> InnerCallbackGen<'a> {
         for method in self.desc.methods.iter() {
             let mut m = java::Method::new(method.name.to_lower_camel_case());
             m.modifiers = vec![java::Modifier::Public];
-            let return_ty = JavaType::new(method.return_type.clone(), self.pkg.clone());
+            let return_ty = JavaType::new(method.return_type.clone());
             m.returns = Java::from(return_ty);
 
             for arg in method.args.clone().into_iter() {
@@ -132,7 +134,7 @@ impl<'a> InnerCallbackGen<'a> {
                 match arg.ty {
                     AstType::Void => (),
                     _ => {
-                        let java = JavaType::new(arg.ty.clone(), self.pkg.clone());
+                        let java = JavaType::new(arg.ty.clone());
                         let mut argument = Argument::new(java, arg.name.clone());
                         argument.modifiers = vec![];
                         m.arguments.push(argument);
@@ -143,7 +145,18 @@ impl<'a> InnerCallbackGen<'a> {
             let mut method_body = Tokens::new();
             self.fill_j2r_cb_arg_convert(&mut method_body, method)?;
             self.fill_j2r_cb_invoke(&mut method_body, method, self.desc)?;
-            crate::java::artifact_j2r::fill_return_convert(&mut method_body, method, &self.pkg)?;
+
+            match method.return_type.clone() {
+                AstType::Void => {}
+                _ => {
+                    let convert = JavaConvert {
+                        ty: method.return_type.clone(),
+                    }
+                    .transferable_to_native("ret".to_string(), Direction::Down);
+                    push!(method_body, "return ", convert, ";");
+                }
+            }
+
             m.body = method_body;
             class.methods.push(m);
         }
@@ -206,15 +219,14 @@ impl<'a> InnerCallbackGen<'a> {
         m.modifiers = vec![Modifier::Static];
 
         if cb_method.return_type != AstType::Void {
-            m.returns =
-                JavaType::new(cb_method.return_type.clone(), self.pkg.clone()).to_transfer();
+            m.returns = JavaType::new(cb_method.return_type.clone()).to_transfer();
         }
 
         let mut argument = Argument::new(java::LONG, "index");
         argument.modifiers = vec![];
         m.arguments.push(argument);
         for arg in cb_method.args.iter() {
-            let arg_type = JavaType::new(arg.ty.clone(), self.pkg.clone()).to_transfer();
+            let arg_type = JavaType::new(arg.ty.clone()).to_transfer();
             let mut argument = Argument::new(arg_type, arg.name.clone());
             argument.modifiers = vec![];
             m.arguments.push(argument);
@@ -229,7 +241,23 @@ impl<'a> InnerCallbackGen<'a> {
         cb_method: &MethodDesc,
     ) -> Result<()> {
         for arg in cb_method.args.iter() {
-            crate::java::artifact_r2j::fill_arg_convert(arg, cb_body, &self.pkg)?;
+            if let AstType::Void = arg.ty.clone() {
+                continue;
+            }
+
+            let java = Java::from(JavaType::new(arg.ty.clone()));
+            let convert = JavaConvert { ty: arg.ty.clone() }
+                .transferable_to_native(arg.name.clone(), Direction::Up);
+            push!(
+                cb_body,
+                java,
+                " ",
+                "j_",
+                arg.name.clone(),
+                " = ",
+                convert,
+                ";"
+            );
         }
 
         Ok(())
@@ -270,7 +298,7 @@ impl<'a> InnerCallbackGen<'a> {
                 );
             }
             _ => {
-                let java = JavaType::new(cb_method.return_type.clone(), self.pkg.clone());
+                let java = JavaType::new(cb_method.return_type.clone());
                 push!(
                     cb_body,
                     Java::from(java),
@@ -291,7 +319,17 @@ impl<'a> InnerCallbackGen<'a> {
         cb_body: &mut Tokens<Java>,
         cb_method: &MethodDesc,
     ) -> Result<()> {
-        crate::java::artifact_r2j::fill_return_convert(cb_body, cb_method)
+        if let AstType::Void = cb_method.return_type.clone() {
+            return Ok(());
+        }
+
+        let convert = JavaConvert {
+            ty: cb_method.return_type.clone(),
+        }
+        .native_to_transferable("result".to_string(), Direction::Up);
+        push!(cb_body, "return ", convert, ";");
+
+        Ok(())
     }
 
     fn fill_j2r_cb_method_sig(
@@ -304,15 +342,14 @@ impl<'a> InnerCallbackGen<'a> {
         m.modifiers = vec![Modifier::Private, Modifier::Static, Modifier::Native];
 
         if cb_method.return_type != AstType::Void {
-            m.returns =
-                JavaType::new(cb_method.return_type.clone(), self.pkg.clone()).to_transfer();
+            m.returns = JavaType::new(cb_method.return_type.clone()).to_transfer();
         }
 
         let mut argument = Argument::new(java::LONG, "index");
         argument.modifiers = vec![];
         m.arguments.push(argument);
         for arg in cb_method.args.iter() {
-            let arg_type = JavaType::new(arg.ty.clone(), self.pkg.clone()).to_transfer();
+            let arg_type = JavaType::new(arg.ty.clone()).to_transfer();
             let mut argument = Argument::new(arg_type, arg.name.clone());
             argument.modifiers = vec![];
             m.arguments.push(argument);
@@ -327,7 +364,15 @@ impl<'a> InnerCallbackGen<'a> {
         cb_method: &MethodDesc,
     ) -> Result<()> {
         for arg in cb_method.args.iter() {
-            crate::java::artifact_j2r::fill_arg_convert(cb_body, arg, &self.pkg)?;
+            if let AstType::Void = arg.ty.clone() {
+                continue;
+            }
+
+            let java = JavaType::new(arg.ty.clone()).to_transfer();
+            let converted = format!("r_{}", &arg.name);
+            let convert = JavaConvert { ty: arg.ty.clone() }
+                .native_to_transferable(arg.name.clone(), Direction::Down);
+            push!(cb_body, java, "  ", converted, " = ", convert, ";");
         }
 
         Ok(())
@@ -363,8 +408,7 @@ impl<'a> InnerCallbackGen<'a> {
                 );
             }
             _ => {
-                let java =
-                    JavaType::new(cb_method.return_type.clone(), self.pkg.clone()).to_transfer();
+                let java = JavaType::new(cb_method.return_type.clone()).to_transfer();
                 push!(
                     cb_body,
                     java,

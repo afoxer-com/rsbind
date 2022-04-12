@@ -1,6 +1,4 @@
 pub(crate) mod artifact;
-mod artifact_r2s;
-mod artifact_s2r;
 pub(crate) mod bridge;
 mod bridge_r2s;
 mod bridge_s2r;

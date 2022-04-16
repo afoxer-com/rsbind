@@ -15,15 +15,15 @@ use std::path::Path;
 ///
 pub(crate) fn new_gen<'a>(
     out_dir: &'a Path,
-    trait_descs: &'a [TraitDesc],
-    struct_descs: &'a [StructDesc],
-    imp_desc: &'a [ImpDesc],
+    traits: &'a [TraitDesc],
+    structs: &'a [StructDesc],
+    imps: &'a [ImpDesc],
 ) -> BridgeFileGen<'a, CFileGenStrategy> {
     BridgeFileGen {
         out_dir,
-        trait_descs,
-        struct_descs,
-        imp_desc,
+        traits,
+        structs,
+        imps,
         strategy: CFileGenStrategy {},
     }
 }
@@ -34,25 +34,6 @@ pub(crate) fn new_gen<'a>(
 pub struct CFileGenStrategy {}
 
 impl CFileGenStrategy {}
-
-impl CFileGenStrategy {
-    fn quote_free_rust_array(fn_name: String, ty: TokenStream) -> TokenStream {
-        let fn_name_ident = ident!(&fn_name);
-        quote! {
-            #[no_mangle]
-            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| {
-                    let len: usize = length as usize;
-                    unsafe { Vec::from_raw_parts(ptr, len, len); }
-                }));
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => { println!("catch_unwind of `rsbind free_rust` error: {:?}", e); }
-                };
-            }
-        }
-    }
-}
 
 impl FileGenStrategy for CFileGenStrategy {
     fn gen_sdk_file(&self, _mod_names: &[String]) -> Result<TokenStream> {
@@ -73,71 +54,10 @@ impl FileGenStrategy for CFileGenStrategy {
     }
 
     fn quote_common_part(&self, _traits: &[TraitDesc]) -> Result<TokenStream> {
-        let int8_free_fn =
-            CFileGenStrategy::quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
-        let int16_free_fn =
-            CFileGenStrategy::quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
-        let int32_free_fn =
-            CFileGenStrategy::quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
-        let int64_free_fn =
-            CFileGenStrategy::quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
-
         Ok(quote! {
             lazy_static! {
                 static ref CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));
                 static ref CALLBACK_INDEX : Arc<RwLock<i64>> = Arc::new(RwLock::new(0));
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt8Array {
-                pub ptr: * const i8,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i8, i32),
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt16Array {
-                pub ptr: * const i16,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i16, i32),
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt32Array {
-                pub ptr: * const i32,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i32, i32),
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt64Array {
-                pub ptr: * const i64,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i64, i32),
-            }
-
-            #int8_free_fn
-            #int16_free_fn
-            #int32_free_fn
-            #int64_free_fn
-
-            #[no_mangle]
-            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
-                    let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
-                    let cstr = CStr::from_bytes_with_nul_unchecked(slice);
-                    CString::from(cstr);
-                }));
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("catch_unwind of `rsbind free_str` error: {:?}", e);
-                    }
-                };
             }
         })
     }
@@ -749,7 +669,7 @@ pub(crate) fn box_to_model_convert(
         }
 
         pub extern "C" fn ret_free_ptr(buffer: *mut i8, size: i32) {
-            #free_fn_ident(buffer, size as u32)
+            free_i8_array(buffer, size)
         }
     };
 

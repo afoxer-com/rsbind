@@ -25,9 +25,9 @@ pub(crate) enum TypeDirection {
 ///
 pub(crate) struct BridgeFileGen<'a, T: FileGenStrategy> {
     pub out_dir: &'a Path,
-    pub trait_descs: &'a [TraitDesc],
-    pub struct_descs: &'a [StructDesc],
-    pub imp_desc: &'a [ImpDesc],
+    pub traits: &'a [TraitDesc],
+    pub structs: &'a [StructDesc],
+    pub imps: &'a [ImpDesc],
     pub strategy: T,
 }
 
@@ -89,7 +89,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
     pub(crate) fn gen_one_bridge_file(&self, file_name: &str) -> Result<()> {
         println!("[bridge][{}]  🔆  begin generate bridge file.", file_name);
         let use_part = self.quote_use_part().unwrap();
-        let common_part = self.strategy.quote_common_part(self.trait_descs).unwrap();
+        let common_part = self.strategy.quote_common_part(self.traits).unwrap();
         let bridge_codes = self.gen_for_one_mod().unwrap();
 
         let mut merge_tokens = quote! {
@@ -121,14 +121,14 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         let mut results: Vec<GenResult> = vec![];
 
         let callbacks = self
-            .trait_descs
+            .traits
             .iter()
             .filter(|desc| desc.is_callback)
             .collect::<Vec<&TraitDesc>>();
 
         println!("callbacks is {:?}", &callbacks);
 
-        for desc in self.trait_descs.iter() {
+        for desc in self.traits.iter() {
             if desc.is_callback {
                 results.push(GenResult {
                     result: self.strategy.quote_callback_structures(desc, &callbacks),
@@ -137,14 +137,14 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
             }
 
             let imps = self
-                .imp_desc
+                .imps
                 .iter()
                 .filter(|info| info.contract == desc.name)
                 .collect::<Vec<&ImpDesc>>();
 
             println!("desc => {:?}", desc);
             println!("imps => {:?}", imps);
-            println!("all imps => {:?}", &self.imp_desc);
+            println!("all imps => {:?}", &self.imps);
 
             match imps.len().cmp(&1) {
                 Ordering::Less => {}
@@ -154,7 +154,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
                             desc,
                             imps[0],
                             &callbacks,
-                            self.struct_descs,
+                            self.structs,
                         ),
                     });
                 }
@@ -172,7 +172,7 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         let tokens = self.strategy.quote_for_all_cb(&callbacks);
         results.push(GenResult { result: tokens });
 
-        for struct_desc in self.struct_descs.iter() {
+        for struct_desc in self.structs.iter() {
             let tokens = self.strategy.quote_for_structures(struct_desc);
             results.push(GenResult { result: tokens });
         }
@@ -226,14 +226,14 @@ impl<'a, T: FileGenStrategy + 'a> BridgeFileGen<'a, T> {
         println!("[bridge]  🔆  begin quote use part.");
         let mut merge = self.strategy.quote_common_use_part().unwrap();
 
-        for trait_desc in self.trait_descs.iter() {
+        for trait_desc in self.traits.iter() {
             if trait_desc.is_callback {
                 println!("Skip callback trait {}", &trait_desc.name);
                 continue;
             }
 
             let imps = self
-                .imp_desc
+                .imps
                 .iter()
                 .filter(|info| info.contract == trait_desc.name)
                 .collect::<Vec<&ImpDesc>>();

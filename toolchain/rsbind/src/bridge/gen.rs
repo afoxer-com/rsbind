@@ -2,7 +2,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use proc_macro2::Ident;
+use proc_macro2::{Ident, TokenStream};
 
 use crate::ast::contract::desc::{StructDesc, TraitDesc};
 use crate::ast::imp::desc::ImpDesc;
@@ -90,44 +90,89 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
         Ok(())
     }
 
+    fn quote_free_rust_array(&self, fn_name: String, ty: TokenStream) -> TokenStream {
+        let fn_name_ident = ident!(&fn_name);
+        quote! {
+            #[no_mangle]
+            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    let len: usize = length as usize;
+                    unsafe { Vec::from_raw_parts(ptr, len, len); }
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => { println!("catch_unwind of `rsbind free_rust` error: {:?}", e); }
+                };
+            }
+        }
+    }
+
     ///
     /// generate common.rs
     ///
     fn gen_common_code(&self, bridge_dir: &Path) -> Result<()> {
         let crate_name = &self.crate_name.replace('-', "_");
-        let free_fun_ident = ident!(&format!("{}_free_rust", crate_name));
-        let free_str_fun_ident = ident!(&format!("{}_free_str", crate_name));
+
+        let int8_free_fn =
+            self.quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
+        let int16_free_fn =
+            self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
+        let int32_free_fn =
+            self.quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
+        let int64_free_fn =
+            self.quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
+
 
         let tokens = quote! {
             use std::panic::*;
             use std::ffi::CString;
             use std::os::raw::c_char;
+            use std::ffi::CStr;
 
-            #[no_mangle]
-            pub extern "C" fn #free_fun_ident(ptr: *mut i8, length: u32) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| {
-                    let len: usize = length as usize;
-                    unsafe {
-                        Vec::from_raw_parts(ptr, len, len);
-                    }
-                }));
-
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("catch_unwind of `rsbind free_rust` error: {:?}", e);
-                    }
-                };
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt8Array {
+                pub ptr: * const i8,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i8, i32),
             }
 
-            #[no_mangle]
-            pub extern "C" fn #free_str_fun_ident(ptr: *mut c_char) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| {
-                    unsafe {
-                        CString::from_raw(ptr);
-                    }
-                }));
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt16Array {
+                pub ptr: * const i16,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i16, i32),
+            }
 
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt32Array {
+                pub ptr: * const i32,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i32, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt64Array {
+                pub ptr: * const i64,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i64, i32),
+            }
+
+            #int8_free_fn
+            #int16_free_fn
+            #int32_free_fn
+            #int64_free_fn
+
+            #[no_mangle]
+            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
+                    let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
+                    let cstr = CStr::from_bytes_with_nul_unchecked(slice);
+                    CString::from(cstr);
+                }));
                 match catch_result {
                     Ok(_) => {}
                     Err(e) => {
@@ -135,6 +180,7 @@ impl<'a, T: ModGenStrategy> BridgeModGen<'a, T> {
                     }
                 };
             }
+
         };
 
         let file_path = bridge_dir.join("common.rs");

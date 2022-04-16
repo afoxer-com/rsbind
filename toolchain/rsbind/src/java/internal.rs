@@ -152,7 +152,7 @@ impl<'a> InnerTraitGen<'a> {
         let convert = JavaConvert {
             ty: method.return_type.clone(),
         }
-            .transferable_to_native("ret".to_string(), Direction::Down);
+        .transferable_to_native("ret".to_string(), Direction::Down);
         push!(method_body, "return ", convert, ";");
         Ok(())
     }

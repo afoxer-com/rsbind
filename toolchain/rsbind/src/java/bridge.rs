@@ -15,16 +15,16 @@ use crate::ident;
 ///
 pub(crate) fn new_gen<'a>(
     out_dir: &'a Path,
-    trait_descs: &'a [TraitDesc],
-    struct_descs: &'a [StructDesc],
-    imp_desc: &'a [ImpDesc],
+    traits: &'a [TraitDesc],
+    structs: &'a [StructDesc],
+    imps: &'a [ImpDesc],
     java_namespace: &'a str,
 ) -> BridgeFileGen<'a, JniFileGenStrategy<'a>> {
     BridgeFileGen {
         out_dir,
-        trait_descs,
-        struct_descs,
-        imp_desc,
+        traits,
+        structs,
+        imps,
         strategy: JniFileGenStrategy { java_namespace },
     }
 }

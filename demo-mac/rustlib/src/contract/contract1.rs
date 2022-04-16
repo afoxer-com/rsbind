@@ -1,3 +1,4 @@
+
 pub trait DemoTrait : Send + Sync {
     fn setup();
 

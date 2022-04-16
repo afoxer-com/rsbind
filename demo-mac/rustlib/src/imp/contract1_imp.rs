@@ -1,6 +1,6 @@
-use contract::{DemoCallback, DemoCallback2, DemoTrait2};
-use contract::DemoStruct;
-use contract::DemoTrait;
+use contract::contract1::{DemoCallback, DemoCallback2, DemoTrait2};
+use contract::contract1::DemoStruct;
+use contract::contract1::DemoTrait;
 
 use log::Level;
 use std::{thread, time};

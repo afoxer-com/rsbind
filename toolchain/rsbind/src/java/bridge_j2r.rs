@@ -1,9 +1,9 @@
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::base::{Convertible, Direction};
-use crate::bridge::file::TypeDirection;
 use crate::errors::*;
 use crate::ident;
+use crate::java::bridge::TypeDirection;
 use crate::java::converter::JavaConvert;
 use proc_macro2::TokenStream;
 

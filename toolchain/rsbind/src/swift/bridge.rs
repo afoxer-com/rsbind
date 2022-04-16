@@ -2,44 +2,442 @@ use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
 use crate::base::{Convertible, Direction};
-use crate::bridge::file::*;
+use crate::bridges::ModGenStrategy;
 use crate::errors::*;
 use crate::ident;
 use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::RustMapping;
+use crate::ErrorKind::GenerateError;
 use proc_macro2::{Ident, TokenStream};
+use std::cmp::Ordering;
 use std::path::Path;
 
-///
-/// create a new c bridges generator.
-///
-pub(crate) fn new_gen<'a>(
-    out_dir: &'a Path,
-    traits: &'a [TraitDesc],
-    structs: &'a [StructDesc],
-    imps: &'a [ImpDesc],
-) -> BridgeFileGen<'a, CFileGenStrategy> {
-    BridgeFileGen {
-        out_dir,
-        traits,
-        structs,
-        imps,
-        strategy: CFileGenStrategy {},
+pub(crate) struct CGenStrategyImp {}
+
+impl ModGenStrategy for CGenStrategyImp {
+    fn mod_name(&self, mod_name: &str) -> String {
+        format!("c_{}", mod_name)
+    }
+
+    fn sdk_file_gen(&self, mod_names: &[String]) -> Result<TokenStream> {
+        Ok(quote! {})
+    }
+
+    fn common_file_gen(&self) -> Result<TokenStream> {
+        let int8_free_fn = self.quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
+        let int16_free_fn = self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
+        let int32_free_fn = self.quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
+        let int64_free_fn = self.quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
+
+        let tokens = quote! {
+            use std::panic::*;
+            use std::ffi::CString;
+            use std::os::raw::c_char;
+            use std::ffi::CStr;
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt8Array {
+                pub ptr: * const i8,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i8, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt16Array {
+                pub ptr: * const i16,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i16, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt32Array {
+                pub ptr: * const i32,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i32, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt64Array {
+                pub ptr: * const i64,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i64, i32),
+            }
+
+            #int8_free_fn
+            #int16_free_fn
+            #int32_free_fn
+            #int64_free_fn
+
+            #[no_mangle]
+            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
+                    let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
+                    let cstr = CStr::from_bytes_with_nul_unchecked(slice);
+                    CString::from(cstr);
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free_str` error: {:?}", e);
+                    }
+                };
+            }
+
+        };
+
+        Ok(tokens)
+    }
+
+    fn bridge_file_gen(
+        &self,
+        traits: &[TraitDesc],
+        structs: &[StructDesc],
+        imps: &[ImpDesc],
+    ) -> Result<TokenStream> {
+        BridgeFileGen {
+            traits,
+            structs,
+            imps,
+        }
+        .gen_one_bridge_file()
+    }
+}
+
+impl CGenStrategyImp {
+    fn quote_free_rust_array(&self, fn_name: String, ty: TokenStream) -> TokenStream {
+        let fn_name_ident = ident!(&fn_name);
+        quote! {
+            #[no_mangle]
+            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    let len: usize = length as usize;
+                    unsafe { Vec::from_raw_parts(ptr, len, len); }
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => { println!("catch_unwind of `rsbind free_rust` error: {:?}", e); }
+                };
+            }
+        }
     }
 }
 
 ///
-/// c bridge file generate strategy.
+/// Executor for generating core files of bridge mod.
 ///
-pub struct CFileGenStrategy {}
+pub(crate) struct BridgeFileGen<'a> {
+    pub traits: &'a [TraitDesc],
+    pub structs: &'a [StructDesc],
+    pub imps: &'a [ImpDesc],
+}
 
-impl CFileGenStrategy {}
+impl<'a> BridgeFileGen<'a> {
+    ///
+    /// generate one bridge file for one contract mod.
+    ///
+    pub(crate) fn gen_one_bridge_file(&self) -> Result<TokenStream> {
+        println!("[bridge] 🔆  begin generate bridge file.");
+        let use_part = self.quote_use_part().unwrap();
+        let common_part = self.quote_common_part(self.traits).unwrap();
+        let bridge_codes = self.gen_for_one_mod().unwrap();
 
-impl FileGenStrategy for CFileGenStrategy {
-    fn gen_sdk_file(&self, _mod_names: &[String]) -> Result<TokenStream> {
-        Ok(quote!())
+        let mut merge_tokens = quote! {
+            #use_part
+            #common_part
+        };
+
+        for bridge_code in bridge_codes {
+            if let Ok(code) = bridge_code {
+                merge_tokens = quote! {
+                    #merge_tokens
+                    #code
+                };
+            }
+        }
+
+        println!("[bridge] ✅  end generate bridge file.");
+        Ok(merge_tokens)
     }
 
+    ///
+    /// generate bridge file from a file of trait.
+    ///
+    fn gen_for_one_mod(&self) -> Result<Vec<Result<TokenStream>>> {
+        let mut results: Vec<Result<TokenStream>> = vec![];
+
+        let callbacks = self
+            .traits
+            .iter()
+            .filter(|desc| desc.is_callback)
+            .collect::<Vec<&TraitDesc>>();
+
+        println!("callbacks is {:?}", &callbacks);
+
+        for desc in self.traits.iter() {
+            if desc.is_callback {
+                results.push(self.quote_callback_structures(desc, &callbacks));
+                continue;
+            }
+
+            let imps = self
+                .imps
+                .iter()
+                .filter(|info| info.contract == desc.name)
+                .collect::<Vec<&ImpDesc>>();
+
+            println!("desc => {:?}", desc);
+            println!("imps => {:?}", imps);
+            println!("all imps => {:?}", &self.imps);
+
+            match imps.len().cmp(&1) {
+                Ordering::Less => {}
+                Ordering::Equal => {
+                    results.push(self.generate_for_one_trait(
+                        desc,
+                        imps[0],
+                        &callbacks,
+                        self.structs,
+                    ));
+                }
+                Ordering::Greater => {
+                    println!("You have more than one impl for trait {}", desc.name);
+                    return Err(GenerateError(format!(
+                        "You have more than one impl for trait {}",
+                        desc.name
+                    ))
+                    .into());
+                }
+            }
+        }
+
+        let tokens = self.quote_for_all_cb(&callbacks);
+        results.push(tokens);
+
+        for struct_desc in self.structs.iter() {
+            let tokens = self.quote_for_structures(struct_desc);
+            results.push(tokens);
+        }
+
+        Ok(results)
+    }
+
+    fn generate_for_one_trait(
+        &self,
+        trait_desc: &TraitDesc,
+        imp: &ImpDesc,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
+    ) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}]  🔆  begin generate bridge on trait.",
+            &trait_desc.name
+        );
+        let mut merge: TokenStream = TokenStream::new();
+
+        for method in trait_desc.methods.iter() {
+            println!(
+                "[bridge][{}.{}]  🔆  begin generate bridge method.",
+                &trait_desc.name, &method.name
+            );
+            let one_method = self
+                .quote_one_method(trait_desc, imp, method, callbacks, structs)
+                .unwrap();
+
+            println!(
+                "[bridge][{}.{}]  ✅  end generate bridge method.",
+                &trait_desc.name, &method.name
+            );
+
+            merge = quote! {
+                #merge
+                #one_method
+            };
+        }
+        println!(
+            "[bridge][{}]  ✅  end generate bridge on trait.",
+            &trait_desc.name
+        );
+        Ok(merge)
+    }
+
+    ///
+    /// quote use part
+    ///
+    fn quote_use_part(&self) -> Result<TokenStream> {
+        println!("[bridge]  🔆  begin quote use part.");
+        let mut merge = self.quote_common_use_part().unwrap();
+
+        for trait_desc in self.traits.iter() {
+            if trait_desc.is_callback {
+                println!("Skip callback trait {}", &trait_desc.name);
+                continue;
+            }
+
+            let imps = self
+                .imps
+                .iter()
+                .filter(|info| info.contract == trait_desc.name)
+                .collect::<Vec<&ImpDesc>>();
+
+            match imps.len().cmp(&1) {
+                Ordering::Less => {}
+                Ordering::Equal => {
+                    let use_part = self
+                        .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
+                        .unwrap();
+                    merge = quote! {
+                       #use_part
+                       #merge
+                    };
+                }
+                Ordering::Greater => {
+                    println!("You have more than one impl for trait {}", trait_desc.name);
+                    return Err(GenerateError(format!(
+                        "You have more than one impl for trait {}",
+                        trait_desc.name
+                    ))
+                    .into());
+                }
+            }
+        }
+        println!("[bridge]  ✅  end quote use part.");
+        Ok(merge)
+    }
+
+    fn quote_one_use_part(&self, trait_mod_path: &str, imp_mod_path: &str) -> Result<TokenStream> {
+        let trait_mod_splits: Vec<Ident> = trait_mod_path
+            .split("::")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|str| ident!(str))
+            .collect();
+        let imp_mod_splits: Vec<Ident> = imp_mod_path
+            .split("::")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|str| ident!(str))
+            .collect();
+
+        Ok(quote! {
+            use #(#trait_mod_splits::)**;
+            use #(#imp_mod_splits::)**;
+        })
+    }
+
+    ///
+    /// quote one method
+    ///
+    fn quote_one_method(
+        &self,
+        trait_desc: &TraitDesc,
+        imp: &ImpDesc,
+        method: &MethodDesc,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
+    ) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}.{}]  🔆 ️begin quote method.",
+            &trait_desc.name, &method.name
+        );
+        let sig_define = self
+            .quote_method_sig(trait_desc, imp, method, callbacks, structs)
+            .unwrap();
+
+        let mut arg_convert = TokenStream::new();
+        for arg in method.args.iter() {
+            let arg_tokens = self.quote_arg_convert(trait_desc, arg, callbacks).unwrap();
+            arg_convert = quote! {
+                #arg_convert
+                #arg_tokens
+            }
+        }
+
+        let call_imp = self.quote_imp_call(&imp.name, method)?;
+
+        let return_handle =
+            self.quote_return_convert(trait_desc, callbacks, &method.return_type, "result")?;
+
+        // combine all the parts
+        let result = quote! {
+            #sig_define {
+                #arg_convert
+                #call_imp
+                #return_handle
+            }
+        };
+
+        println!(
+            "[bridge][{}.{}] ✅ end quote method.",
+            &trait_desc.name, &method.name
+        );
+        Ok(result)
+    }
+
+    fn quote_imp_call(&self, impl_name: &str, method: &MethodDesc) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}.{}]  🔆 ️begin quote imp call.",
+            impl_name, &method.name
+        );
+
+        let ret_name_str = "result";
+        let imp_fun_name = ident!(&method.name);
+        let ret_name_ident = ident!(ret_name_str);
+
+        let tmp_arg_names = method
+            .args
+            .iter()
+            .map(|e| &e.name)
+            .map(|arg_name| ident!(&format!("r_{}", arg_name)))
+            .collect::<Vec<Ident>>();
+
+        let rust_args_repeat = quote! {
+            #(#tmp_arg_names),*
+        };
+
+        let imp_ident = ident!(impl_name);
+        let imp_call = match method.return_type.clone() {
+            AstType::Void => quote! {
+                let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+            },
+            AstType::Vec(AstBaseType::Byte(_))
+            | AstType::Vec(AstBaseType::Short(_))
+            | AstType::Vec(AstBaseType::Int(_))
+            | AstType::Vec(AstBaseType::Long(_)) => {
+                quote! {
+                    let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                }
+            }
+            AstType::Vec(_)
+            | AstType::Struct(_)
+            | AstType::Callback(_)
+            | AstType::String
+            | AstType::Byte(_)
+            | AstType::Short(_)
+            | AstType::Int(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_)
+            | AstType::Boolean => {
+                quote! {
+                    let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                }
+            }
+        };
+
+        println!(
+            "[bridge][{}.{}]  ✅ end quote imp call.",
+            impl_name, &method.name
+        );
+
+        Ok(imp_call)
+    }
+}
+
+impl<'a> BridgeFileGen<'a> {
     fn quote_common_use_part(&self) -> Result<TokenStream> {
         Ok(quote! {
             use std::ffi::CStr;
@@ -272,28 +670,9 @@ impl FileGenStrategy for CFileGenStrategy {
             .collect::<Vec<TokenStream>>();
 
         let ret_ty_tokens = RustMapping::map_transfer_type(&method.return_type, callbacks);
-        let sig_define = if arg_names.is_empty() {
-            match method.return_type {
-                AstType::Void => quote! {
-                    #[no_mangle]
-                    pub extern "C" fn #fun_name()
-                },
-                _ => quote! {
-                    #[no_mangle]
-                    pub extern "C" fn #fun_name() -> #ret_ty_tokens
-                },
-            }
-        } else {
-            match method.return_type {
-                AstType::Void => quote! {
-                    #[no_mangle]
-                    pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*)
-                },
-                _ => quote! {
-                    #[no_mangle]
-                    pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
-                },
-            }
+        let sig_define = quote! {
+            #[no_mangle]
+            pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
         };
 
         Ok(sig_define)
@@ -352,11 +731,6 @@ impl FileGenStrategy for CFileGenStrategy {
             #insert_callback
             r_result
         })
-    }
-
-    fn ty_to_tokens(&self, _ast_type: &AstType, _direction: TypeDirection) -> Result<TokenStream> {
-        // We don't use it.
-        Ok(quote!())
     }
 }
 

@@ -1,3 +1,4 @@
+use std::cmp::Ordering;
 use std::path::Path;
 
 use heck::ToUpperCamelCase;
@@ -6,35 +7,21 @@ use proc_macro2::{Ident, Literal, TokenStream};
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::bridge::file::*;
+use crate::bridges::ModGenStrategy;
 use crate::errors::*;
 use crate::ident;
+use crate::ErrorKind::GenerateError;
 
-///
-/// create a new generator for java bridge files.
-///
-pub(crate) fn new_gen<'a>(
-    out_dir: &'a Path,
-    traits: &'a [TraitDesc],
-    structs: &'a [StructDesc],
-    imps: &'a [ImpDesc],
-    java_namespace: &'a str,
-) -> BridgeFileGen<'a, JniFileGenStrategy<'a>> {
-    BridgeFileGen {
-        out_dir,
-        traits,
-        structs,
-        imps,
-        strategy: JniFileGenStrategy { java_namespace },
+pub(crate) struct JavaGenStrategyImp {
+    pub(crate) namespace: String,
+}
+
+impl ModGenStrategy for JavaGenStrategyImp {
+    fn mod_name(&self, mod_name: &str) -> String {
+        format!("java_{}", mod_name)
     }
-}
 
-pub(crate) struct JniFileGenStrategy<'a> {
-    java_namespace: &'a str,
-}
-
-impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
-    fn gen_sdk_file(&self, mod_names: &[String]) -> Result<TokenStream> {
+    fn sdk_file_gen(&self, mod_names: &[String]) -> Result<TokenStream> {
         let mod_idents = mod_names
             .iter()
             .map(|name| ident!(name))
@@ -58,10 +45,347 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             pub fn set_java_vm(jvm: JavaVM) {
                 #(::java::bridge::#mod_idents::set_global_vm(jvm);)*
             }
-
         })
     }
 
+    fn common_file_gen(&self) -> Result<TokenStream> {
+        Ok(quote! {})
+    }
+
+    fn bridge_file_gen(
+        &self,
+        traits: &[TraitDesc],
+        structs: &[StructDesc],
+        imps: &[ImpDesc],
+    ) -> Result<TokenStream> {
+        BridgeFileGen {
+            traits,
+            structs,
+            imps,
+            namespace: self.namespace.clone(),
+        }
+        .gen_one_bridge_file()
+    }
+}
+
+pub(crate) enum TypeDirection {
+    Argument,
+    Return,
+}
+
+///
+/// Executor for generating core files of bridge mod.
+///
+pub(crate) struct BridgeFileGen<'a> {
+    pub traits: &'a [TraitDesc],
+    pub structs: &'a [StructDesc],
+    pub imps: &'a [ImpDesc],
+    pub namespace: String,
+}
+
+impl<'a> BridgeFileGen<'a> {
+    ///
+    /// generate one bridge file for one contract mod.
+    ///
+    pub(crate) fn gen_one_bridge_file(&self) -> Result<TokenStream> {
+        println!("[bridge] 🔆  begin generate bridge file.");
+        let use_part = self.quote_use_part().unwrap();
+        let common_part = self.quote_common_part(self.traits).unwrap();
+        let bridge_codes = self.gen_for_one_mod().unwrap();
+
+        let mut merge_tokens = quote! {
+            #use_part
+            #common_part
+        };
+
+        for bridge_code in bridge_codes {
+            if let Ok(code) = bridge_code {
+                merge_tokens = quote! {
+                    #merge_tokens
+                    #code
+                };
+            }
+        }
+
+        println!("[bridge] ✅  end generate bridge file.");
+        Ok(merge_tokens)
+    }
+
+    ///
+    /// generate bridge file from a file of trait.
+    ///
+    fn gen_for_one_mod(&self) -> Result<Vec<Result<TokenStream>>> {
+        let mut results: Vec<Result<TokenStream>> = vec![];
+
+        let callbacks = self
+            .traits
+            .iter()
+            .filter(|desc| desc.is_callback)
+            .collect::<Vec<&TraitDesc>>();
+
+        println!("callbacks is {:?}", &callbacks);
+
+        for desc in self.traits.iter() {
+            if desc.is_callback {
+                results.push(self.quote_callback_structures(desc, &callbacks));
+                continue;
+            }
+
+            let imps = self
+                .imps
+                .iter()
+                .filter(|info| info.contract == desc.name)
+                .collect::<Vec<&ImpDesc>>();
+
+            println!("desc => {:?}", desc);
+            println!("imps => {:?}", imps);
+            println!("all imps => {:?}", &self.imps);
+
+            match imps.len().cmp(&1) {
+                Ordering::Less => {}
+                Ordering::Equal => {
+                    results.push(self.generate_for_one_trait(
+                        desc,
+                        imps[0],
+                        &callbacks,
+                        self.structs,
+                    ));
+                }
+                Ordering::Greater => {
+                    println!("You have more than one impl for trait {}", desc.name);
+                    return Err(GenerateError(format!(
+                        "You have more than one impl for trait {}",
+                        desc.name
+                    ))
+                    .into());
+                }
+            }
+        }
+
+        let tokens = self.quote_for_all_cb(&callbacks);
+        results.push(tokens);
+
+        for struct_desc in self.structs.iter() {
+            let tokens = self.quote_for_structures(struct_desc);
+            results.push(tokens);
+        }
+
+        Ok(results)
+    }
+
+    fn generate_for_one_trait(
+        &self,
+        trait_desc: &TraitDesc,
+        imp: &ImpDesc,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
+    ) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}]  🔆  begin generate bridge on trait.",
+            &trait_desc.name
+        );
+        let mut merge: TokenStream = TokenStream::new();
+
+        for method in trait_desc.methods.iter() {
+            println!(
+                "[bridge][{}.{}]  🔆  begin generate bridge method.",
+                &trait_desc.name, &method.name
+            );
+            let one_method = self
+                .quote_one_method(trait_desc, imp, method, callbacks, structs)
+                .unwrap();
+
+            println!(
+                "[bridge][{}.{}]  ✅  end generate bridge method.",
+                &trait_desc.name, &method.name
+            );
+
+            merge = quote! {
+                #merge
+                #one_method
+            };
+        }
+        println!(
+            "[bridge][{}]  ✅  end generate bridge on trait.",
+            &trait_desc.name
+        );
+        Ok(merge)
+    }
+
+    ///
+    /// quote use part
+    ///
+    fn quote_use_part(&self) -> Result<TokenStream> {
+        println!("[bridge]  🔆  begin quote use part.");
+        let mut merge = self.quote_common_use_part().unwrap();
+
+        for trait_desc in self.traits.iter() {
+            if trait_desc.is_callback {
+                println!("Skip callback trait {}", &trait_desc.name);
+                continue;
+            }
+
+            let imps = self
+                .imps
+                .iter()
+                .filter(|info| info.contract == trait_desc.name)
+                .collect::<Vec<&ImpDesc>>();
+
+            match imps.len().cmp(&1) {
+                Ordering::Less => {}
+                Ordering::Equal => {
+                    let use_part = self
+                        .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
+                        .unwrap();
+                    merge = quote! {
+                       #use_part
+                       #merge
+                    };
+                }
+                Ordering::Greater => {
+                    println!("You have more than one impl for trait {}", trait_desc.name);
+                    return Err(GenerateError(format!(
+                        "You have more than one impl for trait {}",
+                        trait_desc.name
+                    ))
+                    .into());
+                }
+            }
+        }
+        println!("[bridge]  ✅  end quote use part.");
+        Ok(merge)
+    }
+
+    fn quote_one_use_part(&self, trait_mod_path: &str, imp_mod_path: &str) -> Result<TokenStream> {
+        let trait_mod_splits: Vec<Ident> = trait_mod_path
+            .split("::")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|str| ident!(str))
+            .collect();
+        let imp_mod_splits: Vec<Ident> = imp_mod_path
+            .split("::")
+            .collect::<Vec<&str>>()
+            .iter()
+            .map(|str| ident!(str))
+            .collect();
+
+        Ok(quote! {
+            use #(#trait_mod_splits::)**;
+            use #(#imp_mod_splits::)**;
+        })
+    }
+
+    ///
+    /// quote one method
+    ///
+    fn quote_one_method(
+        &self,
+        trait_desc: &TraitDesc,
+        imp: &ImpDesc,
+        method: &MethodDesc,
+        callbacks: &[&TraitDesc],
+        structs: &[StructDesc],
+    ) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}.{}]  🔆 ️begin quote method.",
+            &trait_desc.name, &method.name
+        );
+        let sig_define = self
+            .quote_method_sig(trait_desc, imp, method, callbacks, structs)
+            .unwrap();
+
+        let mut arg_convert = TokenStream::new();
+        for arg in method.args.iter() {
+            let arg_tokens = self.quote_arg_convert(trait_desc, arg, callbacks).unwrap();
+            arg_convert = quote! {
+                #arg_convert
+                #arg_tokens
+            }
+        }
+
+        let call_imp = self.quote_imp_call(&imp.name, method)?;
+
+        let return_handle =
+            self.quote_return_convert(trait_desc, callbacks, &method.return_type, "result")?;
+
+        // combine all the parts
+        let result = quote! {
+            #sig_define {
+                #arg_convert
+                #call_imp
+                #return_handle
+            }
+        };
+
+        println!(
+            "[bridge][{}.{}] ✅ end quote method.",
+            &trait_desc.name, &method.name
+        );
+        Ok(result)
+    }
+
+    fn quote_imp_call(&self, impl_name: &str, method: &MethodDesc) -> Result<TokenStream> {
+        println!(
+            "[bridge][{}.{}]  🔆 ️begin quote imp call.",
+            impl_name, &method.name
+        );
+
+        let ret_name_str = "result";
+        let imp_fun_name = ident!(&method.name);
+        let ret_name_ident = ident!(ret_name_str);
+
+        let tmp_arg_names = method
+            .args
+            .iter()
+            .map(|e| &e.name)
+            .map(|arg_name| ident!(&format!("r_{}", arg_name)))
+            .collect::<Vec<Ident>>();
+
+        let rust_args_repeat = quote! {
+            #(#tmp_arg_names),*
+        };
+
+        let imp_ident = ident!(impl_name);
+        let imp_call = match method.return_type.clone() {
+            AstType::Void => quote! {
+                let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+            },
+            AstType::Vec(AstBaseType::Byte(_))
+            | AstType::Vec(AstBaseType::Short(_))
+            | AstType::Vec(AstBaseType::Int(_))
+            | AstType::Vec(AstBaseType::Long(_)) => {
+                quote! {
+                    let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                }
+            }
+            AstType::Vec(_)
+            | AstType::Struct(_)
+            | AstType::Callback(_)
+            | AstType::String
+            | AstType::Byte(_)
+            | AstType::Short(_)
+            | AstType::Int(_)
+            | AstType::Long(_)
+            | AstType::Float(_)
+            | AstType::Double(_)
+            | AstType::Boolean => {
+                quote! {
+                    let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
+                }
+            }
+        };
+
+        println!(
+            "[bridge][{}.{}]  ✅ end quote imp call.",
+            impl_name, &method.name
+        );
+
+        Ok(imp_call)
+    }
+}
+
+impl<'a> BridgeFileGen<'a> {
     fn quote_common_use_part(&self) -> Result<TokenStream> {
         Ok(quote! {
             use jni::JNIEnv;
@@ -128,7 +452,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             let index_to_cb_fn_name = ident!(&format!("index_to_callback_{}", &callback.name));
 
             let callback_ident = ident!(&callback.name);
-            let index_to_cb_fn_body = index_to_callback(callback, self.java_namespace)?;
+            let index_to_cb_fn_body = index_to_callback(callback, &self.namespace)?;
             let index_to_cb_fn = quote! {
                 fn #index_to_cb_fn_name(index: i64) -> Box<dyn #callback_ident> {
                     #index_to_cb_fn_body
@@ -234,7 +558,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             "[bridge][{}.{}]  🔆  begin quote jni bridge method signature.",
             &trait_desc.name, &method.name
         );
-        let namespace = self.java_namespace.replace('.', "_");
+        let namespace = self.namespace.replace('.', "_");
         let method_name = format!(
             "Java_{}_Internal{}_native{}",
             &namespace,
@@ -302,8 +626,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
             &arg.name,
             &arg.ty.origin()
         );
-        let result =
-            crate::java::bridge_j2r::quote_arg_convert(arg, self.java_namespace, trait_desc);
+        let result = crate::java::bridge_j2r::quote_arg_convert(arg, &self.namespace, trait_desc);
         println!(
             "[bridge] ✅ end quote jni bridge method argument convert => {}:{}",
             &arg.name,
@@ -340,7 +663,7 @@ impl<'a> FileGenStrategy for JniFileGenStrategy<'a> {
     }
 }
 
-impl<'a> JniFileGenStrategy<'a> {
+impl<'a> BridgeFileGen<'a> {
     fn quote_j2r_method_for_callback(
         &self,
         callback: &TraitDesc,
@@ -350,7 +673,7 @@ impl<'a> JniFileGenStrategy<'a> {
 
         let mut body = TokenStream::new();
 
-        let namespace = self.java_namespace.replace('.', "_");
+        let namespace = self.namespace.replace('.', "_");
         for method in callback.methods.iter() {
             let method_name = format!(
                 "Java_{}_Internal{}_j2r{}",

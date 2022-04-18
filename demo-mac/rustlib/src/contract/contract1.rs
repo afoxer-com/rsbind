@@ -118,6 +118,8 @@ pub trait DemoCallback: Sync + Send {
 pub trait DemoCallback2: Sync + Send {
     fn test_arg_callback_16(&self, arg: Box<dyn DemoCallback>) -> u8;
     fn test_return_callback(&self) -> Box<dyn DemoCallback>;
+    fn test_arg_bytes(&self, bytes: Vec<i8>);
+    fn test_return_arg_structs(&self, structs: Vec<DemoStruct>) -> i32;
 }
 
 pub struct DemoStruct {

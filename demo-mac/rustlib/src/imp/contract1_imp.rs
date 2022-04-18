@@ -1,9 +1,10 @@
+use std::{thread, time};
+
+use log::Level;
+
 use contract::contract1::{DemoCallback, DemoCallback2, DemoTrait2};
 use contract::contract1::DemoStruct;
 use contract::contract1::DemoTrait;
-
-use log::Level;
-use std::{thread, time};
 
 pub struct TestContract1Imp {}
 
@@ -30,9 +31,18 @@ impl DemoTrait2 for TestContract1Imp {
             fn test_return_callback(&self) -> Box<dyn DemoCallback> {
                 create_callback()
             }
+
+            fn test_arg_bytes(&self, bytes: Vec<i8>) {
+                assert(bytes[0] == 100, "test_arg_bytes");
+            }
+
+            fn test_return_arg_structs(&self, structs: Vec<DemoStruct>) -> i32 {
+                assert_struct(&structs[0], "test_return_arg_structs");
+                100
+            }
         }
 
-        Box::new(CallbackHolder{})
+        Box::new(CallbackHolder {})
     }
 }
 
@@ -268,7 +278,7 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
     assert_eq(
         &arg.test_arg_vec_str_18(vec!["Hello world".to_string()]),
         &18i32,
-        "handle_callback"
+        "handle_callback",
     );
     println!("We call handle_callback test_arg_vec_u8_7");
     assert_eq(&arg.test_arg_vec_u8_7(vec![100u8]), &7, "handle_callback");
@@ -331,7 +341,8 @@ fn handle_callback(arg: Box<dyn DemoCallback>) -> u8 {
 }
 
 fn create_callback() -> Box<dyn DemoCallback> {
-    struct CallbackStruct{};
+    struct CallbackStruct {}
+    ;
     impl DemoCallback for CallbackStruct {
         fn test_u8_1(&self, arg: u8, arg2: u8) -> u8 {
             assert_eq!(arg, 100);
@@ -526,12 +537,10 @@ fn create_callback() -> Box<dyn DemoCallback> {
             15
         }
 
-        fn test_no_return(&self) {
-
-        }
+        fn test_no_return(&self) {}
     }
 
-    Box::new(CallbackStruct{})
+    Box::new(CallbackStruct {})
 }
 
 fn new_struct() -> DemoStruct {
@@ -556,7 +565,7 @@ fn new_struct() -> DemoStruct {
         arg18: vec![18],
         arg19: vec![19],
         arg20: vec![20],
-        arg21_true: vec![true]
+        arg21_true: vec![true],
     }
 }
 
@@ -573,7 +582,7 @@ fn assert_struct(arg: &DemoStruct, fn_name: &str) {
             && !v.arg8_false
             && v.arg9 > 0.0
             && v.arg10 > 0.0,
-        fn_name
+        fn_name,
     );
 }
 
@@ -584,7 +593,7 @@ fn assert(condition: bool, fn_name: &str) {
     }
 }
 
-fn assert_eq<T : PartialEq + std::fmt::Debug + ?Sized>(expected: &T, actual: &T, fn_name: &str) {
+fn assert_eq<T: PartialEq + std::fmt::Debug + ?Sized>(expected: &T, actual: &T, fn_name: &str) {
     if expected != actual {
         println!("Need {:?}, actual is {:?} in {:?}", expected, actual, fn_name);
         // panic!("Need {}, actual is {} in {}", expected, actual, fn_name);

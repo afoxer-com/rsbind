@@ -178,6 +178,15 @@ class demo_ios_ExampleTests: XCTestCase {
     
     private func createCallback2(demoTest: demo_ios_ExampleTests) -> DemoCallback2 {
         class AssertCallback2 : DemoCallback2 {
+            func testArgBytes(bytes: [Int8]) {
+                XCTAssertEqual(100, bytes[0])
+            }
+            
+            func testReturnArgStructs(structs: [DemoStruct]) -> Int32 {
+                demoTest.assertStruct(demoStruct: structs[0])
+                return 100
+            }
+            
             private var demoTest: demo_ios_ExampleTests
             
             init(demoTest: demo_ios_ExampleTests) {

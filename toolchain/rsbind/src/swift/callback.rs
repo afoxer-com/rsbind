@@ -111,34 +111,6 @@ impl<'a> InternalCallbackGen<'a> {
             let mut method_body = Tokens::new();
 
             let mut byte_count = 0;
-            for arg in method.args.iter() {
-                match arg.ty.clone() {
-                    AstType::Vec(AstBaseType::Byte(_))
-                    | AstType::Vec(AstBaseType::Short(_))
-                    | AstType::Vec(AstBaseType::Int(_))
-                    | AstType::Vec(AstBaseType::Long(_)) => {
-                        byte_count += 1;
-                        push!(
-                            method_body,
-                            arg.name.clone(),
-                            ".withUnsafeBufferPointer { ",
-                            arg.name.clone(),
-                            "_buffer in"
-                        );
-                    }
-                    AstType::Vec(AstBaseType::Struct(_)) => {
-                        byte_count += 1;
-                        push!(
-                            method_body,
-                            arg.name.clone(),
-                            ".map { each in each.intoProxy() }.withUnsafeBufferPointer { ",
-                            arg.name.clone(),
-                            "_buffer in"
-                        )
-                    }
-                    _ => {}
-                }
-            }
             // argument convert
             for arg in method.args.iter() {
                 println!("quote arg convert for {}", arg.name.clone());

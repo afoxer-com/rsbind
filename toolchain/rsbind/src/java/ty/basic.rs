@@ -13,9 +13,7 @@ impl<'a> Convertible<Java<'a>> for Bool {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{} ? 1 : 0", origin);
-        body
+        toks_f!("{} ? 1 : 0", origin)
     }
 
     fn transferable_to_native(
@@ -23,9 +21,7 @@ impl<'a> Convertible<Java<'a>> for Bool {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{} > 0 ? true: false", origin);
-        body
+        toks_f!("{} > 0 ? true: false", origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
@@ -75,9 +71,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{}", origin);
-        body
+        toks_f!("{}", origin)
     }
 
     fn transferable_to_native(
@@ -85,9 +79,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{}", origin);
-        body
+        toks_f!("{}", origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

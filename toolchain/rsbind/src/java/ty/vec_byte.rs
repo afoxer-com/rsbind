@@ -15,9 +15,7 @@ impl<'a> Convertible<Java<'a>> for VecByte {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        body.append(origin);
-        body
+        toks!(origin)
     }
 
     fn transferable_to_native(
@@ -25,9 +23,7 @@ impl<'a> Convertible<Java<'a>> for VecByte {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        body.append(origin);
-        body
+        toks!(origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

@@ -15,10 +15,8 @@ impl<'a> Convertible<Java<'a>> for Struct {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
         let json_cls = java::imported("com.google.gson", "Gson");
-        push!(body, "new ", json_cls, "().toJson(", origin, ")");
-        body
+        toks!("new ", json_cls, "().toJson(", origin, ")")
     }
 
     fn transferable_to_native(
@@ -26,10 +24,8 @@ impl<'a> Convertible<Java<'a>> for Struct {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
         let json_cls = java::imported("com.google.gson", "Gson");
-        push!(
-            body,
+        toks!(
             "new ",
             json_cls,
             "().fromJson(",
@@ -37,8 +33,7 @@ impl<'a> Convertible<Java<'a>> for Struct {
             ",",
             self.ty.origin(),
             ".class)"
-        );
-        body
+        )
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {

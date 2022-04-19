@@ -15,12 +15,11 @@ impl<'a> Convertible<Java<'a>> for Callback {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
         if let AstType::Callback(base) = self.ty.clone() {
-            push!(body, "Internal", base, ".pushGlobalCallback(", origin, ")");
+            return toks_f!("Internal{}.pushGlobalCallback({})", base, origin);
         }
 
-        body
+        toks!("")
     }
 
     fn transferable_to_native(
@@ -28,20 +27,10 @@ impl<'a> Convertible<Java<'a>> for Callback {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
         if let AstType::Callback(base) = self.ty.clone() {
-            push!(
-                body,
-                "new Internal",
-                base,
-                ".J2R",
-                base,
-                "Wrapper(",
-                origin,
-                ")"
-            );
+            return toks_f!("new Internal{}.J2R{}Wrapper({})", base, base, origin);
         }
-        body
+        toks!("")
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

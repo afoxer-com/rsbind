@@ -11,9 +11,7 @@ impl<'a> Convertible<Java<'a>> for Str {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{}", origin);
-        body
+        toks_f!("{}", origin)
     }
 
     fn transferable_to_native(
@@ -21,9 +19,7 @@ impl<'a> Convertible<Java<'a>> for Str {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{}", origin);
-        body
+        toks_f!("{}", origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {

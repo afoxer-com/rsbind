@@ -17,9 +17,7 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         let json_cls = java::imported("com.google.gson", "Gson");
-        let mut body = Tokens::new();
-        push!(body, "new ", json_cls, "().toJson(", origin, ")");
-        body
+        toks!("new ", json_cls, "().toJson(", origin, ")")
     }
 
     fn transferable_to_native(
@@ -27,11 +25,9 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
-        let mut body = Tokens::new();
         let json = java::imported("com.google.gson", "Gson");
         if let AstType::Vec(AstBaseType::Struct(ref base)) = self.ty.clone() {
-            push!(
-                body,
+            return toks!(
                 "new ",
                 json,
                 "().fromJson(",
@@ -42,7 +38,7 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
             );
         }
 
-        body
+        toks!("")
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {

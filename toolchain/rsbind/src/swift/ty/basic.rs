@@ -15,9 +15,7 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{} ? Int32(1) : Int32(0)", origin);
-        body
+        toks_f!("{} ? Int32(1) : Int32(0)", origin)
     }
 
     fn transferable_to_native(
@@ -25,9 +23,7 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        nested_f!(body, "{} > 0 ? true : false", origin);
-        body
+        toks_f!("{} > 0 ? true : false", origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
@@ -81,9 +77,7 @@ impl<'a> Convertible<Swift<'a>> for Basic {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{}({})", self.native_type_str(), origin);
-        body
+        toks_f!("{}({})", self.native_type_str(), origin)
     }
 
     fn transferable_to_native(
@@ -91,9 +85,7 @@ impl<'a> Convertible<Swift<'a>> for Basic {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        nested_f!(body, "{}({})", self.native_type_str(), origin);
-        body
+        toks_f!("{}({})", self.native_type_str(), origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

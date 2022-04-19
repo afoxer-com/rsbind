@@ -82,11 +82,9 @@ impl<'a> TraitGen<'a> {
         for arg in method.args.iter() {
             // Argument convert
             println!("quote arg convert for {}", arg.name.clone());
-            push_f!(method_body, "let s_{} = ", arg.name);
-            method_body.append(
-                SwiftConvert { ty: arg.ty.clone() }
-                    .native_to_transferable(arg.name.clone(), Direction::Down),
-            );
+            let convert = SwiftConvert { ty: arg.ty.clone() }
+                .native_to_transferable(arg.name.clone(), Direction::Down);
+            push!(method_body, "let s_", arg.name, " = ", convert);
         }
         Ok(())
     }
@@ -122,13 +120,11 @@ impl<'a> TraitGen<'a> {
         method: &'a MethodDesc,
         callbacks: &'a [&'a TraitDesc],
     ) -> Result<()> {
-        push_f!(method_body, "let r_result = ");
-        method_body.append(
-            SwiftConvert {
-                ty: method.return_type.clone(),
-            }
-            .transferable_to_native("result".to_string(), Direction::Down),
-        );
+        let convert = SwiftConvert {
+            ty: method.return_type.clone(),
+        }
+        .transferable_to_native("result".to_string(), Direction::Down);
+        push!(method_body, "let r_result = ", convert);
         push!(method_body, "return r_result");
         Ok(())
     }

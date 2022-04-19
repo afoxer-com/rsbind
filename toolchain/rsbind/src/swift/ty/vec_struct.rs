@@ -27,7 +27,7 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        push_f!(body, "{{ () -> C{}Array in", self.struct_name());
+        body.append(toks_f!("{{ () -> C{}Array in", self.struct_name()));
         nested_f!(body, |t| {
             nested_f!(
                 t,
@@ -70,7 +70,7 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         let mut body = Tokens::new();
         let _proxy_ty = format!("Proxy{}", &self.struct_name());
         let _c_array_ty = format!("C{}Array", &self.struct_name());
-        push_f!(body, "{{ () -> [{}] in", self.struct_name());
+        body.append(toks_f!(" {{ () -> [{}] in", self.struct_name()));
         nested_f!(
             body,
             "let proxy_array = Array(UnsafeBufferPointer(start: {}.ptr, count: Int({}.len)))",

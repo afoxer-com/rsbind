@@ -12,9 +12,7 @@ impl<'a> Convertible<Swift<'a>> for Void {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, origin);
-        body
+        toks!(origin)
     }
 
     fn transferable_to_native(
@@ -22,9 +20,7 @@ impl<'a> Convertible<Swift<'a>> for Void {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, origin);
-        body
+        toks!(origin)
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

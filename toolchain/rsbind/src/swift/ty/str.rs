@@ -14,7 +14,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        push_f!(body, " { () -> CInt8Array in");
+        body.append(toks!("{ () -> CInt8Array in"));
         nested_f!(body, |t| {
             push_f!(t, "var buffer: UnsafeMutablePointer<Int8>? = nil");
             push_f!(t, "var count : Int32 = 0");
@@ -49,7 +49,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        push_f!(body, "{ () -> String in");
+        body.append(toks!("{ () -> String in"));
         nested_f!(body, "let str = String(cString: {}.ptr!)", origin);
         nested_f!(
             body,

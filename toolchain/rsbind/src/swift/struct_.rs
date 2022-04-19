@@ -52,13 +52,11 @@ impl<'a> StructGen<'a> {
         method.returns(swift::local(format!("Proxy{}", &self.desc.name)));
         push_f!(method.body, "return Proxy{} (", self.desc.name);
         for (index, field) in self.desc.fields.iter().enumerate() {
-            nested_f!(method.body, "{} : ", field.name);
-            method.body.append(
-                SwiftConvert {
-                    ty: field.ty.clone(),
-                }
-                .native_to_transferable(format!("self.{}", &field.name), Direction::Down),
-            );
+            let convert = SwiftConvert {
+                ty: field.ty.clone(),
+            }
+            .native_to_transferable(format!("self.{}", &field.name), Direction::Down);
+            nested!(method.body, field.name, " : ", convert);
             if index != self.desc.fields.len() - 1 {
                 method.body.append(",")
             }
@@ -77,13 +75,11 @@ impl<'a> StructGen<'a> {
         ));
 
         for field in self.desc.fields.iter() {
-            push_f!(constructor2.body, "self.{} = ", field.name);
-            constructor2.body.append(
-                SwiftConvert {
-                    ty: field.ty.clone(),
-                }
-                .transferable_to_native(format!("proxy.{}", &field.name), Direction::Down),
-            );
+            let convert = SwiftConvert {
+                ty: field.ty.clone(),
+            }
+            .transferable_to_native(format!("proxy.{}", &field.name), Direction::Down);
+            push!(constructor2.body, "self.", field.name, " = ", convert);
         }
 
         constructor2

@@ -37,7 +37,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(base) => SwiftMapping::map_base_transfer_type(&AstType::from(base)),
             _ => "".to_string(),
         };
-        push_f!(body, "{{ () -> {} in", transfer_ty);
+        body.append(toks_f!("{{ () -> {} in", transfer_ty));
         nested_f!(
             body,
             "let tmp_ptr = UnsafeMutablePointer<{}>.allocate(capacity: {}.count)",
@@ -70,7 +70,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         let ty = self.native_type_str();
-        nested_f!(body, "{{ () -> {} in", ty);
+        body.append(toks_f!("{{ () -> {} in", ty));
         nested_f!(body, |t| {
             nested_f!(
                 t,

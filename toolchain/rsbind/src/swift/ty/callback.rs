@@ -16,16 +16,10 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
         if let AstType::Callback(base) = self.ty.clone() {
-            push_f!(
-                body,
-                "Internal{}.callbackToModel(callback: {})",
-                base,
-                origin
-            );
+            return toks_f!("Internal{}.callbackToModel(callback: {})", base, origin);
         }
-        body
+        toks!("")
     }
 
     fn transferable_to_native(
@@ -33,11 +27,10 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
         if let AstType::Callback(base) = self.ty.clone() {
-            nested_f!(body, "Internal{}.modelToCallback(model:{})", base, origin);
+            return toks_f!("Internal{}.modelToCallback(model:{})", base, origin);
         }
-        body
+        toks!("")
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

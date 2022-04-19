@@ -114,24 +114,20 @@ impl<'a> InternalCallbackGen<'a> {
             // argument convert
             for arg in method.args.iter() {
                 println!("quote arg convert for {}", arg.name.clone());
-                push_f!(method_body, "let s_{} = ", arg.name);
-                method_body.append(
-                    SwiftConvert { ty: arg.ty.clone() }
-                        .native_to_transferable(arg.name.clone(), Direction::Down),
-                );
+                let convert = SwiftConvert { ty: arg.ty.clone() }
+                    .native_to_transferable(arg.name.clone(), Direction::Down);
+                push!(method_body, "let s_", arg.name, " = ", convert);
             }
 
             // call native method
             self.fill_call_native_method(&mut method_body, method)?;
 
             // return convert
-            push_f!(method_body, "let r_result = ");
-            method_body.append(
-                SwiftConvert {
-                    ty: method.return_type.clone(),
-                }
-                .transferable_to_native("result".to_string(), Direction::Down),
-            );
+            let convert = SwiftConvert {
+                ty: method.return_type.clone(),
+            }
+            .transferable_to_native("result".to_string(), Direction::Down);
+            push!(method_body, "let r_result = ", convert);
             push!(method_body, "return r_result");
 
             for _i in 0..byte_count {
@@ -209,7 +205,7 @@ impl<'a> InternalCallbackGen<'a> {
 
             self.fill_cb_closure_return_convert(cb_method, self.callbacks, &mut method_body)?;
 
-            push!(method_body, "return r_result");
+            nested!(method_body, "return r_result");
             push!(method_body, "}");
 
             cb_args_model = format!(
@@ -279,13 +275,11 @@ impl<'a> InternalCallbackGen<'a> {
         method_body: &'b mut Tokens<'a, Swift<'a>>,
     ) -> Result<()> {
         let mut fn_body = toks!();
-        nested_f!(fn_body, "let c_{} = ", cb_arg.name);
-        fn_body.append(
-            SwiftConvert {
-                ty: cb_arg.ty.clone(),
-            }
-            .transferable_to_native(cb_arg.name.clone(), Direction::Up),
-        );
+        let convert = SwiftConvert {
+            ty: cb_arg.ty.clone(),
+        }
+        .transferable_to_native(cb_arg.name.clone(), Direction::Up);
+        nested!(fn_body, "let c_", cb_arg.name, " = ", convert);
         method_body.push(fn_body);
         Ok(())
     }
@@ -321,13 +315,11 @@ impl<'a> InternalCallbackGen<'a> {
         callbacks: &[&TraitDesc],
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
-        push!(method_body, "let r_result = ");
-        method_body.append(
-            SwiftConvert {
-                ty: cb_method.return_type.clone(),
-            }
-            .native_to_transferable("result".to_string(), Direction::Up),
-        );
+        let convert = SwiftConvert {
+            ty: cb_method.return_type.clone(),
+        }
+        .native_to_transferable("result".to_string(), Direction::Up);
+        nested!(method_body, "let r_result = ", convert);
         Ok(())
     }
 

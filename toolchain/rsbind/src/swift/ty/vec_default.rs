@@ -31,7 +31,7 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        push!(body, "autoreleasepool { () -> CInt8Array in",);
+        body.append(toks!("autoreleasepool { () -> CInt8Array in",));
         nested!(body, "let encoder = JSONEncoder()");
         nested!(body, "let data = try! encoder.encode(", origin, ")");
         nested!(body, "let str = String(data: data, encoding: .utf8)!");
@@ -67,7 +67,7 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         let swift_ty = self.native_type_str();
-        push_f!(body, "{{ () -> {} in", swift_ty);
+        body.append(toks_f!("{{ () -> {} in", swift_ty));
         push_f!(body, "let str = String(cString:{}.ptr!)", origin);
         push_f!(
             body,

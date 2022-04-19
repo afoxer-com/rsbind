@@ -15,9 +15,7 @@ impl<'a> Convertible<Swift<'a>> for Struct {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
-        push_f!(body, "{}.intoProxy()", origin);
-        body
+        toks_f!("{}.intoProxy()", origin)
     }
 
     fn transferable_to_native(
@@ -25,11 +23,10 @@ impl<'a> Convertible<Swift<'a>> for Struct {
         origin: String,
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
-        let mut body = Tokens::new();
         if let AstType::Struct(ref base) = self.ty.clone() {
-            nested_f!(body, "{}(proxy: {})", base, origin);
+            return toks_f!("{}(proxy: {})", base, origin);
         }
-        body
+        toks!("")
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {

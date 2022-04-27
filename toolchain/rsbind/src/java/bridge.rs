@@ -401,13 +401,11 @@ impl<'a> BridgeFileGen<'a> {
         })
     }
 
-    fn quote_common_part(&self, _trait_desc: &[TraitDesc]) -> Result<TokenStream> {
-        // let class_names = trait_desc
-        //     .iter()
-        //     .map(|desc| {
-        //         format!("{}.Internal{}", self.java_namespace, &desc.name).replace('.', "/")
-        //     })
-        //     .collect::<Vec<String>>();
+    fn quote_common_part(&self, trait_desc: &[TraitDesc]) -> Result<TokenStream> {
+        let class_names = trait_desc
+            .iter()
+            .map(|desc| format!("{}.Internal{}", self.namespace, &desc.name).replace('.', "/"))
+            .collect::<Vec<String>>();
 
         Ok(quote! {
             lazy_static! {
@@ -417,7 +415,7 @@ impl<'a> BridgeFileGen<'a> {
             }
 
             pub fn set_global_vm(jvm: JavaVM) {
-                // #(let _ = jvm.get_env().unwrap().find_class(#class_names);)*
+                #(let _ = jvm.get_env().unwrap().find_class(#class_names);)*
                 *(JVM.write().unwrap()) = Some(jvm);
             }
         })

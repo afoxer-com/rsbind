@@ -1,6 +1,4 @@
 use proc_macro2::TokenStream;
-use rstgen::swift;
-use rstgen::swift::Swift;
 
 use crate::ast::contract::desc::TraitDesc;
 use crate::ast::types::{AstBaseType, AstType};

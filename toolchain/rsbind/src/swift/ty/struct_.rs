@@ -3,7 +3,7 @@ use rstgen::swift::Swift;
 use rstgen::{swift, Tokens};
 
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 
 pub(crate) struct Struct {
     pub(crate) ty: AstType,

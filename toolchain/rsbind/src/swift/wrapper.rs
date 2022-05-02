@@ -4,10 +4,9 @@ use rstgen::{IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
 use crate::ast::types::AstType;
-use crate::base::Convertible;
+use crate::base::lang::Convertible;
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
-use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::to_swift_file;
 
 pub(crate) struct WrapperGen<'a> {

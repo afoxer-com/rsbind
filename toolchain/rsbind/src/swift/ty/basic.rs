@@ -3,9 +3,9 @@ use rstgen::swift::Swift;
 use rstgen::{swift, Tokens};
 
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::ident;
-use crate::swift::mapping::{RustMapping, SwiftMapping};
+use crate::swift::mapping::RustMapping;
 
 pub(crate) struct Bool {}
 

@@ -47,7 +47,7 @@ pub(crate) fn parse_from_str(
     mod_name: &str,
     src: &str,
     mod_path: &str,
-) -> Result<(ContractResult)> {
+) -> Result<ContractResult> {
     let syn_file = syn::parse_file(src).map_err(|e| ParseError(e.to_string()))?;
 
     let mut trait_descs = vec![];

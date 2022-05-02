@@ -39,7 +39,6 @@ mod android;
 mod ast;
 mod base;
 mod bridge;
-mod bridges;
 mod cargo;
 mod config;
 mod errors;

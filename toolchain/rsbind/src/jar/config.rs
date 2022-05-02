@@ -85,10 +85,9 @@ impl Jar {
         match self.features_def {
             Some(ref features) => {
                 let mut all_features = features.clone();
-                all_features.extend(vec!["rsbind".to_owned()]);
                 all_features
             }
-            None => vec!["rsbind".to_owned()],
+            None => vec![],
         }
     }
 }

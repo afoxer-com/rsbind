@@ -3,7 +3,7 @@ use rstgen::swift::Swift;
 use rstgen::{swift, Tokens};
 
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::ident;
 
 pub(crate) struct Callback {

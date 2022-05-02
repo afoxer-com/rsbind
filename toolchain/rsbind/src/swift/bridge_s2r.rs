@@ -6,7 +6,7 @@ use proc_macro2::TokenStream;
 
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::ident;
 use crate::swift::converter::SwiftConvert;

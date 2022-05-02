@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use rstgen::{swift, Tokens};
 
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::swift::ty::basic::quote_free_swift_ptr;
 
 pub(crate) struct Str {}

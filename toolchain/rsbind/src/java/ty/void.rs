@@ -1,7 +1,7 @@
 use proc_macro2::TokenStream;
 use rstgen::{java, Java, Tokens};
 
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 
 pub(crate) struct Void {}
 

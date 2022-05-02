@@ -3,8 +3,8 @@ use rstgen::swift::{Argument, Class, Method, Modifier, Protocol, Swift};
 use rstgen::{swift, IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, TraitDesc};
-use crate::ast::types::{AstBaseType, AstType};
-use crate::base::{Convertible, Direction};
+
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::SwiftMapping;
@@ -110,7 +110,7 @@ impl<'a> InternalCallbackGen<'a> {
 
             let mut method_body = Tokens::new();
 
-            let mut byte_count = 0;
+            let byte_count = 0;
             // argument convert
             for arg in method.args.iter() {
                 println!("quote arg convert for {}", arg.name.clone());

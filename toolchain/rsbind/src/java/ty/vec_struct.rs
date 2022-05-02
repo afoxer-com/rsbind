@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use rstgen::{java, Java, Tokens};
 
 use crate::ast::types::{AstBaseType, AstType};
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::ident;
 use crate::java::types::JavaType;
 

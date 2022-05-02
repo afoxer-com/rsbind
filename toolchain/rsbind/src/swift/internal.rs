@@ -3,7 +3,7 @@ use rstgen::swift::{self, *};
 use rstgen::{IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
 use crate::swift::types::to_swift_file;

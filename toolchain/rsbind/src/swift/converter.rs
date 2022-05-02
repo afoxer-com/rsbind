@@ -3,7 +3,7 @@ use rstgen::swift::Swift;
 use rstgen::Tokens;
 
 use crate::ast::types::{AstBaseType, AstType};
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::swift::ty::basic::{Basic, Bool};
 use crate::swift::ty::callback::Callback;
 use crate::swift::ty::str::Str;

@@ -1,6 +1,6 @@
 use crate::ast::contract::desc::{ArgDesc, TraitDesc};
 use crate::ast::types::{AstBaseType, AstType};
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::ident;
 use crate::java::bridge::TypeDirection;

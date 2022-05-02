@@ -7,12 +7,12 @@ use cbindgen::{Config, Language};
 use fs_extra::dir::CopyOptions;
 
 use crate::ast::AstResult;
+use crate::base::lang::LangGen;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
-use crate::bridges::BridgeGen::CGen;
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
-use crate::swift::artifact::SwiftCodeGen;
+use crate::swift::SwiftGen;
 use crate::unzip;
 
 use super::config::Ios;
@@ -105,14 +105,13 @@ impl<'a> BuildProcess for IosProcess<'a> {
 
         unpack.unpack()?;
 
-        let bridge_c_src_path = self.bridge_prj_path.join("src").join("c").join("bridge");
+        let bridge_c_src_path = self.bridge_prj_path.join("src").join("c");
         fs::create_dir_all(&bridge_c_src_path)?;
-        CGen(
-            self.host_crate_name.to_owned(),
-            self.ast_result,
-            &bridge_c_src_path,
-        )
-        .gen_bridges()?;
+        SwiftGen {
+            crate_name: self.host_crate_name.to_string(),
+            ast: self.ast_result.clone(),
+        }
+        .gen_bridge(&bridge_c_src_path)?;
 
         let _ = Command::new("cargo")
             .arg("fmt")
@@ -267,12 +266,11 @@ impl<'a> BuildProcess for IosProcess<'a> {
         }
         fs::create_dir_all(&swift_gen_path)?;
 
-        SwiftCodeGen {
-            swift_gen_dir: &swift_gen_path,
-            ast: self.ast_result,
+        SwiftGen {
+            crate_name: self.host_crate_name.to_string(),
+            ast: self.ast_result.clone(),
         }
-        .gen_swift_code()?;
-        // artifact::gen_swift_code(&self.artifact_prj_path, &self.ast_path, &self.bin_path)?;
+        .gen_native(&swift_gen_path)?;
 
         // get the output dir string
         println!("get output dir string");

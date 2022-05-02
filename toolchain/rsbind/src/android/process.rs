@@ -8,12 +8,12 @@ use fs_extra::dir::CopyOptions;
 use syn::__private::str;
 
 use crate::ast::AstResult;
+use crate::base::lang::LangGen;
 use crate::base::process::BuildProcess;
 use crate::bridge::prj::Unpack;
-use crate::bridges::BridgeGen::JavaGen;
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
-use crate::java::artifact::JavaCodeGen;
+use crate::java::JavaGen;
 use crate::ndk_tool::{build, BuildConfig};
 use crate::unzip;
 
@@ -86,16 +86,17 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             unpack.unpack()?;
         }
 
-        let bridge_c_src_path = self.bridge_prj_path.join("src").join("java").join("bridge");
+        let bridge_c_src_path = self.bridge_prj_path.join("src").join("java");
         fs::create_dir_all(&bridge_c_src_path)?;
-        JavaGen(
-            self.host_crate_name.to_owned(),
-            self.ast_result,
-            &bridge_c_src_path,
-            self.config().namespace(),
-        )
-        .gen_bridges()
-        .unwrap();
+
+        JavaGen {
+            crate_name: self.host_crate_name.to_string(),
+            ast: self.ast_result.clone(),
+            namespace: self.config().namespace(),
+            so_name: self.config().so_name(),
+            ext_libs: self.config().ext_libs(),
+        }
+        .gen_bridge(&bridge_c_src_path)?;
 
         let _ = Command::new("cargo")
             .arg("fmt")
@@ -233,14 +234,14 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
         }
         fs::create_dir_all(&java_gen_path)?;
 
-        JavaCodeGen {
-            java_gen_dir: &java_gen_path,
-            ast: self.ast_result,
+        JavaGen {
+            crate_name: self.host_crate_name.to_string(),
+            ast: self.ast_result.clone(),
             namespace: self.config().namespace(),
             so_name: self.config().so_name(),
             ext_libs: self.config().ext_libs(),
         }
-        .gen_java_code()?;
+        .gen_native(&java_gen_path)?;
 
         // get the output dir string
         println!("get output dir string");

@@ -25,6 +25,7 @@ pub(crate) struct AstHandler {
 }
 
 /// The ast result after parsing contract and imp directories.
+#[derive(Clone)]
 pub(crate) struct AstResult {
     /// All the traits in contract directory, key is mod name, value is all traits.
     pub traits: HashMap<String, Vec<TraitDesc>>,

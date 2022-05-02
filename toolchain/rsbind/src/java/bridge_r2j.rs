@@ -1,6 +1,6 @@
 use crate::ast::contract::desc::{ArgDesc, MethodDesc};
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::ident;
 use crate::java::converter::JavaConvert;

@@ -3,10 +3,9 @@ use rstgen::swift::{self, *};
 use rstgen::IntoTokens;
 
 use crate::ast::contract::desc::{MethodDesc, TraitDesc};
-use crate::base::Convertible;
+use crate::base::lang::Convertible;
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
-use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::to_swift_file;
 
 pub(crate) struct ProtocolGen<'a> {

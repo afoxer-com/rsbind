@@ -16,7 +16,7 @@ pub(crate) struct SwiftCodeGen<'a> {
 }
 
 impl<'a> SwiftCodeGen<'a> {
-    pub fn gen_swift_code(&self) -> Result<()> {
+    pub fn gen_files(&self) -> Result<()> {
         // collect all the callbacks.
         let mut callbacks = vec![];
         for desc in self.ast.traits.iter() {

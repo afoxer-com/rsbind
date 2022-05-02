@@ -2,7 +2,7 @@ use proc_macro2::TokenStream;
 use rstgen::{java, Java, Tokens};
 
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::ident;
 
 pub(crate) struct Callback {

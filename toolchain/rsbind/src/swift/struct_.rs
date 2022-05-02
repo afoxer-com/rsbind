@@ -3,7 +3,7 @@ use rstgen::{swift, IntoTokens};
 
 use crate::ast::contract::desc::StructDesc;
 
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
 

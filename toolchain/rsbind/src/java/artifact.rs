@@ -19,7 +19,7 @@ pub(crate) struct JavaCodeGen<'a> {
 }
 
 impl<'a> JavaCodeGen<'a> {
-    pub(crate) fn gen_java_code(&self) -> Result<()> {
+    pub(crate) fn gen_files(&self) -> Result<()> {
         // get the java_gen dir string
         println!("get java_gen dir string");
         // fs::write(&java_gen_path, );

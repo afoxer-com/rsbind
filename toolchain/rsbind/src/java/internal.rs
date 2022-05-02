@@ -6,7 +6,7 @@ use rstgen::Tokens;
 use crate::ast::contract::desc::MethodDesc;
 use crate::ast::contract::desc::TraitDesc;
 use crate::ast::types::AstType;
-use crate::base::{Convertible, Direction};
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::java::converter::JavaConvert;
 use crate::java::types::{to_java_file, JavaType};

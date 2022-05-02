@@ -1,130 +1,17 @@
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::base::{Convertible, Direction};
-use crate::bridges::ModGenStrategy;
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
-use crate::ident;
 use crate::swift::converter::SwiftConvert;
 use crate::swift::mapping::RustMapping;
 use crate::ErrorKind::GenerateError;
+use crate::{ident, AstResult};
 use proc_macro2::{Ident, TokenStream};
 use std::cmp::Ordering;
+use std::fs::File;
+use std::io::Write;
 use std::path::Path;
-
-pub(crate) struct CGenStrategyImp {}
-
-impl ModGenStrategy for CGenStrategyImp {
-    fn mod_name(&self, mod_name: &str) -> String {
-        format!("c_{}", mod_name)
-    }
-
-    fn sdk_file_gen(&self, mod_names: &[String]) -> Result<TokenStream> {
-        Ok(quote! {})
-    }
-
-    fn common_file_gen(&self) -> Result<TokenStream> {
-        let int8_free_fn = self.quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
-        let int16_free_fn = self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
-        let int32_free_fn = self.quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
-        let int64_free_fn = self.quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
-
-        let tokens = quote! {
-            use std::panic::*;
-            use std::ffi::CString;
-            use std::os::raw::c_char;
-            use std::ffi::CStr;
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt8Array {
-                pub ptr: * const i8,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i8, i32),
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt16Array {
-                pub ptr: * const i16,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i16, i32),
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt32Array {
-                pub ptr: * const i32,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i32, i32),
-            }
-
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct CInt64Array {
-                pub ptr: * const i64,
-                pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i64, i32),
-            }
-
-            #int8_free_fn
-            #int16_free_fn
-            #int32_free_fn
-            #int64_free_fn
-
-            #[no_mangle]
-            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
-                    let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
-                    let cstr = CStr::from_bytes_with_nul_unchecked(slice);
-                    CString::from(cstr);
-                }));
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("catch_unwind of `rsbind free_str` error: {:?}", e);
-                    }
-                };
-            }
-
-        };
-
-        Ok(tokens)
-    }
-
-    fn bridge_file_gen(
-        &self,
-        traits: &[TraitDesc],
-        structs: &[StructDesc],
-        imps: &[ImpDesc],
-    ) -> Result<TokenStream> {
-        BridgeFileGen {
-            traits,
-            structs,
-            imps,
-        }
-        .gen_one_bridge_file()
-    }
-}
-
-impl CGenStrategyImp {
-    fn quote_free_rust_array(&self, fn_name: String, ty: TokenStream) -> TokenStream {
-        let fn_name_ident = ident!(&fn_name);
-        quote! {
-            #[no_mangle]
-            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| {
-                    let len: usize = length as usize;
-                    unsafe { Vec::from_raw_parts(ptr, len, len); }
-                }));
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => { println!("catch_unwind of `rsbind free_rust` error: {:?}", e); }
-                };
-            }
-        }
-    }
-}
 
 ///
 /// Executor for generating core files of bridge mod.
@@ -443,7 +330,7 @@ impl<'a> BridgeFileGen<'a> {
             use std::ffi::CStr;
             use std::os::raw::c_char;
             use std::ffi::CString;
-            use c::bridge::common::*;
+            use c::common::*;
             use std::collections::HashMap;
             use std::sync::RwLock;
             use std::sync::Arc;
@@ -1034,7 +921,7 @@ pub(crate) fn box_to_model_convert(
         }
     }
 
-    let free_fn_ident = ident!(&format!("{}_free_rust", &callback.crate_name));
+    let _free_fn_ident = ident!(&format!("{}_free_rust", &callback.crate_name));
     method_result = quote! {
         #method_result
 
@@ -1059,4 +946,162 @@ pub(crate) fn box_to_model_convert(
             index: callback_index
         }
     })
+}
+
+///
+/// The executor for generating a bridge mod
+///
+pub(crate) struct BridgeCodeGen<'a> {
+    pub ast: &'a AstResult,
+    pub bridge_dir: &'a Path,
+    pub crate_name: String,
+}
+
+impl<'a> BridgeCodeGen<'a> {
+    fn common_file_gen(&self) -> Result<TokenStream> {
+        let int8_free_fn = self.quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
+        let int16_free_fn = self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
+        let int32_free_fn = self.quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
+        let int64_free_fn = self.quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
+
+        let tokens = quote! {
+            use std::panic::*;
+            use std::ffi::CString;
+            use std::os::raw::c_char;
+            use std::ffi::CStr;
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt8Array {
+                pub ptr: * const i8,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i8, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt16Array {
+                pub ptr: * const i16,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i16, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt32Array {
+                pub ptr: * const i32,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i32, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CInt64Array {
+                pub ptr: * const i64,
+                pub len: i32,
+                pub free_ptr: extern "C" fn(*mut i64, i32),
+            }
+
+            #int8_free_fn
+            #int16_free_fn
+            #int32_free_fn
+            #int64_free_fn
+
+            #[no_mangle]
+            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
+                    let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
+                    let cstr = CStr::from_bytes_with_nul_unchecked(slice);
+                    CString::from(cstr);
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free_str` error: {:?}", e);
+                    }
+                };
+            }
+
+        };
+
+        Ok(tokens)
+    }
+
+    fn quote_free_rust_array(&self, fn_name: String, ty: TokenStream) -> TokenStream {
+        let fn_name_ident = ident!(&fn_name);
+        quote! {
+            #[no_mangle]
+            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    let len: usize = length as usize;
+                    unsafe { Vec::from_raw_parts(ptr, len, len); }
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => { println!("catch_unwind of `rsbind free_rust` error: {:?}", e); }
+                };
+            }
+        }
+    }
+}
+
+impl<'a> BridgeCodeGen<'a> {
+    ///
+    /// generate the bridge files
+    ///
+    pub(crate) fn gen_files(&self) -> Result<()> {
+        let empty_vec = vec![];
+
+        let traits = &self.ast.traits;
+        let structs = &self.ast.structs;
+        let imps = &self.ast.imps;
+
+        let mut bridges: Vec<String> = vec![];
+        for (mod_name, trait_vec) in traits {
+            let struct_vec = structs.get(mod_name).unwrap_or(&empty_vec);
+
+            // generate bridge files.
+            let out_mod_name = format!("c_{}", mod_name);
+            let out_file_name = format!("{}.rs", &out_mod_name);
+
+            let tokens = BridgeFileGen {
+                traits: trait_vec,
+                structs: struct_vec,
+                imps,
+            }
+            .gen_one_bridge_file()?;
+            self.write(&out_file_name, &tokens)?;
+            bridges.push(out_mod_name)
+        }
+
+        // generate sdk.rs
+        let tokens = quote! {};
+        self.write("sdk.rs", &tokens)?;
+        bridges.push("sdk".to_owned());
+
+        // generate common.rs
+        let tokens = self.common_file_gen()?;
+        self.write("common.rs", &tokens)?;
+
+        // generate mod.rs
+        let bridge_ident = bridges
+            .iter()
+            .map(|bridge| ident!(bridge))
+            .collect::<Vec<Ident>>();
+
+        let bridge_mod_tokens = quote! {
+            # (pub mod #bridge_ident;)*
+            pub mod common;
+        };
+        self.write("mod.rs", &bridge_mod_tokens)?;
+
+        Ok(())
+    }
+
+    fn write(&self, file: &str, tokens: &TokenStream) -> Result<()> {
+        let file_path = self.bridge_dir.join(file);
+        let mut file = File::create(&file_path)?;
+        file.write_all(&tokens.to_string().into_bytes())?;
+        Ok(())
+    }
 }

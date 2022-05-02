@@ -3,24 +3,27 @@ use std::path::Path;
 
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, Literal, TokenStream};
+use std::fs::File;
+use std::io::Write;
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::bridges::ModGenStrategy;
 use crate::errors::*;
-use crate::ident;
 use crate::ErrorKind::GenerateError;
+use crate::{ident, AstResult};
 
-pub(crate) struct JavaGenStrategyImp {
-    pub(crate) namespace: String,
+///
+/// The executor for generating a bridge mod
+///
+pub(crate) struct BridgeCodeGen<'a> {
+    pub ast: &'a AstResult,
+    pub bridge_dir: &'a Path,
+    pub crate_name: String,
+    pub namespace: String,
 }
 
-impl ModGenStrategy for JavaGenStrategyImp {
-    fn mod_name(&self, mod_name: &str) -> String {
-        format!("java_{}", mod_name)
-    }
-
+impl<'a> BridgeCodeGen<'a> {
     fn sdk_file_gen(&self, mod_names: &[String]) -> Result<TokenStream> {
         let mod_idents = mod_names
             .iter()
@@ -34,7 +37,6 @@ impl ModGenStrategy for JavaGenStrategyImp {
             use std::os::raw::c_void;
             use std::mem;
 
-            #[cfg(feature = "rsbind")]
             #[no_mangle]
             #[allow(non_snake_case)]
             pub extern "C" fn JNI_OnLoad(jvm: JavaVM, _reserved: *mut c_void) -> jint {
@@ -43,28 +45,71 @@ impl ModGenStrategy for JavaGenStrategyImp {
             }
 
             pub fn set_java_vm(jvm: JavaVM) {
-                #(::java::bridge::#mod_idents::set_global_vm(jvm);)*
+                #(crate::java::#mod_idents::set_global_vm(jvm);)*
             }
         })
     }
+}
 
-    fn common_file_gen(&self) -> Result<TokenStream> {
-        Ok(quote! {})
+impl<'a> BridgeCodeGen<'a> {
+    ///
+    /// generate the bridge files
+    ///
+    pub(crate) fn gen_files(&self) -> Result<()> {
+        let empty_vec = vec![];
+
+        let traits = &self.ast.traits;
+        let structs = &self.ast.structs;
+        let imps = &self.ast.imps;
+
+        let mut bridges: Vec<String> = vec![];
+        for (mod_name, trait_vec) in traits {
+            let struct_vec = structs.get(mod_name).unwrap_or(&empty_vec);
+
+            // generate bridge files.
+            let out_mod_name = format!("java_{}", mod_name);
+            let out_file_name = format!("{}.rs", &out_mod_name);
+            let tokens = BridgeFileGen {
+                traits: trait_vec,
+                structs: struct_vec,
+                imps,
+                namespace: self.namespace.clone(),
+            }
+            .gen_one_bridge_file()?;
+            self.write(&out_file_name, &tokens)?;
+            bridges.push(out_mod_name)
+        }
+
+        // generate sdk.rs
+        let tokens = self.sdk_file_gen(&bridges)?;
+        self.write("sdk.rs", &tokens)?;
+        bridges.push("sdk".to_owned());
+
+        // generate common.rs
+        let tokens = quote! {};
+        self.write("common.rs", &tokens)?;
+
+        // generate c/mod.rs
+        let bridge_ident = bridges
+            .iter()
+            .map(|bridge| ident!(bridge))
+            .collect::<Vec<Ident>>();
+
+        let bridge_mod_tokens = quote! {
+            # (pub mod #bridge_ident;)*
+            pub mod common;
+        };
+
+        self.write("mod.rs", &bridge_mod_tokens)?;
+
+        Ok(())
     }
 
-    fn bridge_file_gen(
-        &self,
-        traits: &[TraitDesc],
-        structs: &[StructDesc],
-        imps: &[ImpDesc],
-    ) -> Result<TokenStream> {
-        BridgeFileGen {
-            traits,
-            structs,
-            imps,
-            namespace: self.namespace.clone(),
-        }
-        .gen_one_bridge_file()
+    fn write(&self, file: &str, tokens: &TokenStream) -> Result<()> {
+        let file_path = self.bridge_dir.join(file);
+        let mut file = File::create(&file_path)?;
+        file.write_all(&tokens.to_string().into_bytes())?;
+        Ok(())
     }
 }
 

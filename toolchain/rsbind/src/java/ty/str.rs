@@ -62,6 +62,10 @@ impl<'a> Convertible<Java<'a>> for Str {
         java::imported("java.lang", "String")
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::imported("java.lang", "String")
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

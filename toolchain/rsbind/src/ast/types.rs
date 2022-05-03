@@ -1,3 +1,4 @@
+use crate::ast::contract::parser::ParseContext;
 use std::convert::From;
 
 ///
@@ -14,12 +15,12 @@ pub(crate) enum AstBaseType {
     Double(String),
     Boolean,
     String,
-    Callback(String),
-    Struct(String),
+    Callback(CustomType),
+    Struct(CustomType),
 }
 
 impl<'a> AstBaseType {
-    pub fn new(ident: &'a str, sub: &'a str) -> Self {
+    pub fn new(ident: &'a str, sub: &'a str, ctx: &ParseContext) -> Self {
         let origin = ident.to_string();
         match ident {
             "u8" | "i8" => AstBaseType::Byte(origin),
@@ -31,10 +32,16 @@ impl<'a> AstBaseType {
             "str" | "String" => AstBaseType::String,
             "bool" => AstBaseType::Boolean,
             // Right now, all callbacks are wrapped with Box
-            "Box" => AstBaseType::Callback(sub.to_string()),
+            "Box" => AstBaseType::Callback(CustomType {
+                mod_name: ctx.mod_name.clone(),
+                origin: sub.to_string(),
+            }),
             // If the ident can't recognized, we assume it is a struct,
             // but if we add enum support, it should be changed.
-            _ => AstBaseType::Struct(sub.to_string()),
+            _ => AstBaseType::Struct(CustomType {
+                mod_name: ctx.mod_name.clone(),
+                origin: sub.to_string(),
+            }),
         }
     }
 
@@ -48,11 +55,17 @@ impl<'a> AstBaseType {
             AstBaseType::Double(origin) => origin.clone(),
             AstBaseType::Boolean => "bool".to_owned(),
             AstBaseType::String => "String".to_owned(),
-            AstBaseType::Callback(origin) => origin.clone(),
-            AstBaseType::Struct(origin) => origin.clone(),
+            AstBaseType::Callback(origin) => origin.origin.clone(),
+            AstBaseType::Struct(origin) => origin.origin.clone(),
             AstBaseType::Short(origin) => origin.clone(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub(crate) struct CustomType {
+    pub(crate) mod_name: String,
+    pub(crate) origin: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -67,15 +80,15 @@ pub(crate) enum AstType {
     Boolean,
     String,
     Vec(AstBaseType),
-    Callback(String),
-    Struct(String),
+    Callback(CustomType),
+    Struct(CustomType),
 }
 
 ///
 /// used for converting rust types to ast supported type.
 ///
 impl<'a> AstType {
-    pub fn new(ident: &'a str, sub: &'a str) -> Self {
+    pub fn new(ident: &'a str, sub: &'a str, ctx: &ParseContext) -> Self {
         let origin = ident.to_string();
         match ident {
             "u8" | "i8" => AstType::Byte(origin),
@@ -87,10 +100,16 @@ impl<'a> AstType {
             "str" | "String" => AstType::String,
             "bool" => AstType::Boolean,
             // Right now, all callbacks are wrapped with Box
-            "Box" => AstType::Callback(sub.to_string()),
+            "Box" => AstType::Callback(CustomType {
+                mod_name: ctx.mod_name.clone(),
+                origin: sub.to_string(),
+            }),
             // If the ident can't recognized, we assume it is a struct,
             // but if we add enum support, it should be changed.
-            _ => AstType::Struct(sub.to_string()),
+            _ => AstType::Struct(CustomType {
+                mod_name: ctx.mod_name.clone(),
+                origin: sub.to_string(),
+            }),
         }
     }
 
@@ -106,8 +125,8 @@ impl<'a> AstType {
             AstType::Boolean => "bool".to_owned(),
             AstType::String => "String".to_owned(),
             AstType::Vec(base) => format!("Vec<{}>", &base.origin()),
-            AstType::Callback(origin) => origin.clone(),
-            AstType::Struct(origin) => origin.clone(),
+            AstType::Callback(origin) => origin.origin.clone(),
+            AstType::Struct(origin) => origin.origin.clone(),
         }
     }
 }

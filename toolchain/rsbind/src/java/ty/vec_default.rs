@@ -36,7 +36,7 @@ impl<'a> Convertible<Java<'a>> for VecDefault {
                 AstBaseType::String => java::imported("java.lang", "String"),
                 AstBaseType::Void => java::VOID,
                 AstBaseType::Callback(ref origin) | AstBaseType::Struct(ref origin) => {
-                    java::local(origin.to_string())
+                    java::local(origin.origin.clone())
                 }
             };
             let json = java::imported("com.google.gson", "Gson");
@@ -97,6 +97,10 @@ impl<'a> Convertible<Java<'a>> for VecDefault {
             AstType::Vec(base) => JavaType::new(AstType::from(base.clone())).to_boxed_array(),
             _ => java::local(""),
         }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::imported("java.lang", "String")
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

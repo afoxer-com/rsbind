@@ -34,6 +34,10 @@ impl<'a> Convertible<Java<'a>> for Void {
         java::VOID
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::VOID
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

@@ -768,7 +768,7 @@ impl<'a> BridgeFileGen<'a> {
             )?;
 
             if let AstType::Callback(ref origin) = method.return_type.clone() {
-                let return_callback_ident = ident!(origin);
+                let return_callback_ident = ident!(&origin.origin);
 
                 body = quote! {
                     #body
@@ -963,7 +963,7 @@ pub(crate) fn index_to_callback(
                     quote!(Vec<#vec_innder_ident>)
                 }
                 AstType::Callback(ref origin) => {
-                    let callback_ident = ident!(origin);
+                    let callback_ident = ident!(&origin.origin);
                     quote!(Box<dyn #callback_ident>)
                 }
                 _ => {
@@ -984,7 +984,7 @@ pub(crate) fn index_to_callback(
                 quote!(Vec<#origin_ident>)
             }
             AstType::Callback(ref origin) => {
-                let callback_ident = ident!(origin);
+                let callback_ident = ident!(&origin.origin);
                 quote!(Box<dyn #callback_ident>)
             }
             _ => {

@@ -17,7 +17,11 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         if let AstType::Callback(base) = self.ty.clone() {
-            return toks_f!("Internal{}.callbackToModel(callback: {})", base, origin);
+            return toks_f!(
+                "Internal{}.callbackToModel(callback: {})",
+                &base.origin,
+                origin
+            );
         }
         toks!("")
     }
@@ -28,7 +32,7 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         if let AstType::Callback(base) = self.ty.clone() {
-            return toks_f!("Internal{}.modelToCallback(model:{})", base, origin);
+            return toks_f!("Internal{}.modelToCallback(model:{})", &base.origin, origin);
         }
         toks!("")
     }
@@ -50,7 +54,17 @@ impl<'a> Convertible<Swift<'a>> for Callback {
 
     fn native_type(&self) -> Swift<'a> {
         match self.ty.clone() {
-            AstType::Callback(origin) => swift::local(origin.clone()),
+            AstType::Callback(origin) => swift::local(origin.origin.clone()),
+            _ => swift::local(""),
+        }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        match self.ty.clone() {
+            AstType::Callback(origin) => {
+                let callback_str = format!("{}_{}_Model", &origin.mod_name, &origin.origin);
+                swift::local(callback_str)
+            }
             _ => swift::local(""),
         }
     }

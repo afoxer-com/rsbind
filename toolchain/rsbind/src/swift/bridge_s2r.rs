@@ -39,12 +39,12 @@ pub(crate) fn quote_callback_struct(
     let mut callback_methods = TokenStream::new();
     for method in callback.methods.iter() {
         let callback_method_ident = ident!(&method.name);
-        let ret_ty_tokens = RustMapping::map_transfer_type(&method.return_type, callbacks);
+        let ret_ty_tokens = RustMapping::map_base_transfer_type(&method.return_type);
         let arg_types = method
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| RustMapping::map_transfer_type(&arg.ty, callbacks))
+            .map(|arg| RustMapping::map_base_transfer_type(&arg.ty))
             .collect::<Vec<TokenStream>>();
 
         callback_methods = quote! {

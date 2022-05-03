@@ -553,10 +553,10 @@ impl<'a> BridgeFileGen<'a> {
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| RustMapping::map_transfer_type(&arg.ty, callbacks))
+            .map(|arg| RustMapping::map_base_transfer_type(&arg.ty))
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = RustMapping::map_transfer_type(&method.return_type, callbacks);
+        let ret_ty_tokens = RustMapping::map_base_transfer_type(&method.return_type);
         let sig_define = quote! {
             #[no_mangle]
             pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
@@ -604,7 +604,7 @@ impl<'a> BridgeFileGen<'a> {
             crate::swift::bridge_s2r::quote_return_convert(return_ty, callbacks, ret_name)?;
 
         let insert_callback = if let AstType::Callback(ref origin) = return_ty.clone() {
-            let callback_ident = ident!(origin);
+            let callback_ident = ident!(&origin.origin);
             quote! {
                 (*CALLBACK_HASHMAP.write().unwrap()).insert(callback_index, CallbackEnum::#callback_ident(result));
             }
@@ -641,7 +641,7 @@ fn model_to_box_convert(
         for cb_arg in method.args.iter() {
             let origin_cb_arg_name = ident!(&cb_arg.name);
             let obtain_index = if let AstType::Callback(ref origin) = cb_arg.ty.clone() {
-                let callback_ident = ident!(origin);
+                let callback_ident = ident!(&origin.origin);
                 quote! {
                     let callback_index = {
                         let mut global_index = CALLBACK_INDEX.write().unwrap();
@@ -698,7 +698,7 @@ fn model_to_box_convert(
                 }
                 AstType::Callback(origin) => {
                     has_callback_arg = true;
-                    let origin_ident = ident!(&origin);
+                    let origin_ident = ident!(&origin.origin);
                     quote!(Box<dyn #origin_ident>)
                 }
                 _ => {
@@ -715,7 +715,7 @@ fn model_to_box_convert(
                 quote!(Vec<#ident>)
             }
             AstType::Callback(ref origin) => {
-                let origin_ident = ident!(origin);
+                let origin_ident = ident!(&origin.origin);
                 quote!(Box<dyn #origin_ident>)
             }
             _ => {
@@ -832,9 +832,9 @@ pub(crate) fn box_to_model_convert(
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| RustMapping::map_transfer_type(&arg.ty, callbacks))
+            .map(|arg| RustMapping::map_base_transfer_type(&arg.ty))
             .collect::<Vec<TokenStream>>();
-        let ret_ty_tokens = RustMapping::map_transfer_type(&method.return_type, callbacks);
+        let ret_ty_tokens = RustMapping::map_base_transfer_type(&method.return_type);
         let mut args_convert = TokenStream::new();
         for arg in method.args.iter() {
             let each_convert = crate::swift::bridge_s2r::quote_arg_convert(arg, callbacks)?;
@@ -851,7 +851,7 @@ pub(crate) fn box_to_model_convert(
         let ret_method_name = ident!(&format!("ret_{}", &method.name));
 
         if let AstType::Callback(ref origin) = method.return_type.clone() {
-            let return_callback_ident = ident!(origin);
+            let return_callback_ident = ident!(&origin.origin);
             method_result = quote! {
                 #method_result
 

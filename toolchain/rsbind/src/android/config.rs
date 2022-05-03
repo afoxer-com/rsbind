@@ -101,10 +101,7 @@ impl Android {
 
     pub fn features(&self) -> Vec<String> {
         match self.features_def {
-            Some(ref features) => {
-                let mut all_features = features.clone();
-                all_features
-            }
+            Some(ref features) => features.clone(),
             None => vec![],
         }
     }

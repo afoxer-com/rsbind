@@ -16,7 +16,7 @@ impl<'a> Convertible<Java<'a>> for Callback {
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         if let AstType::Callback(base) = self.ty.clone() {
-            return toks_f!("Internal{}.pushGlobalCallback({})", base, origin);
+            return toks_f!("Internal{}.pushGlobalCallback({})", &base.origin, origin);
         }
 
         toks!("")
@@ -28,7 +28,12 @@ impl<'a> Convertible<Java<'a>> for Callback {
         _direction: Direction,
     ) -> Tokens<'static, Java<'a>> {
         if let AstType::Callback(base) = self.ty.clone() {
-            return toks_f!("new Internal{}.J2R{}Wrapper({})", base, base, origin);
+            return toks_f!(
+                "new Internal{}.J2R{}Wrapper({})",
+                &base.origin,
+                &base.origin,
+                origin
+            );
         }
         toks!("")
     }
@@ -36,7 +41,7 @@ impl<'a> Convertible<Java<'a>> for Callback {
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Callback(ref base) => {
-                let cb_to_index_fn_name = ident!(&format!("callback_to_index_{}", base));
+                let cb_to_index_fn_name = ident!(&format!("callback_to_index_{}", &base.origin));
                 quote! {
                     #cb_to_index_fn_name(#origin)
                 }
@@ -50,7 +55,7 @@ impl<'a> Convertible<Java<'a>> for Callback {
     fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Callback(ref base) => {
-                let _index_to_callback_fn = ident!(&format!("index_to_callback_{}", base));
+                let _index_to_callback_fn = ident!(&format!("index_to_callback_{}", &base.origin));
                 let value_get = match direction {
                     Direction::Down => {
                         quote! {}
@@ -64,7 +69,7 @@ impl<'a> Convertible<Java<'a>> for Callback {
                         }
                     }
                 };
-                let index_to_cb_fn_name = ident!(&format!("index_to_callback_{}", base));
+                let index_to_cb_fn_name = ident!(&format!("index_to_callback_{}", &base.origin));
                 quote! {{
                     #value_get
                     #index_to_cb_fn_name(#origin)
@@ -78,9 +83,13 @@ impl<'a> Convertible<Java<'a>> for Callback {
 
     fn native_type(&self) -> Java<'a> {
         match self.ty.clone() {
-            AstType::Callback(ref origin) => java::local(origin.to_string()),
+            AstType::Callback(ref origin) => java::local(origin.origin.to_string()),
             _ => java::local(""),
         }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::LONG
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

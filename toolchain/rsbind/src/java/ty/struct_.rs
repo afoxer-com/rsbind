@@ -39,7 +39,7 @@ impl<'a> Convertible<Java<'a>> for Struct {
     fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Struct(ref base) => {
-                let proxy_struct = ident!(&format!("Proxy{}", base));
+                let proxy_struct = ident!(&format!("Proxy{}", &base.origin));
                 match direction {
                     Direction::Down => {
                         quote! {{
@@ -78,7 +78,7 @@ impl<'a> Convertible<Java<'a>> for Struct {
 
         match self.ty.clone() {
             AstType::Struct(ref base) => {
-                let proxy_struct = ident!(&format!("Proxy{}", base));
+                let proxy_struct = ident!(&format!("Proxy{}", &base.origin));
                 quote! {{
                     #value_get
                     let json: String = env.get_string(#origin).expect("Couldn't get java string!").into();
@@ -94,9 +94,13 @@ impl<'a> Convertible<Java<'a>> for Struct {
 
     fn native_type(&self) -> Java<'a> {
         match self.ty.clone() {
-            AstType::Struct(ref origin) => java::local(origin.to_string()),
+            AstType::Struct(ref origin) => java::local(origin.origin.clone()),
             _ => java::local(""),
         }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::imported("java.lang", "String")
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

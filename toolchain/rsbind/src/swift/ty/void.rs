@@ -37,6 +37,10 @@ impl<'a> Convertible<Swift<'a>> for Void {
         swift::local("()")
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        swift::VOID
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

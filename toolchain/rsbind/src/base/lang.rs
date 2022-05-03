@@ -25,7 +25,7 @@ pub(crate) trait Convertible<T> {
     fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream;
     fn transferable_to_rust(&self, origin: TokenStream, direction: Direction) -> TokenStream;
     fn native_type(&self) -> T;
-    // fn native_transferable_type(&self, direction: Direction) -> String;
+    fn native_transferable_type(&self, direction: Direction) -> T;
     // fn rust_type(&self) -> String;
     fn quote_common_bridge(&self) -> TokenStream;
     fn quote_common_artifact(&self) -> Tokens<'static, T>;

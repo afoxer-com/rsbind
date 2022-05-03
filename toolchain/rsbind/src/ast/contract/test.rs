@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
-    use crate::ast::contract::parser::{parse_from_str, ContractResult};
-    use crate::ast::types::{AstBaseType, AstType};
+    use crate::ast::contract::parser::{parse_from_str, ContractResult, ParseContext};
+    use crate::ast::types::{AstBaseType, AstType, CustomType};
 
     #[test]
     fn parse_contract_works() {
@@ -42,9 +42,15 @@ mod tests {
                 fn test_self(self);
             }
         ";
-
-        let ContractResult { traits, structs } =
-            parse_from_str("demo_crate", "demo_mod", contract_str, "contract").unwrap();
+        let ContractResult { traits, structs } = parse_from_str(
+            &ParseContext {
+                crate_name: "demo_crate".to_string(),
+                mod_name: "demo_mod".to_string(),
+                mod_path: "contract".to_string(),
+            },
+            contract_str,
+        )
+        .unwrap();
         let trait_desc = traits;
         let struct_desc = structs;
         assert_eq!(trait_desc.len(), 2);
@@ -133,7 +139,10 @@ mod tests {
         assert_eq!(trait_desc[0].methods[2].args[1].name, "callback");
         assert_eq!(
             trait_desc[0].methods[2].args[1].ty,
-            AstType::Callback("FfiCallback".to_string())
+            AstType::Callback(CustomType {
+                mod_name: "demo_mod".to_string(),
+                origin: "FfiCallback".to_string()
+            })
         );
         assert_eq!(
             trait_desc[0].methods[2].return_type,
@@ -143,7 +152,10 @@ mod tests {
         assert!(trait_desc[0].methods[3].args.is_empty());
         assert_eq!(
             trait_desc[0].methods[3].return_type,
-            AstType::Callback("FfiCallback".to_string())
+            AstType::Callback(CustomType {
+                mod_name: "demo_mod".to_string(),
+                origin: "FfiCallback".to_string()
+            })
         );
 
         assert_eq!(trait_desc[1].name, "FfiCallback");

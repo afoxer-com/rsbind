@@ -120,6 +120,10 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
         swift::local(self.native_type_str())
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        swift::local("CInt8Array")
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

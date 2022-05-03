@@ -14,7 +14,7 @@ pub(crate) struct VecStruct {
 impl VecStruct {
     fn struct_name(&self) -> String {
         match self.ty.clone() {
-            AstType::Vec(AstBaseType::Struct(ref origin)) => origin.to_string(),
+            AstType::Vec(AstBaseType::Struct(ref origin)) => origin.origin.clone(),
             _ => "".to_string(),
         }
     }
@@ -125,6 +125,15 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
 
     fn native_type(&self) -> Swift<'a> {
         swift::local(format!("[{}]", self.struct_name()))
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Struct(ref origin)) => {
+                swift::local(format!("C{}Array", &origin.origin))
+            }
+            _ => swift::local(""),
+        }
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

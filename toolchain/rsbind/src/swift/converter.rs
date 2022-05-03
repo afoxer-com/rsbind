@@ -112,6 +112,10 @@ impl<'a> Convertible<Swift<'a>> for SwiftConvert {
         self.handle(|c| c.native_type())
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        self.handle(|c| c.native_transferable_type(direction.clone()))
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         self.handle(|c| c.quote_common_bridge())
     }

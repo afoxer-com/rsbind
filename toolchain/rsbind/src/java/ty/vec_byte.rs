@@ -97,6 +97,10 @@ impl<'a> Convertible<Java<'a>> for VecByte {
         JavaType::new(AstType::Byte("i8".to_string())).to_array()
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        JavaType::new(AstType::Byte("i8".to_string())).to_array()
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

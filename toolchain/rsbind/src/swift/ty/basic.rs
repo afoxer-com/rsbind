@@ -42,6 +42,10 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         swift::BOOLEAN
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        swift::local("Int32")
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }
@@ -103,6 +107,10 @@ impl<'a> Convertible<Swift<'a>> for Basic {
     }
 
     fn native_type(&self) -> Swift<'a> {
+        swift::local(self.native_type_str())
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
         swift::local(self.native_type_str())
     }
 

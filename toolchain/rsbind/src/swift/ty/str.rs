@@ -96,6 +96,10 @@ impl<'a> Convertible<Swift<'a>> for Str {
         swift::local("String")
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        swift::local("CInt8Array")
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

@@ -24,7 +24,7 @@ impl<'a> Convertible<Swift<'a>> for Struct {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         if let AstType::Struct(ref base) = self.ty.clone() {
-            return toks_f!("{}(proxy: {})", base, origin);
+            return toks_f!("{}(proxy: {})", &base.origin, origin);
         }
         toks!("")
     }
@@ -43,7 +43,14 @@ impl<'a> Convertible<Swift<'a>> for Struct {
 
     fn native_type(&self) -> Swift<'a> {
         match self.ty.clone() {
-            AstType::Struct(origin) => swift::local(origin.clone()),
+            AstType::Struct(origin) => swift::local(origin.origin.clone()),
+            _ => swift::local(""),
+        }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        match self.ty.clone() {
+            AstType::Struct(origin) => swift::local(format!("Proxy{}", &origin.origin)),
             _ => swift::local(""),
         }
     }

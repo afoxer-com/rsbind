@@ -52,6 +52,10 @@ impl<'a> Convertible<Java<'a>> for Bool {
         java::BOOLEAN
     }
 
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::INTEGER
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }
@@ -148,6 +152,18 @@ impl<'a> Convertible<Java<'a>> for Basic {
             AstType::Float(_) => java::FLOAT,
             AstType::Double(_) => java::DOUBLE,
             _ => java::local(""),
+        }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        match self.ty.clone() {
+            AstType::Byte(_) => java::BYTE,
+            AstType::Int(_) => java::INTEGER,
+            AstType::Short(_) => java::SHORT,
+            AstType::Long(_) => java::LONG,
+            AstType::Float(_) => java::FLOAT,
+            AstType::Double(_) => java::DOUBLE,
+            _ => java::VOID,
         }
     }
 

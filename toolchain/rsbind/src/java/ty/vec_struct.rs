@@ -33,7 +33,7 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
                 "().fromJson(",
                 origin,
                 ", ",
-                base.to_string(),
+                base.origin.clone(),
                 "[].class)"
             );
         }
@@ -44,7 +44,7 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
     fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Struct(ref base)) => {
-                let proxy_struct = ident!(&format!("Proxy{}", base));
+                let proxy_struct = ident!(&format!("Proxy{}", &base.origin));
                 match direction {
                     Direction::Down => {
                         quote! {{
@@ -85,8 +85,8 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
 
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Struct(ref base)) => {
-                let proxy_struct_name = ident!(&format!("Proxy{}", &base));
-                let real_struct_name = ident!(base);
+                let proxy_struct_name = ident!(&format!("Proxy{}", &base.origin));
+                let real_struct_name = ident!(&base.origin);
                 quote! {{
                     #value_get
                     let json: String = env.get_string(#origin).expect("Couldn't get java string!").into();
@@ -106,6 +106,10 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
             AstType::Vec(base) => JavaType::new(AstType::from(base.clone())).to_array(),
             _ => java::local(""),
         }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+        java::imported("java.lang", "String")
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

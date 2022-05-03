@@ -242,19 +242,25 @@ impl<'a> InternalCallbackGen<'a> {
         callbacks: &[&TraitDesc],
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
-        let mut arg_params = "(index".to_owned();
-        let mut args_str = "(Int64".to_owned();
+        let mut arg_params = toks!("(index");
+        let mut args_str = toks!("(Int64");
         for cb_arg in cb_method.args.iter() {
-            let cb_arg_ty = SwiftMapping::map_transfer_type(&cb_arg.ty, callbacks);
-            arg_params = format!("{}, {}", &arg_params, &cb_arg.name);
-            args_str = format!("{}, {}", &args_str, &cb_arg_ty);
+            let cb_arg_ty = SwiftConvert {
+                ty: cb_arg.ty.clone(),
+            }
+            .native_transferable_type(Direction::Up);
+            arg_params = toks!(arg_params, ", ", cb_arg.name.clone());
+            args_str = toks!(args_str, ", ", cb_arg_ty);
         }
-        arg_params = format!("{})", &arg_params);
-        args_str = format!("{})", &args_str);
+        arg_params = toks!(arg_params, ")");
+        args_str = toks!(args_str, ")");
 
-        let cb_return_ty = SwiftMapping::map_transfer_type(&cb_method.return_type, callbacks);
-        let closure = format!("{} -> {}", &args_str, &cb_return_ty);
-        arg_params = format!("{} -> {}", &arg_params, &cb_return_ty);
+        let cb_return_ty = SwiftConvert {
+            ty: cb_method.return_type.clone(),
+        }
+        .native_transferable_type(Direction::Down);
+        let closure = toks!(args_str, " -> ", cb_return_ty.clone());
+        arg_params = toks!(arg_params, " -> ", cb_return_ty.clone());
 
         push!(
             method_body,

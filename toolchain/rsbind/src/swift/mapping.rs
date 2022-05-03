@@ -8,7 +8,7 @@ pub(crate) struct SwiftMapping {}
 
 impl<'a> SwiftMapping {
     /// Get the swift argument types for transferring to C.
-    pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> String {
+    pub(crate) fn map_transfer_type(ty: &'a AstType) -> String {
         let buffer_str;
         match &ty {
             AstType::Void => "()",
@@ -25,37 +25,20 @@ impl<'a> SwiftMapping {
             AstType::Vec(AstBaseType::Int(_)) => "CInt32Array",
             AstType::Vec(AstBaseType::Long(_)) => "CInt64Array",
             AstType::Vec(AstBaseType::Struct(ref origin)) => {
-                buffer_str = format!("C{}Array", origin);
+                buffer_str = format!("C{}Array", &origin.origin);
                 buffer_str.as_ref()
             }
             AstType::Vec(_) => "CInt8Array",
-            AstType::Callback(origin) => origin,
+            AstType::Callback(origin) => {
+                buffer_str = format!("{}_{}_Model", &origin.mod_name, &origin.origin);
+                buffer_str.as_str()
+            }
             AstType::Struct(origin) => {
-                buffer_str = format!("Proxy{}", origin);
+                buffer_str = format!("Proxy{}", &origin.origin);
                 buffer_str.as_str()
             }
         }
         .to_string()
-    }
-
-    pub(crate) fn map_transfer_type(ty: &AstType, callbacks: &[&TraitDesc]) -> String {
-        match ty.clone() {
-            AstType::Callback(origin) => {
-                let mut callback_trait = None;
-                for callback in callbacks.iter() {
-                    if callback.name == origin.clone() {
-                        callback_trait = Some(callback);
-                        break;
-                    }
-                }
-                format!(
-                    "{}_{}_Model",
-                    &callback_trait.unwrap().mod_name,
-                    &callback_trait.unwrap().name
-                )
-            }
-            _ => SwiftMapping::map_base_transfer_type(ty),
-        }
     }
 }
 
@@ -78,38 +61,18 @@ impl<'a> RustMapping {
             AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
             AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
             AstType::Vec(AstBaseType::Struct(origin)) => {
-                let struct_array_name = ident!(&format!("C{}Array", origin));
+                let struct_array_name = ident!(&format!("C{}Array", &origin.origin));
                 quote!(#struct_array_name)
             }
             AstType::Vec(_) => quote!(CInt8Array),
-            AstType::Callback(_) => quote!(()), // not expected to call here!
+            AstType::Callback(origin) => {
+                let ident = ident!(&format!("{}_{}_Model", &origin.mod_name, &origin.origin));
+                quote! {#ident}
+            }
             AstType::Struct(ref origin) => {
-                let struct_ident = ident!(&format!("Proxy{}", origin));
+                let struct_ident = ident!(&format!("Proxy{}", &origin.origin));
                 quote!(#struct_ident)
             }
-        }
-    }
-
-    pub(crate) fn map_transfer_type(ty: &AstType, callbacks: &[&TraitDesc]) -> TokenStream {
-        match ty.clone() {
-            AstType::Callback(origin) => {
-                let mut callback_trait = None;
-                for callback in callbacks.iter() {
-                    if callback.name == origin.clone() {
-                        callback_trait = Some(callback);
-                        break;
-                    }
-                }
-                let callback_str = &format!(
-                    "{}_{}_Model",
-                    &callback_trait.unwrap().mod_name,
-                    &callback_trait.unwrap().name
-                );
-                let callback_ident = ident!(callback_str);
-                quote!(#callback_ident)
-            }
-
-            _ => RustMapping::map_base_transfer_type(ty),
         }
     }
 }

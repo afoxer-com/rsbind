@@ -29,15 +29,15 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
     fn native_to_transferable(
         &self,
         origin: String,
-        _direction: Direction,
+        direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        let transfer_ty = SwiftMapping::map_base_transfer_type(&self.ty);
+        let transfer_ty = self.native_transferable_type(direction);
         let base_ty = match self.ty.clone() {
-            AstType::Vec(base) => SwiftMapping::map_base_transfer_type(&AstType::from(base)),
+            AstType::Vec(base) => SwiftMapping::map_transfer_type(&AstType::from(base)),
             _ => "".to_string(),
         };
-        body.append(toks_f!("{{ () -> {} in", transfer_ty));
+        body.append(toks!("{ () -> ", transfer_ty.clone(), " in"));
         nested_f!(
             body,
             "let tmp_ptr = UnsafeMutablePointer<{}>.allocate(capacity: {}.count)",
@@ -53,11 +53,13 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
         });
         nested_f!(body, "}");
         nested_f!(body, quote_free_swift_ptr(&base_ty));
-        nested_f!(
+        nested!(
             body,
-            "return {}(ptr: tmp_ptr, len: Int32({}.count), free_ptr: free_ptr)",
-            transfer_ty,
-            origin
+            "return ",
+            transfer_ty.clone(),
+            "(ptr: tmp_ptr, len: Int32(",
+            origin,
+            ".count), free_ptr: free_ptr)",
         );
         push_f!(body, "}()");
         body
@@ -117,17 +119,17 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
         };
 
         quote! {{
-                let mut copy = #origin.clone();
-                copy.shrink_to_fit();
-                let ptr_name = copy.as_ptr();
-                let len_name = copy.len();
-                let array = #c_array_ty {
-                    ptr: ptr_name as (*const #base_ty),
-                    len: len_name as i32,
-                    free_ptr: #free_ptr
-                };
-                std::mem::forget(copy);
-                array
+            let mut copy = #origin.clone();
+            copy.shrink_to_fit();
+            let ptr_name = copy.as_ptr();
+            let len_name = copy.len();
+            let array = #c_array_ty {
+                ptr: ptr_name as (*const #base_ty),
+                len: len_name as i32,
+                free_ptr: #free_ptr
+            };
+            std::mem::forget(copy);
+            array
         }}
     }
 
@@ -158,6 +160,16 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Short(_)) => swift::local("[Int16]"),
             AstType::Vec(AstBaseType::Int(_)) => swift::local("[Int32]"),
             AstType::Vec(AstBaseType::Long(_)) => swift::local("[Int64]"),
+            _ => swift::local(""),
+        }
+    }
+
+    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Byte(_)) => swift::local("CInt8Array"),
+            AstType::Vec(AstBaseType::Short(_)) => swift::local("CInt16Array"),
+            AstType::Vec(AstBaseType::Int(_)) => swift::local("CInt32Array"),
+            AstType::Vec(AstBaseType::Long(_)) => swift::local("CInt64Array"),
             _ => swift::local(""),
         }
     }

@@ -46,6 +46,10 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         swift::local("Int32")
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        quote! {i32}
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }
@@ -93,7 +97,7 @@ impl<'a> Convertible<Swift<'a>> for Basic {
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
-        let ty_ident = RustMapping::map_base_transfer_type(&self.ty);
+        let ty_ident = RustMapping::map_transfer_type(&self.ty);
         quote! {
             #origin as #ty_ident
         }
@@ -112,6 +116,18 @@ impl<'a> Convertible<Swift<'a>> for Basic {
 
     fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
         swift::local(self.native_type_str())
+    }
+
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Byte(_) => quote!(i8),
+            AstType::Short(_) => quote!(i16),
+            AstType::Int(_) => quote!(i32),
+            AstType::Long(_) => quote!(i64),
+            AstType::Float(_) => quote!(f32),
+            AstType::Double(_) => quote!(f64),
+            _ => quote! {},
+        }
     }
 
     fn quote_common_bridge(&self) -> TokenStream {

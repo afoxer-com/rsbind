@@ -4,6 +4,7 @@ use rstgen::{swift, Tokens};
 
 use crate::ast::types::AstType;
 use crate::base::lang::{Convertible, Direction};
+use crate::ident;
 
 pub(crate) struct Struct {
     pub(crate) ty: AstType,
@@ -52,6 +53,16 @@ impl<'a> Convertible<Swift<'a>> for Struct {
         match self.ty.clone() {
             AstType::Struct(origin) => swift::local(format!("Proxy{}", &origin.origin)),
             _ => swift::local(""),
+        }
+    }
+
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Struct(ref origin) => {
+                let struct_ident = ident!(&format!("Proxy{}", &origin.origin));
+                quote!(#struct_ident)
+            }
+            _ => quote! {},
         }
     }
 

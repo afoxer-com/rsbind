@@ -110,6 +110,10 @@ impl<'a> Convertible<Java<'a>> for JavaConvert {
         self.handle(|c| c.native_transferable_type(direction.clone()))
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        self.handle(|c| c.rust_transferable_type(direction.clone()))
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         self.handle(|c| c.quote_common_bridge())
     }

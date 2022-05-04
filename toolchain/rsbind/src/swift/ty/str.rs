@@ -100,6 +100,10 @@ impl<'a> Convertible<Swift<'a>> for Str {
         swift::local("CInt8Array")
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        quote!(CInt8Array)
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

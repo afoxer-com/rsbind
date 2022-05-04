@@ -66,6 +66,17 @@ impl<'a> Convertible<Java<'a>> for Str {
         java::imported("java.lang", "String")
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        match direction.clone() {
+            Direction::Down => {
+                quote! {JString}
+            }
+            Direction::Up => {
+                quote! {jstring}
+            }
+        }
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

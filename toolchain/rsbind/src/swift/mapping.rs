@@ -45,7 +45,7 @@ impl<'a> SwiftMapping {
 pub(crate) struct RustMapping {}
 
 impl<'a> RustMapping {
-    pub(crate) fn map_base_transfer_type(ty: &'a AstType) -> TokenStream {
+    pub(crate) fn map_transfer_type(ty: &'a AstType) -> TokenStream {
         match &ty {
             AstType::Void => quote!(()),
             AstType::Byte(_) => quote!(i8),

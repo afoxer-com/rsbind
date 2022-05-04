@@ -458,9 +458,9 @@ dependencies = [
 
 [[package]]
 name = "rstgen"
-version = "0.1.3"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d09a900ea986e4057dacd7649671e634e94c9da0d60623871614df74f6ec9ee"
+checksum = "b00308aca713b63a22c1b4e06abf943262cab3647565f5ac9aad6f6c4a685739"
 
 [[package]]
 name = "rustc-demangle"

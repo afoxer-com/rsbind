@@ -136,6 +136,16 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         }
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Struct(origin)) => {
+                let struct_array_name = ident!(&format!("C{}Array", &origin.origin));
+                quote!(#struct_array_name)
+            }
+            _ => quote! {},
+        }
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

@@ -92,6 +92,10 @@ impl<'a> Convertible<Java<'a>> for Callback {
         java::LONG
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        quote! {i64}
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

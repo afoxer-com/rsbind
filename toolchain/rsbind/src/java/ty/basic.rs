@@ -56,6 +56,10 @@ impl<'a> Convertible<Java<'a>> for Bool {
         java::INTEGER
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        quote! {u8}
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }
@@ -164,6 +168,18 @@ impl<'a> Convertible<Java<'a>> for Basic {
             AstType::Float(_) => java::FLOAT,
             AstType::Double(_) => java::DOUBLE,
             _ => java::VOID,
+        }
+    }
+
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Byte(_) => quote!(i8),
+            AstType::Short(_) => quote!(i16),
+            AstType::Int(_) => quote!(i32),
+            AstType::Long(_) => quote!(i64),
+            AstType::Float(_) => quote!(f32),
+            AstType::Double(_) => quote!(f64),
+            _ => quote! {},
         }
     }
 

@@ -69,6 +69,16 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         }
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Callback(origin) => {
+                let ident = ident!(&format!("{}_{}_Model", &origin.mod_name, &origin.origin));
+                quote! {#ident}
+            }
+            _ => quote! {},
+        }
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

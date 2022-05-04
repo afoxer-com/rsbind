@@ -41,6 +41,10 @@ impl<'a> Convertible<Swift<'a>> for Void {
         swift::VOID
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        quote! {()}
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

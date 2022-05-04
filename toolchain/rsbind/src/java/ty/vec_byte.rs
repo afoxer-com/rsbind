@@ -101,6 +101,10 @@ impl<'a> Convertible<Java<'a>> for VecByte {
         JavaType::new(AstType::Byte("i8".to_string())).to_array()
     }
 
+    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+        quote! {jbyteArray}
+    }
+
     fn quote_common_bridge(&self) -> TokenStream {
         quote! {}
     }

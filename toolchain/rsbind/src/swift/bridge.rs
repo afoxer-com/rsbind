@@ -421,7 +421,12 @@ impl<'a> BridgeFileGen<'a> {
         let tys = struct_desc
             .fields
             .iter()
-            .map(|field| RustMapping::map_base_transfer_type(&field.ty))
+            .map(|field| {
+                SwiftConvert {
+                    ty: field.ty.clone(),
+                }
+                .rust_transferable_type(Direction::Down)
+            })
             .collect::<Vec<TokenStream>>();
 
         let struct_array_str = format!("C{}Array", &struct_desc.name);
@@ -553,10 +558,13 @@ impl<'a> BridgeFileGen<'a> {
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| RustMapping::map_base_transfer_type(&arg.ty))
+            .map(|arg| SwiftConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down))
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = RustMapping::map_base_transfer_type(&method.return_type);
+        let ret_ty_tokens = SwiftConvert {
+            ty: method.return_type.clone(),
+        }
+        .rust_transferable_type(Direction::Up);
         let sig_define = quote! {
             #[no_mangle]
             pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
@@ -832,9 +840,12 @@ pub(crate) fn box_to_model_convert(
             .args
             .iter()
             .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| RustMapping::map_base_transfer_type(&arg.ty))
+            .map(|arg| SwiftConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down))
             .collect::<Vec<TokenStream>>();
-        let ret_ty_tokens = RustMapping::map_base_transfer_type(&method.return_type);
+        let ret_ty_tokens = SwiftConvert {
+            ty: method.return_type.clone(),
+        }
+        .rust_transferable_type(Direction::Up);
         let mut args_convert = TokenStream::new();
         for arg in method.args.iter() {
             let each_convert = crate::swift::bridge_s2r::quote_arg_convert(arg, callbacks)?;

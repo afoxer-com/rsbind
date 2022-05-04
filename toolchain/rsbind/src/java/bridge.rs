@@ -9,7 +9,9 @@ use std::io::Write;
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
+use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
+use crate::java::converter::JavaConvert;
 use crate::ErrorKind::GenerateError;
 use crate::{ident, AstResult};
 
@@ -618,10 +620,13 @@ impl<'a> BridgeFileGen<'a> {
         let arg_types = method
             .args
             .iter()
-            .map(|arg| self.ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap())
+            .map(|arg| JavaConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down))
             .collect::<Vec<TokenStream>>();
 
-        let ret_ty_tokens = self.ty_to_tokens(&method.return_type, TypeDirection::Return)?;
+        let ret_ty_tokens = JavaConvert {
+            ty: method.return_type.clone(),
+        }
+        .rust_transferable_type(Direction::Up);
 
         let method_sig = if arg_names.is_empty() {
             match method.return_type {
@@ -700,10 +705,6 @@ impl<'a> BridgeFileGen<'a> {
 
         result
     }
-
-    fn ty_to_tokens(&self, ast_type: &AstType, direction: TypeDirection) -> Result<TokenStream> {
-        crate::java::bridge_j2r::ty_to_tokens(ast_type, direction)
-    }
 }
 
 impl<'a> BridgeFileGen<'a> {
@@ -736,12 +737,14 @@ impl<'a> BridgeFileGen<'a> {
                 .args
                 .iter()
                 .map(|arg| {
-                    crate::java::bridge_j2r::ty_to_tokens(&arg.ty, TypeDirection::Argument).unwrap()
+                    JavaConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down)
                 })
                 .collect::<Vec<TokenStream>>();
 
-            let ret_ty_tokens =
-                crate::java::bridge_j2r::ty_to_tokens(&method.return_type, TypeDirection::Return)?;
+            let ret_ty_tokens = JavaConvert {
+                ty: method.return_type.clone(),
+            }
+            .rust_transferable_type(Direction::Up);
 
             let mut args_convert = TokenStream::new();
             for arg in method.args.iter() {

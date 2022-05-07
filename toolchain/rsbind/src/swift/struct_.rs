@@ -2,11 +2,9 @@ use rstgen::swift::{local, Argument, Constructor, Field, Method, Modifier, Swift
 use rstgen::{swift, IntoTokens};
 
 use crate::ast::contract::desc::StructDesc;
-
 use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
-
 use crate::swift::types::{to_swift_file, SwiftType};
 
 pub(crate) struct StructGen<'a> {
@@ -31,13 +29,7 @@ impl<'a> StructGen<'a> {
             constructor1
                 .arguments
                 .push(Argument::new(swift_ty.clone(), arg.name.clone()));
-            push!(
-                constructor1.body,
-                "self.",
-                arg.name.clone(),
-                " = ",
-                arg.name.clone()
-            );
+            push_f!(constructor1.body, "self.{} = {}", arg.name, arg.name);
         }
         struct_.constructors.push(constructor1);
         struct_.constructors.push(self.create_proxy_constructor());
@@ -56,7 +48,7 @@ impl<'a> StructGen<'a> {
                 ty: field.ty.clone(),
             }
             .native_to_transferable(format!("self.{}", &field.name), Direction::Down);
-            nested!(method.body, field.name, " : ", convert);
+            nested_f!(method.body, "{} : {}", field.name, convert);
             if index != self.desc.fields.len() - 1 {
                 method.body.append(",")
             }
@@ -79,7 +71,7 @@ impl<'a> StructGen<'a> {
                 ty: field.ty.clone(),
             }
             .transferable_to_native(format!("proxy.{}", &field.name), Direction::Down);
-            push!(constructor2.body, "self.", field.name, " = ", convert);
+            push_f!(constructor2.body, "self.{} = {}", field.name, convert);
         }
 
         constructor2

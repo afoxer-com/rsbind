@@ -68,22 +68,19 @@ impl<'a> WrapperGen<'a> {
     ) -> Result<()> {
         match method.return_type.clone() {
             AstType::Void => {
-                push!(
+                push_f!(
                     method_body,
+                    "{}.{}(",
                     inner_cls_name,
-                    ".",
                     method.name.to_lower_camel_case(),
-                    "("
                 );
             }
             _ => {
-                push!(
+                push_f!(
                     method_body,
-                    "return ",
+                    "return {}.{}(",
                     inner_cls_name,
-                    ".",
                     method.name.to_lower_camel_case(),
-                    "("
                 );
             }
         }

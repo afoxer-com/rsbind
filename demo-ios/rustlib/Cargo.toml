@@ -9,4 +9,4 @@ drive = []
 
 [dependencies]
 log = "0.4.14"
-oslog = "0.2.0"
+#oslog = "0.2.0"

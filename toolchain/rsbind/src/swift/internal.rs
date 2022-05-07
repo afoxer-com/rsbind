@@ -84,7 +84,7 @@ impl<'a> TraitGen<'a> {
             println!("quote arg convert for {}", arg.name.clone());
             let convert = SwiftConvert { ty: arg.ty.clone() }
                 .native_to_transferable(arg.name.clone(), Direction::Down);
-            push!(method_body, "let s_", arg.name, " = ", convert);
+            push_f!(method_body, "let s_{} = {}", arg.name, convert);
         }
         Ok(())
     }
@@ -99,7 +99,7 @@ impl<'a> TraitGen<'a> {
             &self.desc.mod_name, &self.desc.name, &method.name
         );
         println!("quote method call for {}", method_name);
-        push!(method_body, "let result = ", method_name, "(");
+        push_f!(method_body, "let result = {}(", method_name);
 
         for (index, item) in method.args.clone().into_iter().enumerate() {
             let converted = format!("s_{}", &item.name);

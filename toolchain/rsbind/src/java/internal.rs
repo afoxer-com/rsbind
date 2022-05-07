@@ -94,7 +94,13 @@ impl<'a> InnerTraitGen<'a> {
             let converted = format!("r_{}", &arg.name);
             let convert = JavaConvert { ty: arg.ty.clone() }
                 .native_to_transferable(arg.name.clone(), Direction::Down);
-            push!(method_body, java, "  ", converted, " = ", convert, ";");
+            push_f!(
+                method_body,
+                "{} {} = {};",
+                java.into_tokens(),
+                converted,
+                convert
+            );
         }
 
         Ok(())

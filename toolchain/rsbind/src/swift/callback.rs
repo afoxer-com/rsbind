@@ -3,7 +3,6 @@ use rstgen::swift::{Argument, Class, Method, Modifier, Protocol, Swift};
 use rstgen::{swift, IntoTokens, Tokens};
 
 use crate::ast::contract::desc::{ArgDesc, MethodDesc, TraitDesc};
-
 use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
@@ -116,7 +115,7 @@ impl<'a> InternalCallbackGen<'a> {
                 println!("quote arg convert for {}", arg.name.clone());
                 let convert = SwiftConvert { ty: arg.ty.clone() }
                     .native_to_transferable(arg.name.clone(), Direction::Down);
-                push!(method_body, "let s_", arg.name, " = ", convert);
+                push_f!(method_body, "let s_{} = {}", arg.name, convert);
             }
 
             // call native method
@@ -127,7 +126,7 @@ impl<'a> InternalCallbackGen<'a> {
                 ty: method.return_type.clone(),
             }
             .transferable_to_native("result".to_string(), Direction::Down);
-            push!(method_body, "let r_result = ", convert);
+            push_f!(method_body, "let r_result = {}", convert);
             push!(method_body, "return r_result");
 
             for _i in 0..byte_count {
@@ -138,7 +137,7 @@ impl<'a> InternalCallbackGen<'a> {
             class.methods.push(cls_method);
         }
         body.push(class.into_tokens());
-        push!(body, "return ", class_name, "(model: model)");
+        push_f!(body, "return {}(model: model)", class_name);
         m.body.push(body);
         outer_cls.methods.push(m);
 
@@ -152,7 +151,7 @@ impl<'a> InternalCallbackGen<'a> {
     ) -> Result<()> {
         let method_name = method.name.clone();
         println!("quote method call for {}", method_name);
-        push!(method_body, "let result = self.model.", method_name, "(");
+        push_f!(method_body, "let result = self.model.{}(", method_name);
 
         method_body.append(toks!("self.model.index"));
         if !method.args.is_empty() {
@@ -262,13 +261,11 @@ impl<'a> InternalCallbackGen<'a> {
         let closure = toks!(args_str, " -> ", cb_return_ty.clone());
         arg_params = toks!(arg_params, " -> ", cb_return_ty.clone());
 
-        push!(
+        push_f!(
             method_body,
-            "let ",
-            format!("arg_{}", &cb_method.name),
-            ": @convention(c) ",
+            "let arg_{} : @convention(c) {} = {{",
+            cb_method.name,
             closure,
-            " = {"
         );
         nested!(method_body, arg_params, " in\n");
         Ok(())
@@ -285,7 +282,7 @@ impl<'a> InternalCallbackGen<'a> {
             ty: cb_arg.ty.clone(),
         }
         .transferable_to_native(cb_arg.name.clone(), Direction::Up);
-        nested!(fn_body, "let c_", cb_arg.name, " = ", convert);
+        nested_f!(fn_body, "let c_{} = {}", cb_arg.name, convert);
         method_body.push(fn_body);
         Ok(())
     }
@@ -305,9 +302,9 @@ impl<'a> InternalCallbackGen<'a> {
 
         cb_method_call = format!("{})", &cb_method_call);
 
-        nested!(
+        nested_f!(
             method_body,
-            "let result = origin_callback.",
+            "let result = origin_callback.{}{}",
             cb_method.name.to_lower_camel_case(),
             cb_method_call
         );
@@ -325,7 +322,7 @@ impl<'a> InternalCallbackGen<'a> {
             ty: cb_method.return_type.clone(),
         }
         .native_to_transferable("result".to_string(), Direction::Up);
-        nested!(method_body, "let r_result = ", convert);
+        nested_f!(method_body, "let r_result = {}", convert);
         Ok(())
     }
 

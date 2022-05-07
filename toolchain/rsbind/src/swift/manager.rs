@@ -22,7 +22,7 @@ impl<'a> ManagerGen<'a> {
                     method.modifiers = vec![Modifier::Public, Modifier::Static];
                     method.returns = Some(swift::local(each.name.clone()));
                     let mut method_body: Tokens<Swift> = Tokens::new();
-                    push!(method_body, "return Rust", each.name.to_string(), "()");
+                    push_f!(method_body, "return Rust{}()", each.name.to_string());
                     method.body = method_body;
                     class.methods.push(method)
                 }

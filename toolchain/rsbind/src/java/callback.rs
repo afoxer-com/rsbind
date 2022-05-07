@@ -153,7 +153,7 @@ impl<'a> InnerCallbackGen<'a> {
                         ty: method.return_type.clone(),
                     }
                     .transferable_to_native("ret".to_string(), Direction::Down);
-                    push!(method_body, "return ", convert, ";");
+                    push_f!(method_body, "return {};", convert);
                 }
             }
 
@@ -248,15 +248,12 @@ impl<'a> InnerCallbackGen<'a> {
             let java = Java::from(JavaType::new(arg.ty.clone()));
             let convert = JavaConvert { ty: arg.ty.clone() }
                 .transferable_to_native(arg.name.clone(), Direction::Up);
-            push!(
+            push_f!(
                 cb_body,
-                java,
-                " ",
-                "j_",
-                arg.name.clone(),
-                " = ",
+                "{} j_{} = {};",
+                java.into_tokens(),
+                arg.name,
                 convert,
-                ";"
             );
         }
 
@@ -279,34 +276,29 @@ impl<'a> InnerCallbackGen<'a> {
             }
         }
 
-        push!(
+        push_f!(
             cb_body,
-            callback.name.clone(),
-            " callback = (",
-            callback.name.clone(),
-            ") globalCallbacks.get(index);"
+            "{} callback = ({}) globalCallbacks.get(index);",
+            callback.name,
+            callback.name,
         );
         match cb_method.return_type.clone() {
             AstType::Void => {
-                push!(
+                push_f!(
                     cb_body,
-                    "callback.",
+                    "callback.{}({});",
                     cb_method.name.to_lower_camel_case(),
-                    "(",
                     arg_calls,
-                    ");"
                 );
             }
             _ => {
                 let java = JavaType::new(cb_method.return_type.clone());
-                push!(
+                push_f!(
                     cb_body,
-                    Java::from(java),
-                    " result = callback.",
+                    "{} result = callback.{}({});",
+                    Java::from(java).into_tokens(),
                     cb_method.name.to_lower_camel_case(),
-                    "(",
                     arg_calls,
-                    ");"
                 );
             }
         }
@@ -327,7 +319,7 @@ impl<'a> InnerCallbackGen<'a> {
             ty: cb_method.return_type.clone(),
         }
         .native_to_transferable("result".to_string(), Direction::Up);
-        push!(cb_body, "return ", convert, ";");
+        push_f!(cb_body, "return {};", convert);
 
         Ok(())
     }
@@ -372,7 +364,13 @@ impl<'a> InnerCallbackGen<'a> {
             let converted = format!("r_{}", &arg.name);
             let convert = JavaConvert { ty: arg.ty.clone() }
                 .native_to_transferable(arg.name.clone(), Direction::Down);
-            push!(cb_body, java, "  ", converted, " = ", convert, ";");
+            push_f!(
+                cb_body,
+                "{} {} = {};",
+                java.into_tokens(),
+                converted,
+                convert
+            );
         }
 
         Ok(())
@@ -385,38 +383,27 @@ impl<'a> InnerCallbackGen<'a> {
         _callback: &TraitDesc,
     ) -> Result<()> {
         let mut arg_calls = "index".to_string();
-        if !cb_method.args.is_empty() {
-            arg_calls = format!("{}, ", &arg_calls);
-        }
-        for (index, arg) in cb_method.args.iter().enumerate() {
-            if index == cb_method.args.len() - 1 {
-                arg_calls = format!("{}r_{}", &arg_calls, &arg.name);
-            } else {
-                arg_calls = format!("{}r_{}, ", &arg_calls, &arg.name);
-            }
+        for arg in cb_method.args.iter() {
+            arg_calls = format!("{}, r_{}", &arg_calls, &arg.name);
         }
 
         match cb_method.return_type.clone() {
             AstType::Void => {
-                push!(
+                push_f!(
                     cb_body,
-                    "j2r",
+                    "j2r{}({});",
                     cb_method.name.to_upper_camel_case(),
-                    "(",
-                    arg_calls,
-                    ");"
+                    arg_calls
                 );
             }
             _ => {
                 let java = JavaType::new(cb_method.return_type.clone()).to_transfer();
-                push!(
+                push_f!(
                     cb_body,
-                    java,
-                    " ret = j2r",
+                    "{} ret = j2r{}({});",
+                    java.into_tokens(),
                     cb_method.name.to_upper_camel_case(),
-                    "(",
-                    arg_calls,
-                    ");"
+                    arg_calls
                 );
             }
         }

@@ -69,31 +69,28 @@ impl<'a> WrapperGen<'a> {
     ) -> Result<()> {
         match method.return_type.clone() {
             AstType::Void => {
-                push!(
+                push_f!(
                     method_body,
+                    "{}.{}(",
                     inner_cls_name,
-                    ".",
                     method.name.to_lower_camel_case(),
-                    "("
                 );
             }
             _ => {
-                push!(
+                push_f!(
                     method_body,
-                    "return ",
+                    "return {}.{}(",
                     inner_cls_name,
-                    ".",
                     method.name.to_lower_camel_case(),
-                    "("
                 );
             }
         }
 
         for (index, item) in method.args.clone().into_iter().enumerate() {
             if index == method.args.len() - 1 {
-                method_body.append(toks!(item.name.clone(), ": ", item.name.clone()));
+                method_body.append(toks_f!("{} : {}", item.name, item.name));
             } else {
-                method_body.append(toks!(item.name.clone(), ": ", item.name.clone(), ", "));
+                method_body.append(toks_f!("{} : {},", item.name, item.name));
             }
         }
 

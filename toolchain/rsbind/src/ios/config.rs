@@ -1,7 +1,5 @@
-const ARCHS: [&str; 4] = [
+const ARCHS: [&str; 2] = [
     "aarch64-apple-ios",
-    "armv7-apple-ios",
-    "i386-apple-ios",
     "x86_64-apple-ios",
 ];
 

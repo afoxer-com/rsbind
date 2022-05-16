@@ -2,7 +2,7 @@
 [![Test](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
 [![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
 
-[Discord](https://discord.gg/fj5wqdXY) | 
+[Discord](https://discord.gg/fj5wqdXY) | [QQ](https://qm.qq.com/cgi-bin/qm/qr?k=IPpizGMYhQLXmPii97OeZC9SDWeVOijj&authKey=vB8sdvszOIYhWApDZMIyCaxdjzNWxQOh0p6ChF/owY0zf5f6Zvvth4jvXjN3oAZR&noverify=0)
 
 ## Rsbind
 Rsbind provide tools to bind rust trait with other language and export library artifact directly. It also help you invoke rust services just like you write it in native language.     

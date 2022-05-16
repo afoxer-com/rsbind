@@ -1,6 +1,9 @@
 
 [![Test](https://github.com/sidneywang/rsbind/actions/workflows/build.yml/badge.svg)](https://github.com/sidneywang/rsbind/actions/workflows/build.yml)
 [![crates.io](https://img.shields.io/crates/v/rsbind.svg)](https://crates.io/crates/rsbind)
+
+[Discord](https://discord.gg/fj5wqdXY) | 
+
 ## Rsbind
 Rsbind provide tools to bind rust trait with other language and export library artifact directly. It also help you invoke rust services just like you write it in native language.     
 It generate bindings from a Rust package and packaged to android aar or iOS lib or other library artifact. You don't need to write jni or other ffi code with this tool.   
@@ -123,7 +126,7 @@ uploadService.upload("to/your/path", new UploadProgress() {
 
 ## Step by step.
 1. [Setup rust environment](/docs/env.md).
-2. Install 'rsbind'. ```cargo install --git https://github.com/sidneywang/rsbind.git --force -- rsbind```
+2. Install 'rsbind'. ```cargo install --git https://github.com/rs-bind/rsbind.git --force -- rsbind```
 3. Create a Rust library, which contains two mod, contract and imp. There are two structures you can arrange.
 - First structure:  
 ![alt First structure picture](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/first_structure.jpg)

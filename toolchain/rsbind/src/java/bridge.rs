@@ -115,11 +115,6 @@ impl<'a> BridgeCodeGen<'a> {
     }
 }
 
-pub(crate) enum TypeDirection {
-    Argument,
-    Return,
-}
-
 ///
 /// Executor for generating core files of bridge mod.
 ///
@@ -674,13 +669,21 @@ impl<'a> BridgeFileGen<'a> {
             &arg.name,
             &arg.ty.origin()
         );
-        let result = crate::java::bridge_j2r::quote_arg_convert(arg, &self.namespace, trait_desc);
+        let rust_arg_str = format!("r_{}", &arg.name);
+        let rust_arg_name = ident!(&rust_arg_str);
+        let arg_name_ident = ident!(&arg.name);
+        let convert = JavaConvert { ty: arg.ty.clone() }
+            .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
+        let result = quote! {
+            let #rust_arg_name = #convert;
+        };
+
         println!(
             "[bridge] ✅ end quote jni bridge method argument convert => {}:{}",
             &arg.name,
             &arg.ty.origin()
         );
-        result
+        Ok(result)
     }
 
     fn quote_return_convert(
@@ -695,15 +698,23 @@ impl<'a> BridgeFileGen<'a> {
             return_ty.origin()
         );
 
-        let result = crate::java::bridge_j2r::quote_return_convert(
-            return_ty, trait_desc, callbacks, ret_name,
-        );
+        let mut result;
+        if let AstType::Void = return_ty.clone() {
+            result = quote! {};
+        }
+
+        let ret_name_ident = ident!(ret_name);
+        result = JavaConvert {
+            ty: return_ty.clone(),
+        }
+        .rust_to_transferable(quote! {#ret_name_ident}, Direction::Down);
+
         println!(
             "[bridge]  ✅  end quote jni bridge method return convert => {}",
             return_ty.origin()
         );
 
-        result
+        Ok(result)
     }
 }
 
@@ -748,8 +759,15 @@ impl<'a> BridgeFileGen<'a> {
 
             let mut args_convert = TokenStream::new();
             for arg in method.args.iter() {
-                let each_convert =
-                    crate::java::bridge_j2r::quote_arg_convert(arg, &namespace, callback)?;
+                let rust_arg_str = format!("r_{}", &arg.name);
+                let rust_arg_name = ident!(&rust_arg_str);
+                let arg_name_ident = ident!(&arg.name);
+                let convert = JavaConvert { ty: arg.ty.clone() }
+                    .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
+                let each_convert = quote! {
+                    let #rust_arg_name = #convert;
+                };
+
                 args_convert = quote! {
                     #args_convert
                     #each_convert
@@ -763,12 +781,15 @@ impl<'a> BridgeFileGen<'a> {
                 .map(|arg| ident!(&format!("r_{}", &arg.name)))
                 .collect::<Vec<Ident>>();
 
-            let return_convert = crate::java::bridge_j2r::quote_return_convert(
-                &method.return_type,
-                callback,
-                callbacks,
-                "result",
-            )?;
+            let mut return_convert;
+            if let AstType::Void = method.return_type.clone() {
+                return_convert = quote! {};
+            }
+
+            return_convert = JavaConvert {
+                ty: method.return_type.clone(),
+            }
+            .rust_to_transferable(quote! {result}, Direction::Down);
 
             if let AstType::Callback(ref origin) = method.return_type.clone() {
                 let return_callback_ident = ident!(&origin.origin);
@@ -890,7 +911,16 @@ pub(crate) fn index_to_callback(
             let cb_arg_name = ident!(&format!("j_{}", cb_arg.name));
             method_java_sig = format!("{}{}", &method_java_sig, cb_arg.ty.to_java_sig());
 
-            let args_convert_each = crate::java::bridge_r2j::arg_convert(cb_arg)?;
+            let cb_arg_name = ident!(&format!("j_{}", cb_arg.name));
+            let cb_origin_arg_name = ident!(&cb_arg.name);
+
+            let convert = JavaConvert {
+                ty: cb_arg.ty.clone(),
+            }
+            .rust_to_transferable(quote! {#cb_origin_arg_name}, Direction::Up);
+            let args_convert_each = quote! {
+                let #cb_arg_name = #convert;
+            };
 
             args_convert = quote! {
                 #args_convert
@@ -1000,7 +1030,19 @@ pub(crate) fn index_to_callback(
             &callback_desc.name, &method.name
         );
 
-        let return_convert = crate::java::bridge_r2j::return_convert(method)?;
+        let mut return_convert;
+
+        if let AstType::Void = method.return_type.clone() {
+            return_convert = quote! {};
+        }
+
+        let convert = JavaConvert {
+            ty: method.return_type.clone(),
+        }
+        .transferable_to_rust(quote! {result}, Direction::Up);
+        return_convert = quote! {
+            let r_result = #convert;
+        };
 
         let return_result_ident = match method.return_type {
             AstType::Void => quote!(),

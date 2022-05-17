@@ -8,8 +8,6 @@ use std::path::Path;
 
 mod artifact;
 mod bridge;
-mod bridge_j2r;
-mod bridge_r2j;
 mod callback;
 mod converter;
 mod interface;

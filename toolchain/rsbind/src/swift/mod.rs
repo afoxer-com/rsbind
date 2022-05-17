@@ -10,8 +10,6 @@ use std::path::Path;
 
 mod artifact;
 mod bridge;
-mod bridge_r2s;
-mod bridge_s2r;
 mod callback;
 mod converter;
 mod internal;

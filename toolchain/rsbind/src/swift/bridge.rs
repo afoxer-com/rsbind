@@ -401,8 +401,7 @@ impl<'a> BridgeFileGen<'a> {
         callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
         let callback_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
-        let callback_struct =
-            crate::swift::bridge_s2r::quote_callback_struct(callback, callbacks, callback_str)?;
+        let callback_struct = quote_callback_struct(callback, callbacks, callback_str)?;
         Ok(quote! {
             #[repr(C)]
             #callback_struct
@@ -579,7 +578,16 @@ impl<'a> BridgeFileGen<'a> {
         arg: &ArgDesc,
         callbacks: &[&TraitDesc],
     ) -> Result<TokenStream> {
-        crate::swift::bridge_s2r::quote_arg_convert(arg, callbacks)
+        let rust_arg_name = ident!(&format!("r_{}", &arg.name));
+        let arg_name_ident = ident!(&arg.name);
+
+        let convert = SwiftConvert { ty: arg.ty.clone() }
+            .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
+        let convert = quote! {
+            let #rust_arg_name = #convert;
+        };
+
+        Ok(convert)
     }
 
     fn quote_return_convert(
@@ -608,8 +616,14 @@ impl<'a> BridgeFileGen<'a> {
             quote! {}
         };
 
-        let return_convert =
-            crate::swift::bridge_s2r::quote_return_convert(return_ty, callbacks, ret_name)?;
+        let ret_name_ident = ident!(ret_name);
+        let convert = SwiftConvert {
+            ty: return_ty.clone(),
+        }
+        .rust_to_transferable(quote! {#ret_name_ident}, Direction::Down);
+        let return_convert = quote! {
+            let r_result = #convert;
+        };
 
         let insert_callback = if let AstType::Callback(ref origin) = return_ty.clone() {
             let callback_ident = ident!(&origin.origin);
@@ -672,7 +686,28 @@ fn model_to_box_convert(
                 quote! {}
             };
 
-            let args_convert_each = crate::swift::bridge_r2s::arg_convert(cb_arg, callbacks)?;
+            let cb_arg_name = ident!(&format!("c_{}", cb_arg.name));
+            let cb_origin_arg_name = ident!(&cb_arg.name);
+
+            let convert = SwiftConvert {
+                ty: cb_arg.ty.clone(),
+            }
+            .rust_to_transferable(quote! {#cb_origin_arg_name}, Direction::Up);
+            let convert = quote! {
+                let #cb_arg_name = #convert;
+            };
+
+            let args_convert_each = match cb_arg.ty.clone() {
+                AstType::String | AstType::Vec(_) => {
+                    let ptr_arg = ident!(&format!("ptr_{}", &cb_arg.name));
+                    quote! {
+                        #convert
+                        let #ptr_arg = #cb_arg_name.ptr;
+                    }
+                }
+                _ => convert,
+            };
+
             args_convert = quote! {
                 #obtain_index
                 #args_convert
@@ -732,8 +767,13 @@ fn model_to_box_convert(
             }
         };
 
-        let return_convert = crate::swift::bridge_r2s::return_convert(&method.return_type)
-            .expect("Return convert error!");
+        let convert = SwiftConvert {
+            ty: method.return_type.clone(),
+        }
+        .transferable_to_rust(quote! {result}, Direction::Up);
+        let return_convert = quote! {
+            let r_result = #convert;
+        };
 
         // return var ident name
         let return_var_name = match method.return_type {
@@ -763,9 +803,7 @@ fn model_to_box_convert(
         method_names.push(method_name);
     }
 
-    let callback_struct =
-        crate::swift::bridge_s2r::quote_callback_struct(callback_desc, callbacks, struct_name)
-            .unwrap();
+    let callback_struct = quote_callback_struct(callback_desc, callbacks, struct_name).unwrap();
 
     let callback_ty = ident!(&callback_desc.name);
     let mut method_assign_tokens = TokenStream::new();
@@ -848,17 +886,27 @@ pub(crate) fn box_to_model_convert(
         .rust_transferable_type(Direction::Up);
         let mut args_convert = TokenStream::new();
         for arg in method.args.iter() {
-            let each_convert = crate::swift::bridge_s2r::quote_arg_convert(arg, callbacks)?;
+            let rust_arg_name = ident!(&format!("r_{}", &arg.name));
+            let arg_name_ident = ident!(&arg.name);
+
+            let convert = SwiftConvert { ty: arg.ty.clone() }
+                .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
+            let each_convert = quote! {
+                let #rust_arg_name = #convert;
+            };
+
             args_convert = quote! {
                 #args_convert
                 #each_convert
             }
         }
-        let return_convert = crate::swift::bridge_s2r::quote_return_convert(
-            &method.return_type,
-            callbacks,
-            "result",
-        )?;
+
+        let convert = SwiftConvert { ty: method.return_type.clone() }
+            .rust_to_transferable(quote! {result}, Direction::Down);
+        let return_convert = quote! {
+            let r_result = #convert;
+        };
+
         let ret_method_name = ident!(&format!("ret_{}", &method.name));
 
         if let AstType::Callback(ref origin) = method.return_type.clone() {
@@ -957,6 +1005,50 @@ pub(crate) fn box_to_model_convert(
             index: callback_index
         }
     })
+}
+
+pub(crate) fn quote_callback_struct(
+    callback: &TraitDesc,
+    callbacks: &[&TraitDesc],
+    name: &str,
+) -> Result<TokenStream> {
+    let callback_ident = ident!(name);
+
+    let callback_struct_sig = quote! {
+        pub struct #callback_ident
+    };
+
+    let mut callback_methods = TokenStream::new();
+    for method in callback.methods.iter() {
+        let callback_method_ident = ident!(&method.name);
+        let ret_ty_tokens = SwiftConvert {
+            ty: method.return_type.clone(),
+        }
+        .rust_transferable_type(Direction::Up);
+        let arg_types = method
+            .args
+            .iter()
+            .filter(|arg| !matches!(arg.ty, AstType::Void))
+            .map(|arg| SwiftConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down))
+            .collect::<Vec<TokenStream>>();
+
+        callback_methods = quote! {
+            #callback_methods
+            pub #callback_method_ident: extern "C" fn(i64, #(#arg_types),*) -> #ret_ty_tokens,
+        }
+    }
+
+    let callback_struct = quote! {
+        #callback_struct_sig {
+            #callback_methods
+            pub free_callback: extern "C" fn(i64),
+            pub free_ptr: extern "C" fn(* mut i8, i32),
+            pub index: i64,
+
+        }
+    };
+
+    Ok(callback_struct)
 }
 
 ///

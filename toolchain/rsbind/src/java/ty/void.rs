@@ -27,7 +27,7 @@ impl<'a> Convertible<Java<'a>> for Void {
     }
 
     fn transferable_to_rust(&self, _origin: TokenStream, _direction: Direction) -> TokenStream {
-        quote! {}
+        quote! {()}
     }
 
     fn native_type(&self) -> Java<'a> {

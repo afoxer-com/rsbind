@@ -53,7 +53,7 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
         nested!(body, quote_free_swift_ptr("Int8"));
         nested!(
             body,
-            "return CInt8Array(ptr: buffer!, len: count, free_ptr: free_ptr)"
+            "return CInt8Array(ptr: buffer!, len: count, cap: count, free_ptr: free_ptr)"
         );
         push!(body, "}");
         body
@@ -70,7 +70,8 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
         push_f!(body, "let str = String(cString:{}.ptr!)", origin);
         push_f!(
             body,
-            "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr!), {}.len)",
+            "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr!), {}.len, {}.cap)",
+            origin,
             origin,
             origin,
             origin
@@ -98,6 +99,7 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
             let array = CInt8Array {
                 ptr: bytes.as_ptr() as (*const i8),
                 len: bytes.len() as i32,
+                cap: bytes.len() as i32,
                 free_ptr: free_str
             };
             std::mem::forget(cstr);
@@ -111,7 +113,7 @@ impl<'a> Convertible<Swift<'a>> for VecDefault {
             let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(&slice)};
             let json_str = cstr.to_string_lossy().to_string();
             let object = serde_json::from_str(&json_str).unwrap();
-            (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len);
+            (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len, #origin.len);
             object
         }}
     }

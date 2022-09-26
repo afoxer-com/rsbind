@@ -59,7 +59,9 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             transfer_ty.clone(),
             "(ptr: tmp_ptr, len: Int32(",
             origin,
-            ".count), free_ptr: free_ptr)",
+            ".count), cap: Int32(",
+            origin,
+            ".capacity), free_ptr: free_ptr)",
         );
         push_f!(body, "}()");
         body
@@ -83,7 +85,8 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             );
             nested_f!(
                 t,
-                "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr), {}.len)",
+                "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr), {}.len, {}.cap)",
+                origin,
                 origin,
                 origin,
                 origin
@@ -120,12 +123,13 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
 
         quote! {{
             let mut copy = #origin.clone();
-            copy.shrink_to_fit();
             let ptr_name = copy.as_ptr();
             let len_name = copy.len();
+            let cap_name = copy.capacity();
             let array = #c_array_ty {
                 ptr: ptr_name as (*const #base_ty),
                 len: len_name as i32,
+                cap: cap_name as i32,
                 free_ptr: #free_ptr
             };
             std::mem::forget(copy);
@@ -146,7 +150,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
                 let origin_ident = ident!(base);
                 quote! {{
                     let vec = unsafe { std::slice::from_raw_parts(#origin.ptr as (* mut #origin_ident), #origin.len as usize).to_vec() };
-                    (#origin.free_ptr)(#origin.ptr as (*mut #transfer_ty), #origin.len);
+                    (#origin.free_ptr)(#origin.ptr as (*mut #transfer_ty), #origin.len, #origin.cap);
                     vec
                 }}
             }

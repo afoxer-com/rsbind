@@ -507,18 +507,19 @@ impl<'a> BridgeFileGen<'a> {
             pub struct #struct_array_name {
                 pub ptr: *const #proxy_struct_name,
                 pub len: i32,
-                pub free_ptr: extern "C" fn(*mut #proxy_struct_name, i32),
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut #proxy_struct_name, i32, i32),
             }
 
             #[no_mangle]
-            pub extern "C" fn #free_proxy_struct_array_fn(ptr: *mut #proxy_struct_name, len: i32) {
+            pub extern "C" fn #free_proxy_struct_array_fn(ptr: *mut #proxy_struct_name, len: i32, cap: i32) {
                 let catch_result = catch_unwind(AssertUnwindSafe(|| {
                     unsafe {
                         // let proxy_vec =
                         Vec::from_raw_parts(
                             ptr as *mut #proxy_struct_name,
                             len as usize,
-                            len as usize);
+                            cap as usize);
                         // proxy_vec.into_iter().for_each(|each| {#origin_struct_name::from(each);});
                     }
                 }));
@@ -988,8 +989,8 @@ pub(crate) fn box_to_model_convert(
             (*CALLBACK_HASHMAP.write().unwrap()).remove(&index);
         }
 
-        pub extern "C" fn ret_free_ptr(buffer: *mut i8, size: i32) {
-            free_i8_array(buffer, size)
+        pub extern "C" fn ret_free_ptr(buffer: *mut i8, len: i32, cap: i32) {
+            free_i8_array(buffer, len, cap)
         }
     };
 
@@ -1042,7 +1043,7 @@ pub(crate) fn quote_callback_struct(
         #callback_struct_sig {
             #callback_methods
             pub free_callback: extern "C" fn(i64),
-            pub free_ptr: extern "C" fn(* mut i8, i32),
+            pub free_ptr: extern "C" fn(* mut i8, i32, i32),
             pub index: i64,
 
         }
@@ -1078,7 +1079,8 @@ impl<'a> BridgeCodeGen<'a> {
             pub struct CInt8Array {
                 pub ptr: * const i8,
                 pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i8, i32),
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut i8, i32, i32),
             }
 
             #[repr(C)]
@@ -1086,7 +1088,8 @@ impl<'a> BridgeCodeGen<'a> {
             pub struct CInt16Array {
                 pub ptr: * const i16,
                 pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i16, i32),
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut i16, i32, i32),
             }
 
             #[repr(C)]
@@ -1094,7 +1097,8 @@ impl<'a> BridgeCodeGen<'a> {
             pub struct CInt32Array {
                 pub ptr: * const i32,
                 pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i32, i32),
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut i32, i32, i32),
             }
 
             #[repr(C)]
@@ -1102,7 +1106,8 @@ impl<'a> BridgeCodeGen<'a> {
             pub struct CInt64Array {
                 pub ptr: * const i64,
                 pub len: i32,
-                pub free_ptr: extern "C" fn(*mut i64, i32),
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut i64, i32, i32),
             }
 
             #int8_free_fn
@@ -1111,7 +1116,7 @@ impl<'a> BridgeCodeGen<'a> {
             #int64_free_fn
 
             #[no_mangle]
-            pub extern "C" fn free_str(ptr: *mut i8, length: i32) {
+            pub extern "C" fn free_str(ptr: *mut i8, length: i32, cap: i32) {
                 let catch_result = catch_unwind(AssertUnwindSafe(|| unsafe {
                     let slice = std::slice::from_raw_parts_mut(ptr as (*mut u8), length as usize);
                     let cstr = CStr::from_bytes_with_nul_unchecked(slice);
@@ -1134,10 +1139,10 @@ impl<'a> BridgeCodeGen<'a> {
         let fn_name_ident = ident!(&fn_name);
         quote! {
             #[no_mangle]
-            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32) {
+            pub extern "C" fn #fn_name_ident(ptr: *mut #ty, length: i32, cap: i32) {
                 let catch_result = catch_unwind(AssertUnwindSafe(|| {
                     let len: usize = length as usize;
-                    unsafe { Vec::from_raw_parts(ptr, len, len); }
+                    unsafe { Vec::from_raw_parts(ptr, len as usize, cap as usize); }
                 }));
                 match catch_result {
                     Ok(_) => {}

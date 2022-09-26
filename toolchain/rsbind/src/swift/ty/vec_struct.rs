@@ -54,8 +54,9 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         );
         nested_f!(
             body,
-            "return C{}Array(ptr: buffer, len: Int32({}.count), free_ptr: free_ptr)",
+            "return C{}Array(ptr: buffer, len: Int32({}.count), cap: Int32({}.capacity), free_ptr: free_ptr)",
             self.struct_name(),
+            origin,
             origin
         );
         push_f!(body, "}()");
@@ -83,7 +84,8 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         );
         nested_f!(
             body,
-            "({}.free_ptr)(UnsafeMutablePointer(mutating:{}.ptr!), {}.len)",
+            "({}.free_ptr)(UnsafeMutablePointer(mutating:{}.ptr!), {}.len, {}.cap)",
+            origin,
             origin,
             origin,
             origin
@@ -100,13 +102,14 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         let free_proxy_struct_array_fn = ident!(&format!("free_{}", &struct_array_str));
         quote! {{
             let mut tmp_vec = #origin.into_iter().map(|each| #proxy_struct::from(each)).collect::<Vec<#proxy_struct>>();
-            tmp_vec.shrink_to_fit();
             let ptr = tmp_vec.as_ptr();
             let len = tmp_vec.len();
+            let cap = tmp_vec.capacity();
             std::mem::forget(tmp_vec);
             #struct_array_name {
                 ptr,
                 len: len as i32,
+                cap: cap as i32,
                 free_ptr: #free_proxy_struct_array_fn
             }
         }}
@@ -118,7 +121,7 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
             let tmp_vec: Vec<#proxy_struct> = unsafe {
                 std::slice::from_raw_parts(#origin.ptr as *mut #proxy_struct, #origin.len as usize).to_vec()
             };
-            (#origin.free_ptr)(#origin.ptr as (*mut #proxy_struct), #origin.len);
+            (#origin.free_ptr)(#origin.ptr as (*mut #proxy_struct), #origin.len, #origin.cap);
             tmp_vec.into_iter().map(|each| each.into()).collect()
         }}
     }

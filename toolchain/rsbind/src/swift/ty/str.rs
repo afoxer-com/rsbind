@@ -36,7 +36,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
             push_f!(t, quote_free_swift_ptr("Int8"));
             push_f!(
                 t,
-                "return CInt8Array(ptr: buffer!, len: count, free_ptr: free_ptr)"
+                "return CInt8Array(ptr: buffer!, len: count, cap: count, free_ptr: free_ptr)"
             );
         });
         push_f!(body, "}()");
@@ -57,7 +57,8 @@ impl<'a> Convertible<Swift<'a>> for Str {
         );
         nested_f!(
             body,
-            "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr!), Int32({}.len))",
+            "({}.free_ptr)(UnsafeMutablePointer(mutating: {}.ptr!), Int32({}.len), Int32({}.cap))",
+            origin,
             origin,
             origin,
             origin
@@ -74,6 +75,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
                 let array = CInt8Array {
                     ptr: bytes.as_ptr() as (*const i8),
                     len: bytes.len() as i32,
+                    cap: bytes.len() as i32,
                     free_ptr: free_str
                 };
                 std::mem::forget(cstr);
@@ -87,7 +89,7 @@ impl<'a> Convertible<Swift<'a>> for Str {
                 let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(&slice)};
                 println!("begin free str from rust");
                 let str = cstr.to_string_lossy().to_string();
-                (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len);
+                (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len, #origin.len);
                 str
         }}
     }

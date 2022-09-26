@@ -340,10 +340,10 @@ impl<'a> InternalCallbackGen<'a> {
     fn fill_cb_closure_free_ptr_fn(&self, method_body: &mut Tokens<Swift>) -> Result<()> {
         push!(
             method_body,
-            "let arg_ptr_free : @convention(c) (UnsafeMutablePointer<Int8>?, Int32) -> () = {"
+            "let arg_ptr_free : @convention(c) (UnsafeMutablePointer<Int8>?, Int32, Int32) -> () = {"
         );
-        nested!(method_body, "(ptr, count) in");
-        nested!(method_body, "ptr?.deinitialize(count: Int(count))");
+        nested!(method_body, "(ptr, count, capability) in");
+        nested!(method_body, "ptr?.deinitialize(count: Int(capability))");
         nested!(method_body, "ptr?.deallocate()");
         push!(method_body, "}");
         Ok(())

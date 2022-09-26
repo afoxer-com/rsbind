@@ -143,12 +143,12 @@ pub(crate) fn quote_free_swift_ptr(ty: &str) -> Tokens<'static, Swift<'static>> 
     let mut t = Tokens::new();
     push_f!(
         t,
-        "let free_ptr : @convention(c) (UnsafeMutablePointer<{}>?, Int32) -> () = {{",
+        "let free_ptr : @convention(c) (UnsafeMutablePointer<{}>?, Int32, Int32) -> () = {{",
         ty
     );
     nested_f!(t, |tt| {
-        nested_f!(tt, "(ptr, count) in");
-        nested_f!(tt, "ptr?.deinitialize(count: Int(count))");
+        nested_f!(tt, "(ptr, count, capacity) in");
+        nested_f!(tt, "ptr?.deinitialize(count: Int(capacity))");
         nested_f!(tt, "ptr?.deallocate()");
     });
     push_f!(t, "}");

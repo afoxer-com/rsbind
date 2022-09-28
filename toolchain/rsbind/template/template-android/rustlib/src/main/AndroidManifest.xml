@@ -1,2 +1,2 @@
-<manifest
-        package="$(*521%-namespace)"/>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="$(*521%-namespace)" />

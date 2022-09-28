@@ -1,0 +1,93 @@
+[tasks.setup-android-env]
+description = "Setup android env."
+script_runner = "@shell"
+script = '''
+rustup target add aarch64-linux-android arm-linux-androideabi armv7-linux-androideabi i686-linux-android x86_64-linux-android
+'''
+
+[tasks.setup-ios-env]
+description = "Setup android env."
+script_runner = "@shell"
+script = '''
+rustup target add aarch64-apple-ios x86_64-apple-ios
+'''
+
+[tasks.setup-env]
+description = "Setup env."
+dependencies = ["setup-android-env", "setup-ios-env"]
+
+[tasks.build-tools]
+description = "Build rsbind tools."
+category = "Build"
+command = "cargo"
+args = ["build", "--manifest-path", "toolchain/rsbind/Cargo.toml", "--verbose"]
+
+[tasks.copy-template]
+description = "Copy template to src."
+cwd = "toolchain/rsbind"
+command = "cargo"
+args = ["run", "--manifest-path", "../build-script/Cargo.toml"]
+
+[tasks.build-jar-demo]
+description = "Build java demo rustlib."
+cwd = "demo-jar/rustlib"
+command = "cargo"
+args = ["run", "--manifest-path", "../../toolchain/rsbind/Cargo.toml", ".", "jar", "all"]
+
+[tasks.test-jar-demo]
+description = "Test through jar demo lib."
+cwd = "demo-jar"
+script_runner = "@shell"
+script = '''
+./gradlew assemble
+./gradlew app:test
+'''
+dependencies = ["build-jar-demo"]
+
+[tasks.build-mac-demo]
+description = "Build mac demo rustlib."
+cwd = "demo-mac/rustlib"
+command = "cargo"
+args = ["run", "--manifest-path", "../../toolchain/rsbind/Cargo.toml", ".", "mac", "all"]
+
+[tasks.test-mac-demo]
+description = "Test through mac demo."
+cwd = "demo-mac/Example"
+script_runner = "@shell"
+script = '''
+    pod install
+    xcodebuild test -workspace "MacDemo.xcworkspace" -scheme MacDemoTests
+'''
+dependencies = ["build-mac-demo"]
+
+[tasks.build-android-demo]
+description = "Build android demo rustlib."
+cwd = "demo-android/rustlib"
+command = "cargo"
+args = ["run", "--manifest-path", "../../toolchain/rsbind/Cargo.toml", ".", "android", "all"]
+
+[tasks.test-android-demo]
+description = "Test through android demo lib."
+cwd = "demo-android"
+script_runner = "@shell"
+# TODO unit test
+script = '''
+./gradlew assembleDebug
+'''
+dependencies = ["build-android-demo"]
+
+[tasks.build-ios-demo]
+description = "Build iOS demo rustlib."
+cwd = "demo-ios/rustlib"
+command = "cargo"
+args = ["run", "--manifest-path", "../../toolchain/rsbind/Cargo.toml", ".", "ios", "all"]
+
+[tasks.test-ios-demo]
+description = "Test through ios demo."
+cwd = "demo-ios/Example"
+script_runner = "@shell"
+script = '''
+    pod install
+    xcodebuild -workspace "demo-ios.xcworkspace" -scheme "demo-ios-Example" -sdk iphonesimulator -configuration "Debug" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" ARCHS="x86_64" clean build
+'''
+dependencies = ["build-ios-demo"]

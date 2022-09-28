@@ -13,42 +13,30 @@ jobs:
   java-test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup-Env
-      run: rustup target add aarch64-linux-android arm-linux-androideabi armv7-linux-androideabi i686-linux-android x86_64-linux-android
-    - name: Unit-Test
-      run: cd toolchain/rsbind && cargo test 
-    - name: Build-Android-Rust
-      run: cd demo-android/rustlib && pwd && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . android all
-    - name: Build-Android-Demo
-      run: cd demo-android && pwd && ./gradlew assembleDebug
-    - name: Build-Jar-Rust
-      run: cd demo-jar/rustlib && pwd && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . jar all
-    - name: Test-Jar-Demo
-      run: cd demo-jar && pwd && ./gradlew assemble && ./gradlew app:test
+      - uses: actions/checkout@v2
+      - name: Setup-Env
+        run: cargo install --no-default-features --force cargo-make && cargo make setup-android-env
+      - name: Unit-Test
+        run: cd toolchain/rsbind && cargo test
+      - name: Build-Android-Demo
+        run: cargo make test-android-demo
+      - name: Test-Jar-Demo
+        run: cargo make test-jar-demo
     # - uses: actions/upload-artifact@v3
     #   if: always()
     #   with:
     #     name: my-artifact
     #     path: demo-jar/app/
-    
+
   swift-test:
     runs-on: macos-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup-Env
-      run: rustup target add aarch64-apple-ios x86_64-apple-ios
-    - name: Unit-Test
-      run: cd toolchain/rsbind && cargo test 
-    - name: Build-iOS-Rust
-      run: cd demo-ios/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . ios all
-    - name: iOS-Pod-Install
-      run: cd demo-ios/Example && pod install
-    - name: Build-iOS-Demo
-      run: xcodebuild -workspace "demo-ios/Example/demo-ios.xcworkspace" -scheme "demo-ios-Example" -sdk iphonesimulator -configuration "Debug" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" ARCHS="x86_64" clean build
-    - name: Build-Mac-Rust
-      run: cd demo-mac/rustlib && cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . mac all
-    - name: Mac-Pod-Install
-      run: cd demo-mac/Example && pod install
-    - name: Test-Mac-Demo
-      run: xcodebuild test -workspace "demo-mac/Example/MacDemo.xcworkspace" -scheme MacDemoTests
+      - uses: actions/checkout@v2
+      - name: Setup-Env
+        run: cargo install --no-default-features --force cargo-make && cargo make setup-ios-env
+      - name: Unit-Test
+        run: cd toolchain/rsbind && cargo test
+      - name: Build-ios-Demo
+        run: cargo make test-ios-demo
+      - name: Test-Mac-Demo
+        run: cargo make test-mac-demo

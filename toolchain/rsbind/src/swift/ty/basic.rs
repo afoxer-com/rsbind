@@ -71,8 +71,8 @@ impl Basic {
             AstType::Short(_) => "Int16",
             AstType::Int(_) => "Int32",
             AstType::Long(_) => "Int64",
-            AstType::Float(_) => "Float",
-            AstType::Double(_) => "Double",
+            AstType::Float(_) => "Float32",
+            AstType::Double(_) => "Float64",
             _ => "",
         }
         .to_string()

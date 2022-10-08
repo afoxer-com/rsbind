@@ -8,5 +8,5 @@ drive_ios = []
 drive = []
 
 [dependencies]
-android_logger = "0.10.1"
+android_logger = "0.11.1"
 log = "0.4.14"

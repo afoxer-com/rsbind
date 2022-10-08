@@ -5,7 +5,6 @@ use rstgen::{swift, Tokens};
 use crate::ast::types::{AstBaseType, AstType};
 use crate::base::lang::{Convertible, Direction};
 use crate::ident;
-use crate::swift::mapping::{RustMapping, SwiftMapping};
 use crate::swift::ty::basic::quote_free_swift_ptr;
 
 pub(crate) struct VecBase {
@@ -13,17 +12,29 @@ pub(crate) struct VecBase {
 }
 
 impl VecBase {
-    fn native_type_str(&self) -> String {
+    fn native_base_type_str(&self) -> String {
         match self.ty.clone() {
-            AstType::Vec(AstBaseType::Byte(_)) => "[Int8]",
-            AstType::Vec(AstBaseType::Short(_)) => "[Int16]",
-            AstType::Vec(AstBaseType::Int(_)) => "[Int32]",
-            AstType::Vec(AstBaseType::Long(_)) => "[Int64]",
-            AstType::Vec(AstBaseType::Float(_)) => "[Float32]",
-            AstType::Vec(AstBaseType::Double(_)) => "[Float64]",
-            _ => "",
+            AstType::Vec(AstBaseType::Byte(_)) => "Int8",
+            AstType::Vec(AstBaseType::Short(_)) => "Int16",
+            AstType::Vec(AstBaseType::Int(_)) => "Int32",
+            AstType::Vec(AstBaseType::Long(_)) => "Int64",
+            AstType::Vec(AstBaseType::Float(_)) => "Float32",
+            AstType::Vec(AstBaseType::Double(_)) => "Float64",
+            _ => panic!("Error type found."),
         }
-            .to_string()
+        .to_string()
+    }
+
+    fn rust_base_transfer_type(&self) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Byte(_)) => quote!(i8),
+            AstType::Vec(AstBaseType::Short(_)) => quote!(i16),
+            AstType::Vec(AstBaseType::Int(_)) => quote!(i32),
+            AstType::Vec(AstBaseType::Long(_)) => quote!(i64),
+            AstType::Vec(AstBaseType::Float(_)) => quote!(f32),
+            AstType::Vec(AstBaseType::Double(_)) => quote!(f64),
+            _ => panic!("Error type found."),
+        }
     }
 }
 
@@ -35,10 +46,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
         let transfer_ty = self.native_transferable_type(direction);
-        let base_ty = match self.ty.clone() {
-            AstType::Vec(base) => SwiftMapping::map_transfer_type(&AstType::from(base)),
-            _ => "".to_string(),
-        };
+        let base_ty = self.native_base_type_str();
         body.append(toks!("{ () -> ", transfer_ty.clone(), " in"));
         nested_f!(
             body,
@@ -75,7 +83,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
         _direction: Direction,
     ) -> Tokens<'static, Swift<'a>> {
         let mut body = Tokens::new();
-        let ty = self.native_type_str();
+        let ty = format!("[{}]", self.native_base_type_str());
         body.append(toks_f!("{{ () -> {} in", ty));
         nested_f!(body, |t| {
             nested_f!(
@@ -100,11 +108,8 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
-        let base_ty = match self.ty.clone() {
-            AstType::Vec(base) => RustMapping::map_transfer_type(&AstType::from(base)),
-            _ => quote!(),
-        };
-        let c_array_ty = RustMapping::map_transfer_type(&self.ty);
+        let base_ty = self.rust_base_transfer_type();
+        let c_array_ty = self.rust_transferable_type(Direction::Down);
         let free_ptr = match self.ty.clone() {
             AstType::Vec(AstBaseType::Byte(ref _base)) => {
                 ident!("free_i8_array")
@@ -146,10 +151,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
     }
 
     fn transferable_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
-        let transfer_ty = match self.ty.clone() {
-            AstType::Vec(base) => RustMapping::map_transfer_type(&AstType::from(base)),
-            _ => quote! {},
-        };
+        let transfer_ty = self.rust_base_transfer_type();
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Byte(ref base))
             | AstType::Vec(AstBaseType::Short(ref base))
@@ -169,15 +171,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
     }
 
     fn native_type(&self) -> Swift<'a> {
-        match self.ty.clone() {
-            AstType::Vec(AstBaseType::Byte(_)) => swift::local("[Int8]"),
-            AstType::Vec(AstBaseType::Short(_)) => swift::local("[Int16]"),
-            AstType::Vec(AstBaseType::Int(_)) => swift::local("[Int32]"),
-            AstType::Vec(AstBaseType::Long(_)) => swift::local("[Int64]"),
-            AstType::Vec(AstBaseType::Float(_)) => swift::local("[Float32]"),
-            AstType::Vec(AstBaseType::Double(_)) => swift::local("[Float64]"),
-            _ => swift::local(""),
-        }
+        swift::local(format!("[{}]", self.native_base_type_str()))
     }
 
     fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {

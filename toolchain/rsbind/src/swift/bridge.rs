@@ -4,7 +4,6 @@ use crate::ast::types::*;
 use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
-use crate::swift::mapping::RustMapping;
 use crate::ErrorKind::GenerateError;
 use crate::{ident, AstResult};
 use proc_macro2::{Ident, TokenStream};
@@ -902,8 +901,10 @@ pub(crate) fn box_to_model_convert(
             }
         }
 
-        let convert = SwiftConvert { ty: method.return_type.clone() }
-            .rust_to_transferable(quote! {result}, Direction::Down);
+        let convert = SwiftConvert {
+            ty: method.return_type.clone(),
+        }
+        .rust_to_transferable(quote! {result}, Direction::Down);
         let return_convert = quote! {
             let r_result = #convert;
         };

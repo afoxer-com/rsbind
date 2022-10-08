@@ -6,7 +6,6 @@ use crate::ast::contract::desc::{ArgDesc, MethodDesc, TraitDesc};
 use crate::base::lang::{Convertible, Direction};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
-use crate::swift::mapping::SwiftMapping;
 use crate::swift::types::{to_swift_file, SwiftType};
 
 pub(crate) struct CallbackGen<'a> {

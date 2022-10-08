@@ -1,7 +1,4 @@
-const ARCHS: [&str; 2] = [
-    "aarch64-apple-ios",
-    "x86_64-apple-ios",
-];
+const ARCHS: [&str; 2] = ["aarch64-apple-ios", "x86_64-apple-ios"];
 
 ///
 /// iOS Configuration struct

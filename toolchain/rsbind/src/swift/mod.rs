@@ -14,7 +14,6 @@ mod callback;
 mod converter;
 mod internal;
 mod manager;
-mod mapping;
 mod protocol;
 mod struct_;
 mod ty;

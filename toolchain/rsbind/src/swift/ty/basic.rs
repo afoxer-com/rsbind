@@ -5,9 +5,10 @@ use rstgen::{swift, Tokens};
 use crate::ast::types::AstType;
 use crate::base::lang::{Convertible, Direction};
 use crate::ident;
-use crate::swift::mapping::RustMapping;
 
 pub(crate) struct Bool {}
+
+impl Bool {}
 
 impl<'a> Convertible<Swift<'a>> for Bool {
     fn native_to_transferable(
@@ -73,7 +74,7 @@ impl Basic {
             AstType::Long(_) => "Int64",
             AstType::Float(_) => "Float32",
             AstType::Double(_) => "Float64",
-            _ => "",
+            _ => panic!("Error type found."),
         }
         .to_string()
     }
@@ -96,8 +97,8 @@ impl<'a> Convertible<Swift<'a>> for Basic {
         toks_f!("{}({})", self.native_type_str(), origin)
     }
 
-    fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
-        let ty_ident = RustMapping::map_transfer_type(&self.ty);
+    fn rust_to_transferable(&self, origin: TokenStream, direction: Direction) -> TokenStream {
+        let ty_ident = self.rust_transferable_type(direction);
         quote! {
             #origin as #ty_ident
         }

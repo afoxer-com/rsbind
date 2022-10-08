@@ -63,7 +63,9 @@ impl<'a> SwiftConvert {
             AstType::Vec(AstBaseType::Byte(_))
             | AstType::Vec(AstBaseType::Short(_))
             | AstType::Vec(AstBaseType::Int(_))
-            | AstType::Vec(AstBaseType::Long(_)) => {
+            | AstType::Vec(AstBaseType::Long(_))
+            | AstType::Vec(AstBaseType::Float(_))
+            | AstType::Vec(AstBaseType::Double(_)) => {
                 ConvertEnum::VecBase(VecBase { ty: ty.clone() })
             }
             AstType::Vec(AstBaseType::Struct(ref base)) => {

@@ -1067,6 +1067,8 @@ impl<'a> BridgeCodeGen<'a> {
         let int16_free_fn = self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
         let int32_free_fn = self.quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
         let int64_free_fn = self.quote_free_rust_array("free_i64_array".to_string(), quote! {i64});
+        let float_free_fn = self.quote_free_rust_array("free_f32_array".to_string(), quote! {f32});
+        let double_free_fn = self.quote_free_rust_array("free_f64_array".to_string(), quote! {f64});
 
         let tokens = quote! {
             use std::panic::*;
@@ -1110,10 +1112,30 @@ impl<'a> BridgeCodeGen<'a> {
                 pub free_ptr: extern "C" fn(*mut i64, i32, i32),
             }
 
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CFloat32Array {
+                pub ptr: * const f32,
+                pub len: i32,
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut f32, i32, i32),
+            }
+
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct CFloat64Array {
+                pub ptr: * const f64,
+                pub len: i32,
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut f64, i32, i32),
+            }
+
             #int8_free_fn
             #int16_free_fn
             #int32_free_fn
             #int64_free_fn
+            #float_free_fn
+            #double_free_fn
 
             #[no_mangle]
             pub extern "C" fn free_str(ptr: *mut i8, length: i32, cap: i32) {

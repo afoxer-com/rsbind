@@ -24,6 +24,8 @@ impl<'a> SwiftMapping {
             AstType::Vec(AstBaseType::Short(_)) => "CInt16Array",
             AstType::Vec(AstBaseType::Int(_)) => "CInt32Array",
             AstType::Vec(AstBaseType::Long(_)) => "CInt64Array",
+            AstType::Vec(AstBaseType::Float(_)) => "CFloat32Array",
+            AstType::Vec(AstBaseType::Double(_)) => "CFloat64Array",
             AstType::Vec(AstBaseType::Struct(ref origin)) => {
                 buffer_str = format!("C{}Array", &origin.origin);
                 buffer_str.as_ref()
@@ -60,6 +62,8 @@ impl<'a> RustMapping {
             AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),
             AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
             AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
+            AstType::Vec(AstBaseType::Float(_)) => quote!(CFloat32Array),
+            AstType::Vec(AstBaseType::Double(_)) => quote!(CFloat64Array),
             AstType::Vec(AstBaseType::Struct(origin)) => {
                 let struct_array_name = ident!(&format!("C{}Array", &origin.origin));
                 quote!(#struct_array_name)

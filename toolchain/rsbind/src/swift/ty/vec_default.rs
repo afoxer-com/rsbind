@@ -15,8 +15,6 @@ impl VecDefault {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Boolean) => "[Bool]",
             AstType::Vec(AstBaseType::String) => "[String]",
-            AstType::Vec(AstBaseType::Float(_)) => "[Float]",
-            AstType::Vec(AstBaseType::Double(_)) => "[Double]",
             _ => "",
         }
         .to_string()

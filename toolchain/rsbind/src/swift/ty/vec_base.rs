@@ -19,9 +19,11 @@ impl VecBase {
             AstType::Vec(AstBaseType::Short(_)) => "[Int16]",
             AstType::Vec(AstBaseType::Int(_)) => "[Int32]",
             AstType::Vec(AstBaseType::Long(_)) => "[Int64]",
+            AstType::Vec(AstBaseType::Float(_)) => "[Float32]",
+            AstType::Vec(AstBaseType::Double(_)) => "[Float64]",
             _ => "",
         }
-        .to_string()
+            .to_string()
     }
 }
 
@@ -116,6 +118,12 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Long(ref _base)) => {
                 ident!("free_i64_array")
             }
+            AstType::Vec(AstBaseType::Float(ref base)) => {
+                ident!("free_f32_array")
+            }
+            AstType::Vec(AstBaseType::Double(ref base)) => {
+                ident!("free_f64_array")
+            }
             _ => {
                 ident!("free_i8_array")
             }
@@ -146,7 +154,9 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Byte(ref base))
             | AstType::Vec(AstBaseType::Short(ref base))
             | AstType::Vec(AstBaseType::Int(ref base))
-            | AstType::Vec(AstBaseType::Long(ref base)) => {
+            | AstType::Vec(AstBaseType::Long(ref base))
+            | AstType::Vec(AstBaseType::Float(ref base))
+            | AstType::Vec(AstBaseType::Double(ref base)) => {
                 let origin_ident = ident!(base);
                 quote! {{
                     let vec = unsafe { std::slice::from_raw_parts(#origin.ptr as (* mut #origin_ident), #origin.len as usize).to_vec() };
@@ -164,6 +174,8 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Short(_)) => swift::local("[Int16]"),
             AstType::Vec(AstBaseType::Int(_)) => swift::local("[Int32]"),
             AstType::Vec(AstBaseType::Long(_)) => swift::local("[Int64]"),
+            AstType::Vec(AstBaseType::Float(_)) => swift::local("[Float32]"),
+            AstType::Vec(AstBaseType::Double(_)) => swift::local("[Float64]"),
             _ => swift::local(""),
         }
     }
@@ -174,6 +186,8 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Short(_)) => swift::local("CInt16Array"),
             AstType::Vec(AstBaseType::Int(_)) => swift::local("CInt32Array"),
             AstType::Vec(AstBaseType::Long(_)) => swift::local("CInt64Array"),
+            AstType::Vec(AstBaseType::Float(_)) => swift::local("CFloat32Array"),
+            AstType::Vec(AstBaseType::Double(_)) => swift::local("CFloat64Array"),
             _ => swift::local(""),
         }
     }
@@ -184,6 +198,8 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),
             AstType::Vec(AstBaseType::Int(_)) => quote!(CInt32Array),
             AstType::Vec(AstBaseType::Long(_)) => quote!(CInt64Array),
+            AstType::Vec(AstBaseType::Float(_)) => quote!(CFloat32Array),
+            AstType::Vec(AstBaseType::Double(_)) => quote!(CFloat64Array),
             _ => quote! {},
         }
     }

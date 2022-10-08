@@ -6,10 +6,3 @@ namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
 #ext_lib = []
 #features_def = ["xxxx=[]"]
-
-[ios]
-rustc_param = ""
-arch = ["aarch64-apple-ios", "x86_64-apple-ios"]
-release = true
-features_def = []
-

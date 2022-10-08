@@ -1,4 +1,3 @@
-
 [jar]
 rustc_param = ""
 release = true

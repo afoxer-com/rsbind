@@ -1,13 +1,13 @@
 #![allow(warnings)]
 
-extern crate demo;
+extern crate ios_rustlisb;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
 #[macro_use]
 extern crate lazy_static;
 
-use demo::contract;
-use demo::imp;
+use ios_rustlisb::contract;
+use ios_rustlisb::imp;
 
 pub mod c;

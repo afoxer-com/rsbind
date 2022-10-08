@@ -114,11 +114,15 @@ impl<'a> Convertible<Java<'a>> for JavaConvert {
         self.handle(|c| c.rust_transferable_type(direction.clone()))
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
-        self.handle(|c| c.quote_common_bridge())
+    fn quote_common_in_bridge(&self) -> TokenStream {
+        self.handle(|c| c.quote_common_in_bridge())
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Java<'a>> {
-        self.handle(|c| c.quote_common_artifact())
+    fn quote_common_in_native(&self) -> Tokens<'static, Java<'a>> {
+        self.handle(|c| c.quote_common_in_native())
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        self.handle(|c| c.quote_in_common_rs())
     }
 }

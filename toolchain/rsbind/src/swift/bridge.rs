@@ -1,652 +1,23 @@
 use crate::ast::contract::desc::*;
 use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::base::lang::{Convertible, Direction};
+use crate::base::bridge::BaseBridgeGen;
+use crate::base::lang::{
+    ArgumentContext, BridgeContext, CallbackContext, Convertible, Direction, LangImp,
+    MethodContext, ModContext, ServiceContext, StructContext,
+};
 use crate::errors::*;
 use crate::swift::converter::SwiftConvert;
 use crate::ErrorKind::GenerateError;
 use crate::{ident, AstResult};
 use proc_macro2::{Ident, TokenStream};
+use rstgen::swift::Swift;
 use std::cmp::Ordering;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-///
-/// Executor for generating core files of bridge mod.
-///
-pub(crate) struct BridgeFileGen<'a> {
-    pub traits: &'a [TraitDesc],
-    pub structs: &'a [StructDesc],
-    pub imps: &'a [ImpDesc],
-}
-
-impl<'a> BridgeFileGen<'a> {
-    ///
-    /// generate one bridge file for one contract mod.
-    ///
-    pub(crate) fn gen_one_bridge_file(&self) -> Result<TokenStream> {
-        println!("[bridge] 🔆  begin generate bridge file.");
-        let use_part = self.quote_use_part().unwrap();
-        let common_part = self.quote_common_part(self.traits).unwrap();
-        let bridge_codes = self.gen_for_one_mod().unwrap();
-
-        let mut merge_tokens = quote! {
-            #use_part
-            #common_part
-        };
-
-        for bridge_code in bridge_codes {
-            if let Ok(code) = bridge_code {
-                merge_tokens = quote! {
-                    #merge_tokens
-                    #code
-                };
-            }
-        }
-
-        println!("[bridge] ✅  end generate bridge file.");
-        Ok(merge_tokens)
-    }
-
-    ///
-    /// generate bridge file from a file of trait.
-    ///
-    fn gen_for_one_mod(&self) -> Result<Vec<Result<TokenStream>>> {
-        let mut results: Vec<Result<TokenStream>> = vec![];
-
-        let callbacks = self
-            .traits
-            .iter()
-            .filter(|desc| desc.is_callback)
-            .collect::<Vec<&TraitDesc>>();
-
-        println!("callbacks is {:?}", &callbacks);
-
-        for desc in self.traits.iter() {
-            if desc.is_callback {
-                results.push(self.quote_callback_structures(desc, &callbacks));
-                continue;
-            }
-
-            let imps = self
-                .imps
-                .iter()
-                .filter(|info| info.contract == desc.name)
-                .collect::<Vec<&ImpDesc>>();
-
-            println!("desc => {:?}", desc);
-            println!("imps => {:?}", imps);
-            println!("all imps => {:?}", &self.imps);
-
-            match imps.len().cmp(&1) {
-                Ordering::Less => {}
-                Ordering::Equal => {
-                    results.push(self.generate_for_one_trait(
-                        desc,
-                        imps[0],
-                        &callbacks,
-                        self.structs,
-                    ));
-                }
-                Ordering::Greater => {
-                    println!("You have more than one impl for trait {}", desc.name);
-                    return Err(GenerateError(format!(
-                        "You have more than one impl for trait {}",
-                        desc.name
-                    ))
-                    .into());
-                }
-            }
-        }
-
-        let tokens = self.quote_for_all_cb(&callbacks);
-        results.push(tokens);
-
-        for struct_desc in self.structs.iter() {
-            let tokens = self.quote_for_structures(struct_desc);
-            results.push(tokens);
-        }
-
-        Ok(results)
-    }
-
-    fn generate_for_one_trait(
-        &self,
-        trait_desc: &TraitDesc,
-        imp: &ImpDesc,
-        callbacks: &[&TraitDesc],
-        structs: &[StructDesc],
-    ) -> Result<TokenStream> {
-        println!(
-            "[bridge][{}]  🔆  begin generate bridge on trait.",
-            &trait_desc.name
-        );
-        let mut merge: TokenStream = TokenStream::new();
-
-        for method in trait_desc.methods.iter() {
-            println!(
-                "[bridge][{}.{}]  🔆  begin generate bridge method.",
-                &trait_desc.name, &method.name
-            );
-            let one_method = self
-                .quote_one_method(trait_desc, imp, method, callbacks, structs)
-                .unwrap();
-
-            println!(
-                "[bridge][{}.{}]  ✅  end generate bridge method.",
-                &trait_desc.name, &method.name
-            );
-
-            merge = quote! {
-                #merge
-                #one_method
-            };
-        }
-        println!(
-            "[bridge][{}]  ✅  end generate bridge on trait.",
-            &trait_desc.name
-        );
-        Ok(merge)
-    }
-
-    ///
-    /// quote use part
-    ///
-    fn quote_use_part(&self) -> Result<TokenStream> {
-        println!("[bridge]  🔆  begin quote use part.");
-        let mut merge = self.quote_common_use_part().unwrap();
-
-        for trait_desc in self.traits.iter() {
-            if trait_desc.is_callback {
-                println!("Skip callback trait {}", &trait_desc.name);
-                continue;
-            }
-
-            let imps = self
-                .imps
-                .iter()
-                .filter(|info| info.contract == trait_desc.name)
-                .collect::<Vec<&ImpDesc>>();
-
-            match imps.len().cmp(&1) {
-                Ordering::Less => {}
-                Ordering::Equal => {
-                    let use_part = self
-                        .quote_one_use_part(&trait_desc.mod_path, &imps[0].mod_path)
-                        .unwrap();
-                    merge = quote! {
-                       #use_part
-                       #merge
-                    };
-                }
-                Ordering::Greater => {
-                    println!("You have more than one impl for trait {}", trait_desc.name);
-                    return Err(GenerateError(format!(
-                        "You have more than one impl for trait {}",
-                        trait_desc.name
-                    ))
-                    .into());
-                }
-            }
-        }
-        println!("[bridge]  ✅  end quote use part.");
-        Ok(merge)
-    }
-
-    fn quote_one_use_part(&self, trait_mod_path: &str, imp_mod_path: &str) -> Result<TokenStream> {
-        let trait_mod_splits: Vec<Ident> = trait_mod_path
-            .split("::")
-            .collect::<Vec<&str>>()
-            .iter()
-            .map(|str| ident!(str))
-            .collect();
-        let imp_mod_splits: Vec<Ident> = imp_mod_path
-            .split("::")
-            .collect::<Vec<&str>>()
-            .iter()
-            .map(|str| ident!(str))
-            .collect();
-
-        Ok(quote! {
-            use #(#trait_mod_splits::)**;
-            use #(#imp_mod_splits::)**;
-        })
-    }
-
-    ///
-    /// quote one method
-    ///
-    fn quote_one_method(
-        &self,
-        trait_desc: &TraitDesc,
-        imp: &ImpDesc,
-        method: &MethodDesc,
-        callbacks: &[&TraitDesc],
-        structs: &[StructDesc],
-    ) -> Result<TokenStream> {
-        println!(
-            "[bridge][{}.{}]  🔆 ️begin quote method.",
-            &trait_desc.name, &method.name
-        );
-        let sig_define = self
-            .quote_method_sig(trait_desc, imp, method, callbacks, structs)
-            .unwrap();
-
-        let mut arg_convert = TokenStream::new();
-        for arg in method.args.iter() {
-            let arg_tokens = self.quote_arg_convert(trait_desc, arg, callbacks).unwrap();
-            arg_convert = quote! {
-                #arg_convert
-                #arg_tokens
-            }
-        }
-
-        let call_imp = self.quote_imp_call(&imp.name, method)?;
-
-        let return_handle =
-            self.quote_return_convert(trait_desc, callbacks, &method.return_type, "result")?;
-
-        // combine all the parts
-        let result = quote! {
-            #sig_define {
-                #arg_convert
-                #call_imp
-                #return_handle
-            }
-        };
-
-        println!(
-            "[bridge][{}.{}] ✅ end quote method.",
-            &trait_desc.name, &method.name
-        );
-        Ok(result)
-    }
-
-    fn quote_imp_call(&self, impl_name: &str, method: &MethodDesc) -> Result<TokenStream> {
-        println!(
-            "[bridge][{}.{}]  🔆 ️begin quote imp call.",
-            impl_name, &method.name
-        );
-
-        let ret_name_str = "result";
-        let imp_fun_name = ident!(&method.name);
-        let ret_name_ident = ident!(ret_name_str);
-
-        let tmp_arg_names = method
-            .args
-            .iter()
-            .map(|e| &e.name)
-            .map(|arg_name| ident!(&format!("r_{}", arg_name)))
-            .collect::<Vec<Ident>>();
-
-        let rust_args_repeat = quote! {
-            #(#tmp_arg_names),*
-        };
-
-        let imp_ident = ident!(impl_name);
-        let imp_call = match method.return_type.clone() {
-            AstType::Void => quote! {
-                let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-            },
-            AstType::Vec(AstBaseType::Byte(_))
-            | AstType::Vec(AstBaseType::Short(_))
-            | AstType::Vec(AstBaseType::Int(_))
-            | AstType::Vec(AstBaseType::Long(_)) => {
-                quote! {
-                    let mut #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-                }
-            }
-            AstType::Vec(_)
-            | AstType::Struct(_)
-            | AstType::Callback(_)
-            | AstType::String
-            | AstType::Byte(_)
-            | AstType::Short(_)
-            | AstType::Int(_)
-            | AstType::Long(_)
-            | AstType::Float(_)
-            | AstType::Double(_)
-            | AstType::Boolean => {
-                quote! {
-                    let #ret_name_ident = #imp_ident::#imp_fun_name(#rust_args_repeat);
-                }
-            }
-        };
-
-        println!(
-            "[bridge][{}.{}]  ✅ end quote imp call.",
-            impl_name, &method.name
-        );
-
-        Ok(imp_call)
-    }
-}
-
-impl<'a> BridgeFileGen<'a> {
-    fn quote_common_use_part(&self) -> Result<TokenStream> {
-        Ok(quote! {
-            use std::ffi::CStr;
-            use std::os::raw::c_char;
-            use std::ffi::CString;
-            use c::common::*;
-            use std::collections::HashMap;
-            use std::sync::RwLock;
-            use std::sync::Arc;
-            use std::panic::*;
-        })
-    }
-
-    fn quote_common_part(&self, _traits: &[TraitDesc]) -> Result<TokenStream> {
-        Ok(quote! {
-            lazy_static! {
-                static ref CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));
-                static ref CALLBACK_INDEX : Arc<RwLock<i64>> = Arc::new(RwLock::new(0));
-            }
-        })
-    }
-
-    fn quote_for_all_cb(&self, callbacks: &[&TraitDesc]) -> Result<TokenStream> {
-        let enum_items = callbacks
-            .iter()
-            .map(|item| ident!(&item.name))
-            .collect::<Vec<Ident>>();
-        let enums = quote! {
-            enum CallbackEnum {
-                #(#enum_items(Box<dyn #enum_items>)),*
-            }
-        };
-
-        let mut return_cb_fns = TokenStream::new();
-        let mut arg_cb_fns = TokenStream::new();
-        for callback in callbacks.iter() {
-            let box_to_model_convert_tokens =
-                box_to_model_convert(callback, callbacks, "r_result")?;
-            let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, callback.name);
-            let callback_model_ident = ident!(callback_model_str);
-            let callback_ident = ident!(&callback.name);
-            let box_to_model_fn_name = ident!(&format!("box_to_model_{}", callback.name));
-            return_cb_fns = quote! {
-                #return_cb_fns
-
-                fn #box_to_model_fn_name(callback_index: i64) ->  #callback_model_ident {
-                    #box_to_model_convert_tokens
-                }
-            };
-
-            let model_to_box_convert_tokens = model_to_box_convert(callback, callbacks)?;
-            let model_to_box_fn_name = ident!(&format!("model_to_box_{}", callback.name));
-            arg_cb_fns = quote! {
-                #arg_cb_fns
-
-                fn #model_to_box_fn_name(callback_model: #callback_model_ident) -> Box<dyn #callback_ident> {
-                    #model_to_box_convert_tokens
-                }
-            };
-        }
-
-        Ok(quote! {
-            #enums
-
-            #return_cb_fns
-
-            #arg_cb_fns
-        })
-    }
-
-    fn quote_callback_structures(
-        &self,
-        callback: &TraitDesc,
-        callbacks: &[&TraitDesc],
-    ) -> Result<TokenStream> {
-        let callback_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
-        let callback_struct = quote_callback_struct(callback, callbacks, callback_str)?;
-        Ok(quote! {
-            #[repr(C)]
-            #callback_struct
-        })
-    }
-
-    fn quote_for_structures(&self, struct_desc: &StructDesc) -> Result<TokenStream> {
-        let proxy_struct_str = format!("Proxy{}", &struct_desc.name);
-        let proxy_struct_name = ident!(&proxy_struct_str);
-        let origin_struct_name = ident!(&struct_desc.name);
-        let names = struct_desc
-            .fields
-            .iter()
-            .map(|field| ident!(&field.name))
-            .collect::<Vec<Ident>>();
-        let tys = struct_desc
-            .fields
-            .iter()
-            .map(|field| {
-                SwiftConvert {
-                    ty: field.ty.clone(),
-                }
-                .rust_transferable_type(Direction::Down)
-            })
-            .collect::<Vec<TokenStream>>();
-
-        let struct_array_str = format!("C{}Array", &struct_desc.name);
-        let struct_array_name = ident!(&struct_array_str);
-
-        fn origin_to_proxy_convert(field: &ArgDesc) -> TokenStream {
-            let field_name = ident!(&field.name);
-            let convert = SwiftConvert {
-                ty: field.ty.clone(),
-            }
-            .rust_to_transferable(quote! {origin.#field_name}, Direction::Down);
-            quote! {
-                #field_name : #convert
-            }
-        }
-
-        fn proxy_to_origin_convert(field: &ArgDesc) -> TokenStream {
-            let field_name = ident!(&field.name);
-            let convert = SwiftConvert {
-                ty: field.ty.clone(),
-            }
-            .transferable_to_rust(quote! {proxy.#field_name}, Direction::Down);
-            quote! {
-                #field_name : #convert
-            }
-        }
-
-        let origin_to_proxy_convert_tokens = struct_desc
-            .fields
-            .iter()
-            .map(origin_to_proxy_convert)
-            .collect::<Vec<TokenStream>>();
-
-        let proxy_to_origin_convert_tokens = struct_desc
-            .fields
-            .iter()
-            .map(proxy_to_origin_convert)
-            .collect::<Vec<TokenStream>>();
-
-        let free_proxy_struct_array_fn = ident!(&format!("free_{}", &struct_array_str));
-        let free_proxy_struct_fn = ident!(&format!("free_{}", &proxy_struct_str));
-
-        Ok(quote! {
-            #[repr(C)]
-            #[derive(Clone)]
-            pub struct #proxy_struct_name {
-                #(pub #names: #tys),*
-            }
-
-            impl From<#origin_struct_name> for #proxy_struct_name {
-                fn from(origin: #origin_struct_name) -> Self {
-                    #proxy_struct_name{
-                        #(#origin_to_proxy_convert_tokens),*
-                    }
-                }
-            }
-
-            impl From<#proxy_struct_name> for #origin_struct_name {
-                fn from(proxy: #proxy_struct_name) -> Self {
-                    #origin_struct_name{
-                        #(#proxy_to_origin_convert_tokens),*
-                    }
-                }
-            }
-            #[no_mangle]
-            pub extern "C" fn #free_proxy_struct_fn(proxy: #proxy_struct_name) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| {
-                    #origin_struct_name::from(proxy);
-                }));
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("catch_unwind of `rsbind free proxy struct` error: {:?}", e);
-                    }
-                };
-            }
-
-            #[repr(C)]
-            pub struct #struct_array_name {
-                pub ptr: *const #proxy_struct_name,
-                pub len: i32,
-                pub cap: i32,
-                pub free_ptr: extern "C" fn(*mut #proxy_struct_name, i32, i32),
-            }
-
-            #[no_mangle]
-            pub extern "C" fn #free_proxy_struct_array_fn(ptr: *mut #proxy_struct_name, len: i32, cap: i32) {
-                let catch_result = catch_unwind(AssertUnwindSafe(|| {
-                    unsafe {
-                        // let proxy_vec =
-                        Vec::from_raw_parts(
-                            ptr as *mut #proxy_struct_name,
-                            len as usize,
-                            cap as usize);
-                        // proxy_vec.into_iter().for_each(|each| {#origin_struct_name::from(each);});
-                    }
-                }));
-                match catch_result {
-                    Ok(_) => {}
-                    Err(e) => {
-                        println!("catch_unwind of `rsbind free proxy struct` error: {:?}", e);
-                    }
-                };
-            }
-
-        })
-    }
-
-    fn quote_method_sig(
-        &self,
-        trait_desc: &TraitDesc,
-        _impl_desc: &ImpDesc,
-        method: &MethodDesc,
-        callbacks: &[&TraitDesc],
-        _structs: &[StructDesc],
-    ) -> Result<TokenStream> {
-        let fun_name = ident!(&format!(
-            "{}_{}_{}",
-            &trait_desc.mod_name, trait_desc.name, &method.name
-        ));
-
-        let arg_names = method
-            .args
-            .iter()
-            .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| ident!(&arg.name))
-            .collect::<Vec<Ident>>();
-
-        let arg_types = method
-            .args
-            .iter()
-            .filter(|arg| !matches!(arg.ty, AstType::Void))
-            .map(|arg| SwiftConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down))
-            .collect::<Vec<TokenStream>>();
-
-        let ret_ty_tokens = SwiftConvert {
-            ty: method.return_type.clone(),
-        }
-        .rust_transferable_type(Direction::Up);
-        let sig_define = quote! {
-            #[no_mangle]
-            pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
-        };
-
-        Ok(sig_define)
-    }
-
-    fn quote_arg_convert(
-        &self,
-        _trait_desc: &TraitDesc,
-        arg: &ArgDesc,
-        callbacks: &[&TraitDesc],
-    ) -> Result<TokenStream> {
-        let rust_arg_name = ident!(&format!("r_{}", &arg.name));
-        let arg_name_ident = ident!(&arg.name);
-
-        let convert = SwiftConvert { ty: arg.ty.clone() }
-            .transferable_to_rust(quote! {#arg_name_ident}, Direction::Down);
-        let convert = quote! {
-            let #rust_arg_name = #convert;
-        };
-
-        Ok(convert)
-    }
-
-    fn quote_return_convert(
-        &self,
-        _trait_desc: &TraitDesc,
-        callbacks: &[&TraitDesc],
-        return_ty: &AstType,
-        ret_name: &str,
-    ) -> Result<TokenStream> {
-        let obtain_index = if let AstType::Callback(_) = return_ty.clone() {
-            quote! {
-                let callback_index = {
-                    let mut global_index = CALLBACK_INDEX.write().unwrap();
-                    let mut index = *global_index;
-                    if index == i64::MAX {
-                        *global_index = 0;
-                        index = 0;
-                    } else {
-                        *global_index = index + 1;
-                        index = index + 1;
-                    }
-                    index
-                };
-            }
-        } else {
-            quote! {}
-        };
-
-        let ret_name_ident = ident!(ret_name);
-        let convert = SwiftConvert {
-            ty: return_ty.clone(),
-        }
-        .rust_to_transferable(quote! {#ret_name_ident}, Direction::Down);
-        let return_convert = quote! {
-            let r_result = #convert;
-        };
-
-        let insert_callback = if let AstType::Callback(ref origin) = return_ty.clone() {
-            let callback_ident = ident!(&origin.origin);
-            quote! {
-                (*CALLBACK_HASHMAP.write().unwrap()).insert(callback_index, CallbackEnum::#callback_ident(result));
-            }
-        } else {
-            quote! {}
-        };
-
-        Ok(quote! {
-            #obtain_index
-            #return_convert
-            #insert_callback
-            r_result
-        })
-    }
-}
-
-fn model_to_box_convert(
-    callback_desc: &TraitDesc,
-    callbacks: &[&TraitDesc],
-) -> Result<TokenStream> {
+fn c_pointers_to_callback_convert(callback_desc: &TraitDesc) -> Result<TokenStream> {
     let struct_name = &format!("{}_struct", &callback_desc.name);
     let struct_ident = ident!(struct_name);
 
@@ -803,7 +174,7 @@ fn model_to_box_convert(
         method_names.push(method_name);
     }
 
-    let callback_struct = quote_callback_struct(callback_desc, callbacks, struct_name).unwrap();
+    let callback_struct = quote_callback_struct(callback_desc, struct_name).unwrap();
 
     let callback_ty = ident!(&callback_desc.name);
     let mut method_assign_tokens = TokenStream::new();
@@ -815,35 +186,37 @@ fn model_to_box_convert(
     }
 
     // total converting codes.
+    let c_pointers_to_callback_fn_name =
+        ident!(&format!("c_pointers_to_callback_{}", callback_desc.name));
+    let callback_model_str = &format!("{}_{}_Model", &callback_desc.mod_name, &callback_desc.name);
+    let callback_model_ident = ident!(callback_model_str);
+
     Ok(quote! {
-        #callback_struct
+        fn #c_pointers_to_callback_fn_name(callback_model: #callback_model_ident) -> Box<dyn #callback_ty> {
+            #callback_struct
 
-        impl #callback_ty for #struct_ident {
-            #callback_methods
-        }
-
-        impl Drop for  #struct_ident {
-            fn drop(&mut self) {
-                let free_callback = self.free_callback;
-                free_callback(self.index)
+            impl #callback_ty for #struct_ident {
+                #callback_methods
             }
+
+            impl Drop for  #struct_ident {
+                fn drop(&mut self) {
+                    let free_callback = self.free_callback;
+                    free_callback(self.index)
+                }
+            }
+
+            Box::new(#struct_ident {
+                #method_assign_tokens
+                free_callback: callback_model.free_callback,
+                free_ptr: callback_model.free_ptr,
+                index: callback_model.index,
+            })
         }
-
-        Box::new(#struct_ident {
-            #method_assign_tokens
-            free_callback: callback_model.free_callback,
-            free_ptr: callback_model.free_ptr,
-            index: callback_model.index,
-        })
-
     })
 }
 
-pub(crate) fn box_to_model_convert(
-    callback: &TraitDesc,
-    callbacks: &[&TraitDesc],
-    _ret_name: &str,
-) -> Result<TokenStream> {
+pub(crate) fn callback_to_c_pointers_convert(callback: &TraitDesc) -> Result<TokenStream> {
     let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
     let callback_model_ident = ident!(callback_model_str);
     let callback_ident = ident!(&callback.name);
@@ -995,25 +368,26 @@ pub(crate) fn box_to_model_convert(
         }
     };
 
-    Ok(quote! {
-        impl #callback_model_ident {
-            #method_result
-        }
+    let callback_to_c_pointers_fn_name =
+        ident!(&format!("callback_to_c_pointers_{}", callback.name));
 
-        #callback_model_ident {
-            #(#method_names: #callback_model_ident::#ret_method_names),*,
-            free_callback: #callback_model_ident::ret_free_callback,
-            free_ptr: #callback_model_ident::ret_free_ptr,
-            index: callback_index
+    Ok(quote! {
+        fn #callback_to_c_pointers_fn_name(callback_index: i64) ->  #callback_model_ident {
+            impl #callback_model_ident {
+                #method_result
+            }
+
+            #callback_model_ident {
+                #(#method_names: #callback_model_ident::#ret_method_names),*,
+                free_callback: #callback_model_ident::ret_free_callback,
+                free_ptr: #callback_model_ident::ret_free_ptr,
+                index: callback_index
+            }
         }
     })
 }
 
-pub(crate) fn quote_callback_struct(
-    callback: &TraitDesc,
-    callbacks: &[&TraitDesc],
-    name: &str,
-) -> Result<TokenStream> {
+pub(crate) fn quote_callback_struct(callback: &TraitDesc, name: &str) -> Result<TokenStream> {
     let callback_ident = ident!(name);
 
     let callback_struct_sig = quote! {
@@ -1053,17 +427,17 @@ pub(crate) fn quote_callback_struct(
     Ok(callback_struct)
 }
 
-///
-/// The executor for generating a bridge mod
-///
-pub(crate) struct BridgeCodeGen<'a> {
-    pub ast: &'a AstResult,
-    pub bridge_dir: &'a Path,
-    pub crate_name: String,
-}
+pub struct SwiftImp {}
 
-impl<'a> BridgeCodeGen<'a> {
-    fn common_file_gen(&self) -> Result<TokenStream> {
+impl LangImp<Swift<'static>, ()> for SwiftImp {
+    fn quote_sdk_file(&self, context: &BridgeContext<Swift<'static>, ()>) -> Result<TokenStream> {
+        Ok(quote! {})
+    }
+
+    fn quote_common_file(
+        &self,
+        context: &BridgeContext<Swift<'static>, ()>,
+    ) -> Result<TokenStream> {
         let int8_free_fn = self.quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
         let int16_free_fn = self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
         let int32_free_fn = self.quote_free_rust_array("free_i32_array".to_string(), quote! {i32});
@@ -1158,6 +532,224 @@ impl<'a> BridgeCodeGen<'a> {
         Ok(tokens)
     }
 
+    fn quote_use_part(&self, context: &ModContext<Swift<'static>, ()>) -> Result<TokenStream> {
+        Ok(quote! {
+            use std::ffi::CStr;
+            use std::os::raw::c_char;
+            use std::ffi::CString;
+            use c::common::*;
+            use std::collections::HashMap;
+            use std::sync::RwLock;
+            use std::sync::Arc;
+            use std::panic::*;
+        })
+    }
+
+    fn quote_common_part(&self, context: &ModContext<Swift<'static>, ()>) -> Result<TokenStream> {
+        Ok(quote! {
+            lazy_static! {
+                static ref CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));
+                static ref CALLBACK_INDEX : Arc<RwLock<i64>> = Arc::new(RwLock::new(0));
+            }
+        })
+    }
+
+    fn quote_method_sig(&self, context: &MethodContext<Swift<'static>, ()>) -> Result<TokenStream> {
+        let fun_name = ident!(&format!(
+            "{}_{}_{}",
+            &context.service_ctx.trait_.mod_name,
+            &context.service_ctx.trait_.name,
+            &context.method.name
+        ));
+
+        let arg_names = context
+            .method
+            .args
+            .iter()
+            .filter(|arg| !matches!(arg.ty, AstType::Void))
+            .map(|arg| ident!(&arg.name))
+            .collect::<Vec<Ident>>();
+
+        let arg_types = context
+            .method
+            .args
+            .iter()
+            .filter(|arg| !matches!(arg.ty, AstType::Void))
+            .map(|arg| SwiftConvert { ty: arg.ty.clone() }.rust_transferable_type(Direction::Down))
+            .collect::<Vec<TokenStream>>();
+
+        let ret_ty_tokens = SwiftConvert {
+            ty: context.method.return_type.clone(),
+        }
+        .rust_transferable_type(Direction::Up);
+        let sig_define = quote! {
+            #[no_mangle]
+            pub extern "C" fn #fun_name(#(#arg_names: #arg_types),*) -> #ret_ty_tokens
+        };
+
+        Ok(sig_define)
+    }
+
+    fn quote_for_one_struct(
+        &self,
+        context: &StructContext<Swift<'static>, ()>,
+    ) -> Result<TokenStream> {
+        let struct_desc = context.struct_;
+        let proxy_struct_str = format!("Proxy{}", &struct_desc.name);
+        let proxy_struct_name = ident!(&proxy_struct_str);
+        let origin_struct_name = ident!(&struct_desc.name);
+        let names = struct_desc
+            .fields
+            .iter()
+            .map(|field| ident!(&field.name))
+            .collect::<Vec<Ident>>();
+        let tys = struct_desc
+            .fields
+            .iter()
+            .map(|field| {
+                SwiftConvert {
+                    ty: field.ty.clone(),
+                }
+                .rust_transferable_type(Direction::Down)
+            })
+            .collect::<Vec<TokenStream>>();
+
+        let struct_array_str = format!("C{}Array", &struct_desc.name);
+        let struct_array_name = ident!(&struct_array_str);
+
+        fn origin_to_proxy_convert(field: &ArgDesc) -> TokenStream {
+            let field_name = ident!(&field.name);
+            let convert = SwiftConvert {
+                ty: field.ty.clone(),
+            }
+            .rust_to_transferable(quote! {origin.#field_name}, Direction::Down);
+            quote! {
+                #field_name : #convert
+            }
+        }
+
+        fn proxy_to_origin_convert(field: &ArgDesc) -> TokenStream {
+            let field_name = ident!(&field.name);
+            let convert = SwiftConvert {
+                ty: field.ty.clone(),
+            }
+            .transferable_to_rust(quote! {proxy.#field_name}, Direction::Down);
+            quote! {
+                #field_name : #convert
+            }
+        }
+
+        let origin_to_proxy_convert_tokens = struct_desc
+            .fields
+            .iter()
+            .map(origin_to_proxy_convert)
+            .collect::<Vec<TokenStream>>();
+
+        let proxy_to_origin_convert_tokens = struct_desc
+            .fields
+            .iter()
+            .map(proxy_to_origin_convert)
+            .collect::<Vec<TokenStream>>();
+
+        let free_proxy_struct_array_fn = ident!(&format!("free_{}", &struct_array_str));
+        let free_proxy_struct_fn = ident!(&format!("free_{}", &proxy_struct_str));
+
+        Ok(quote! {
+            #[repr(C)]
+            #[derive(Clone)]
+            pub struct #proxy_struct_name {
+                #(pub #names: #tys),*
+            }
+
+            impl From<#origin_struct_name> for #proxy_struct_name {
+                fn from(origin: #origin_struct_name) -> Self {
+                    #proxy_struct_name{
+                        #(#origin_to_proxy_convert_tokens),*
+                    }
+                }
+            }
+
+            impl From<#proxy_struct_name> for #origin_struct_name {
+                fn from(proxy: #proxy_struct_name) -> Self {
+                    #origin_struct_name{
+                        #(#proxy_to_origin_convert_tokens),*
+                    }
+                }
+            }
+            #[no_mangle]
+            pub extern "C" fn #free_proxy_struct_fn(proxy: #proxy_struct_name) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    #origin_struct_name::from(proxy);
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free proxy struct` error: {:?}", e);
+                    }
+                };
+            }
+
+            #[repr(C)]
+            pub struct #struct_array_name {
+                pub ptr: *const #proxy_struct_name,
+                pub len: i32,
+                pub cap: i32,
+                pub free_ptr: extern "C" fn(*mut #proxy_struct_name, i32, i32),
+            }
+
+            #[no_mangle]
+            pub extern "C" fn #free_proxy_struct_array_fn(ptr: *mut #proxy_struct_name, len: i32, cap: i32) {
+                let catch_result = catch_unwind(AssertUnwindSafe(|| {
+                    unsafe {
+                        // let proxy_vec =
+                        Vec::from_raw_parts(
+                            ptr as *mut #proxy_struct_name,
+                            len as usize,
+                            cap as usize);
+                        // proxy_vec.into_iter().for_each(|each| {#origin_struct_name::from(each);});
+                    }
+                }));
+                match catch_result {
+                    Ok(_) => {}
+                    Err(e) => {
+                        println!("catch_unwind of `rsbind free proxy struct` error: {:?}", e);
+                    }
+                };
+            }
+
+        })
+    }
+
+    fn quote_for_one_callback(
+        &self,
+        context: &CallbackContext<Swift<'static>, ()>,
+    ) -> Result<TokenStream> {
+        let callback = context.callback;
+        let callback_model_str = &format!("{}_{}_Model", &callback.mod_name, &callback.name);
+        let callback_struct = quote_callback_struct(callback, callback_model_str)?;
+        let callback_struct_tokens = quote! {
+            #[repr(C)]
+            #callback_struct
+        };
+
+        let callback_to_c_pointers_convert_tokens = callback_to_c_pointers_convert(callback)?;
+        let c_pointers_to_callback_convert_tokens = c_pointers_to_callback_convert(callback)?;
+
+        Ok(quote! {
+            #callback_struct_tokens
+
+            #callback_to_c_pointers_convert_tokens
+
+            #c_pointers_to_callback_convert_tokens
+        })
+    }
+
+    fn provide_converter(&self, ty: &AstType) -> Box<dyn Convertible<Swift<'static>>> {
+        Box::new(SwiftConvert { ty: ty.clone() })
+    }
+}
+
+impl SwiftImp {
     fn quote_free_rust_array(&self, fn_name: String, ty: TokenStream) -> TokenStream {
         let fn_name_ident = ident!(&fn_name);
         quote! {
@@ -1173,66 +765,5 @@ impl<'a> BridgeCodeGen<'a> {
                 };
             }
         }
-    }
-}
-
-impl<'a> BridgeCodeGen<'a> {
-    ///
-    /// generate the bridge files
-    ///
-    pub(crate) fn gen_files(&self) -> Result<()> {
-        let empty_vec = vec![];
-
-        let traits = &self.ast.traits;
-        let structs = &self.ast.structs;
-        let imps = &self.ast.imps;
-
-        let mut bridges: Vec<String> = vec![];
-        for (mod_name, trait_vec) in traits {
-            let struct_vec = structs.get(mod_name).unwrap_or(&empty_vec);
-
-            // generate bridge files.
-            let out_mod_name = format!("c_{}", mod_name);
-            let out_file_name = format!("{}.rs", &out_mod_name);
-
-            let tokens = BridgeFileGen {
-                traits: trait_vec,
-                structs: struct_vec,
-                imps,
-            }
-            .gen_one_bridge_file()?;
-            self.write(&out_file_name, &tokens)?;
-            bridges.push(out_mod_name)
-        }
-
-        // generate sdk.rs
-        let tokens = quote! {};
-        self.write("sdk.rs", &tokens)?;
-        bridges.push("sdk".to_owned());
-
-        // generate common.rs
-        let tokens = self.common_file_gen()?;
-        self.write("common.rs", &tokens)?;
-
-        // generate mod.rs
-        let bridge_ident = bridges
-            .iter()
-            .map(|bridge| ident!(bridge))
-            .collect::<Vec<Ident>>();
-
-        let bridge_mod_tokens = quote! {
-            # (pub mod #bridge_ident;)*
-            pub mod common;
-        };
-        self.write("mod.rs", &bridge_mod_tokens)?;
-
-        Ok(())
-    }
-
-    fn write(&self, file: &str, tokens: &TokenStream) -> Result<()> {
-        let file_path = self.bridge_dir.join(file);
-        let mut file = File::create(&file_path)?;
-        file.write_all(&tokens.to_string().into_bytes())?;
-        Ok(())
     }
 }

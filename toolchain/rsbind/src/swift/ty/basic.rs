@@ -51,12 +51,16 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         quote! {i32}
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Swift<'a>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Swift<'a>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
     }
 }
 
@@ -131,12 +135,16 @@ impl<'a> Convertible<Swift<'a>> for Basic {
         }
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Swift<'a>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Swift<'a>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
     }
 }
 

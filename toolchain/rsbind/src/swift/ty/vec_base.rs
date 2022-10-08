@@ -11,33 +11,6 @@ pub(crate) struct VecBase {
     pub(crate) ty: AstType,
 }
 
-impl VecBase {
-    fn native_base_type_str(&self) -> String {
-        match self.ty.clone() {
-            AstType::Vec(AstBaseType::Byte(_)) => "Int8",
-            AstType::Vec(AstBaseType::Short(_)) => "Int16",
-            AstType::Vec(AstBaseType::Int(_)) => "Int32",
-            AstType::Vec(AstBaseType::Long(_)) => "Int64",
-            AstType::Vec(AstBaseType::Float(_)) => "Float32",
-            AstType::Vec(AstBaseType::Double(_)) => "Float64",
-            _ => panic!("Error type found."),
-        }
-        .to_string()
-    }
-
-    fn rust_base_transfer_type(&self) -> TokenStream {
-        match self.ty.clone() {
-            AstType::Vec(AstBaseType::Byte(_)) => quote!(i8),
-            AstType::Vec(AstBaseType::Short(_)) => quote!(i16),
-            AstType::Vec(AstBaseType::Int(_)) => quote!(i32),
-            AstType::Vec(AstBaseType::Long(_)) => quote!(i64),
-            AstType::Vec(AstBaseType::Float(_)) => quote!(f32),
-            AstType::Vec(AstBaseType::Double(_)) => quote!(f64),
-            _ => panic!("Error type found."),
-        }
-    }
-}
-
 impl<'a> Convertible<Swift<'a>> for VecBase {
     fn native_to_transferable(
         &self,
@@ -198,11 +171,42 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
         }
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Swift<'a>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Swift<'a>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
+    }
+}
+
+impl VecBase {
+    fn native_base_type_str(&self) -> String {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Byte(_)) => "Int8",
+            AstType::Vec(AstBaseType::Short(_)) => "Int16",
+            AstType::Vec(AstBaseType::Int(_)) => "Int32",
+            AstType::Vec(AstBaseType::Long(_)) => "Int64",
+            AstType::Vec(AstBaseType::Float(_)) => "Float32",
+            AstType::Vec(AstBaseType::Double(_)) => "Float64",
+            _ => panic!("Error type found."),
+        }
+        .to_string()
+    }
+
+    fn rust_base_transfer_type(&self) -> TokenStream {
+        match self.ty.clone() {
+            AstType::Vec(AstBaseType::Byte(_)) => quote!(i8),
+            AstType::Vec(AstBaseType::Short(_)) => quote!(i16),
+            AstType::Vec(AstBaseType::Int(_)) => quote!(i32),
+            AstType::Vec(AstBaseType::Long(_)) => quote!(i64),
+            AstType::Vec(AstBaseType::Float(_)) => quote!(f32),
+            AstType::Vec(AstBaseType::Double(_)) => quote!(f64),
+            _ => panic!("Error type found."),
+        }
     }
 }

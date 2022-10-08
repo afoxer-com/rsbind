@@ -38,17 +38,19 @@ impl<'a> Convertible<Swift<'a>> for Callback {
     }
 
     fn rust_to_transferable(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
-        let box_to_model_fn_name = ident!(&format!("box_to_model_{}", self.ty.origin()));
+        let callback_to_c_pointers_fn_name =
+            ident!(&format!("callback_to_c_pointers_{}", self.ty.origin()));
         quote! {{
             let #origin = callback_index;
-            #box_to_model_fn_name(#origin)
+            #callback_to_c_pointers_fn_name(#origin)
         }}
     }
 
     fn transferable_to_rust(&self, origin: TokenStream, _direction: Direction) -> TokenStream {
-        let model_to_box_fn = ident!(&format!("model_to_box_{}", self.ty.origin()));
+        let c_pointers_to_callback_fn =
+            ident!(&format!("c_pointers_to_callback_{}", self.ty.origin()));
         quote! {
-             #model_to_box_fn(#origin)
+             #c_pointers_to_callback_fn(#origin)
         }
     }
 
@@ -79,11 +81,15 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         }
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Swift<'a>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Swift<'a>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
     }
 }

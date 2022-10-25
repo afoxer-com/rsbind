@@ -149,11 +149,15 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         }
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Swift<'static>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Swift<'static>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
     }
 }

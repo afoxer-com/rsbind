@@ -38,10 +38,6 @@ typedef struct test_contract1_UploadService_Model {
   int64_t index;
 } test_contract1_UploadService_Model;
 
-struct test_contract1_LoginService_Model test_contract1_Services_get_login_service(void);
-
-struct test_contract1_UploadService_Model test_contract1_Services_get_upload_service(void);
-
 void free_i8_array(int8_t *ptr, int32_t length, int32_t cap);
 
 void free_i16_array(int16_t *ptr, int32_t length, int32_t cap);
@@ -50,4 +46,12 @@ void free_i32_array(int32_t *ptr, int32_t length, int32_t cap);
 
 void free_i64_array(int64_t *ptr, int32_t length, int32_t cap);
 
+void free_f32_array(float *ptr, int32_t length, int32_t cap);
+
+void free_f64_array(double *ptr, int32_t length, int32_t cap);
+
 void free_str(int8_t *ptr, int32_t length, int32_t cap);
+
+struct test_contract1_LoginService_Model test_contract1_Services_get_login_service(void);
+
+struct test_contract1_UploadService_Model test_contract1_Services_get_upload_service(void);

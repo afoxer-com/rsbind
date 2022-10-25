@@ -60,12 +60,16 @@ impl<'a> Convertible<Java<'a>> for Bool {
         quote! {u8}
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Java<'a>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Java<'a>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
     }
 }
 
@@ -183,12 +187,16 @@ impl<'a> Convertible<Java<'a>> for Basic {
         }
     }
 
-    fn quote_common_bridge(&self) -> TokenStream {
+    fn quote_common_in_bridge(&self) -> TokenStream {
         quote! {}
     }
 
-    fn quote_common_artifact(&self) -> Tokens<'static, Java<'a>> {
+    fn quote_common_in_native(&self) -> Tokens<'static, Java<'a>> {
         Tokens::new()
+    }
+
+    fn quote_in_common_rs(&self) -> TokenStream {
+        quote! {}
     }
 }
 

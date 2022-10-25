@@ -46,6 +46,26 @@ impl DemoTrait2 for TestContract1Imp {
     }
 }
 
+//Just to test if we impl callback if it works.
+struct ImplDemoCallback2 {}
+impl DemoCallback2 for ImplDemoCallback2 {
+    fn test_arg_callback_16(&self, arg: Box<dyn DemoCallback>) -> u8 {
+        16u8
+    }
+
+    fn test_return_callback(&self) -> Box<dyn DemoCallback> {
+        create_callback()
+    }
+
+    fn test_arg_bytes(&self, bytes: Vec<i8>) {
+
+    }
+
+    fn test_return_arg_structs(&self, structs: Vec<DemoStruct>) -> i32 {
+        0
+    }
+}
+
 impl DemoTrait for TestContract1Imp {
     fn setup() {
         println!("We call setup");

@@ -1,9 +1,11 @@
 use crate::ast::contract::desc::TraitDesc;
-use crate::base::lang::LangGen;
+use crate::base::bridge::{BaseBridgeGen, FilesGenerator};
+use crate::base::lang::{BridgeContext, LangGen, LangImp, ModContext};
 use crate::errors::*;
 use crate::java::artifact::JavaCodeGen;
-use crate::java::bridge::BridgeCodeGen;
-use crate::AstResult;
+use crate::{ident, AstResult};
+use bridge::JavaImp;
+use proc_macro2::{Ident, TokenStream};
 use std::path::Path;
 
 mod artifact;
@@ -26,15 +28,24 @@ pub(crate) struct JavaGen {
     pub(crate) ext_libs: String,
 }
 
+pub(crate) struct JavaExtra {
+    pub(crate) namespace: String,
+}
+
 impl LangGen for JavaGen {
     fn gen_bridge(&self, path: &Path) -> Result<()> {
-        BridgeCodeGen {
-            crate_name: self.crate_name.clone(),
+        BaseBridgeGen {
+            lang_name: "java".to_string(),
             ast: &self.ast,
             bridge_dir: path,
-            namespace: self.namespace.to_string(),
+            crate_name: self.namespace.clone(),
+            lang_imp: Box::new(JavaImp {}),
+            extra: JavaExtra {
+                namespace: self.namespace.clone(),
+            },
+            generator: FilesGenerator::default(),
         }
-        .gen_files()
+        .gen()
     }
 
     fn gen_native(&self, path: &Path) -> Result<()> {

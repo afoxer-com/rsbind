@@ -40,6 +40,8 @@ impl LangGen for SwiftGen {
             .trait_method_generator
             .quote_method_return_convert;
 
+        // We overwrite the base return-convert method because of the deadlock problem.
+        // If we read and write lock in converting method will result deadlock.
         generator
             .bridge_file_generator
             .bridge_code_generator

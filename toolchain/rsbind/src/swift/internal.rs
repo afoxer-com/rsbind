@@ -10,7 +10,7 @@ use crate::swift::types::to_swift_file;
 
 pub(crate) struct TraitGen<'a> {
     pub desc: &'a TraitDesc,
-    pub callbacks: &'a Vec<&'a TraitDesc>,
+    pub callbacks: &'a Vec<TraitDesc>,
 }
 
 impl<'a> TraitGen<'a> {
@@ -118,7 +118,7 @@ impl<'a> TraitGen<'a> {
         &self,
         method_body: &mut Tokens<'a, Swift<'a>>,
         method: &'a MethodDesc,
-        callbacks: &'a [&'a TraitDesc],
+        callbacks: &'a [TraitDesc],
     ) -> Result<()> {
         let convert = SwiftConvert {
             ty: method.return_type.clone(),

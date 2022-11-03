@@ -1,7 +1,3 @@
-use std::fs;
-use std::path::PathBuf;
-
-use crate::ast::contract::desc::TraitDesc;
 use crate::ast::AstResult;
 use crate::base::artifact::{NativeCodeGen, NativeGenStrategy};
 use crate::errors::*;
@@ -11,6 +7,7 @@ use crate::swift::manager::ManagerGen;
 use crate::swift::protocol::ProtocolGen;
 use crate::swift::struct_::StructGen;
 use crate::swift::wrapper::WrapperGen;
+use std::path::PathBuf;
 
 pub(crate) struct SwiftCodeGen<'a> {
     pub swift_gen_dir: &'a PathBuf,
@@ -27,7 +24,7 @@ impl<'a> SwiftCodeGen<'a> {
                 }
                 .gen()
             }),
-            gen_callback: Box::new(|ctx, desc| CallbackGen { desc }.gen()),
+            gen_callback: Box::new(|_ctx, desc| CallbackGen { desc }.gen()),
             gen_bridge_trait: Box::new(|ctx, desc| {
                 TraitGen {
                     desc,
@@ -35,9 +32,9 @@ impl<'a> SwiftCodeGen<'a> {
                 }
                 .gen()
             }),
-            gen_wrapper_trait: Box::new(|ctx, desc| WrapperGen { desc }.gen()),
-            gen_trait: Box::new(|ctx, desc| ProtocolGen { desc }.gen()),
-            gen_struct: Box::new(|ctx, desc| StructGen { desc }.gen()),
+            gen_wrapper_trait: Box::new(|_ctx, desc| WrapperGen { desc }.gen()),
+            gen_trait: Box::new(|_ctx, desc| ProtocolGen { desc }.gen()),
+            gen_struct: Box::new(|_ctx, desc| StructGen { desc }.gen()),
             gen_manager: Box::new(|ctx| ManagerGen { ast: ctx.ast }.gen()),
         };
 

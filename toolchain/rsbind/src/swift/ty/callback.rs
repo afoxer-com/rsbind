@@ -56,12 +56,12 @@ impl<'a> Convertible<Swift<'a>> for Callback {
 
     fn native_type(&self) -> Swift<'a> {
         match self.ty.clone() {
-            AstType::Callback(origin) => swift::local(origin.origin.clone()),
+            AstType::Callback(origin) => swift::local(origin.origin),
             _ => swift::local(""),
         }
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         match self.ty.clone() {
             AstType::Callback(origin) => {
                 let callback_str = format!("{}_{}_Model", &origin.mod_name, &origin.origin);
@@ -71,7 +71,7 @@ impl<'a> Convertible<Swift<'a>> for Callback {
         }
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Callback(origin) => {
                 let ident = ident!(&format!("{}_{}_Model", &origin.mod_name, &origin.origin));

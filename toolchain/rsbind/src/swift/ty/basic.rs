@@ -43,11 +43,11 @@ impl<'a> Convertible<Swift<'a>> for Bool {
         swift::BOOLEAN
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         swift::local("Int32")
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         quote! {i32}
     }
 
@@ -119,11 +119,11 @@ impl<'a> Convertible<Swift<'a>> for Basic {
         swift::local(self.native_type_str())
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         swift::local(self.native_type_str())
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Byte(_) => quote!(i8),
             AstType::Short(_) => quote!(i16),

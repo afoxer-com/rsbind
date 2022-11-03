@@ -329,7 +329,7 @@ fn parse_boxed_ast(ctx: &ParseContext, type_path: &TypePath) -> AstType {
     ty
 }
 
-fn parse_ident_in_path(ctx: &ParseContext, type_path: &TypePath) -> String {
+fn parse_ident_in_path(_ctx: &ParseContext, type_path: &TypePath) -> String {
     let segments = &(type_path.path.segments);
     (&segments[segments.len() - 1].ident).to_string()
 }

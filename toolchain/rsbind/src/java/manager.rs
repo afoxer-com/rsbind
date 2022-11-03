@@ -53,7 +53,7 @@ impl<'a> ManagerGen<'a> {
                     push_f!(
                         load_lib_tokens,
                         "com.afoxer.rsbind.Common.loadLibrary(\"{}\");",
-                        ext_lib.to_owned(),
+                        ext_lib,
                     );
                 }
             }

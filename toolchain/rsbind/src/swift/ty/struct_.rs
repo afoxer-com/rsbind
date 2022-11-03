@@ -44,19 +44,19 @@ impl<'a> Convertible<Swift<'a>> for Struct {
 
     fn native_type(&self) -> Swift<'a> {
         match self.ty.clone() {
-            AstType::Struct(origin) => swift::local(origin.origin.clone()),
+            AstType::Struct(origin) => swift::local(origin.origin),
             _ => swift::local(""),
         }
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         match self.ty.clone() {
             AstType::Struct(origin) => swift::local(format!("Proxy{}", &origin.origin)),
             _ => swift::local(""),
         }
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Struct(ref origin) => {
                 let struct_ident = ident!(&format!("Proxy{}", &origin.origin));

@@ -130,7 +130,7 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         swift::local(format!("[{}]", self.struct_name()))
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Struct(ref origin)) => {
                 swift::local(format!("C{}Array", &origin.origin))
@@ -139,7 +139,7 @@ impl<'a> Convertible<Swift<'a>> for VecStruct {
         }
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Struct(origin)) => {
                 let struct_array_name = ident!(&format!("C{}Array", &origin.origin));

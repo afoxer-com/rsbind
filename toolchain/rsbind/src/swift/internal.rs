@@ -118,7 +118,7 @@ impl<'a> TraitGen<'a> {
         &self,
         method_body: &mut Tokens<'a, Swift<'a>>,
         method: &'a MethodDesc,
-        callbacks: &'a [TraitDesc],
+        _callbacks: &'a [TraitDesc],
     ) -> Result<()> {
         let convert = SwiftConvert {
             ty: method.return_type.clone(),

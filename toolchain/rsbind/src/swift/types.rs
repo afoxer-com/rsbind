@@ -43,9 +43,7 @@ impl From<SwiftType> for Swift<'static> {
                 AstBaseType::Byte(_) => SwiftType::new(AstType::from(base)).to_array(),
                 _ => SwiftType::new(AstType::from(base)).to_array(),
             },
-            AstType::Callback(origin) | AstType::Struct(origin) => {
-                swift::local(origin.origin.clone())
-            }
+            AstType::Callback(origin) | AstType::Struct(origin) => swift::local(origin.origin),
         }
     }
 }

@@ -1,7 +1,6 @@
 use crate::ast::contract::desc::TraitDesc;
 use crate::ast::imp::desc::ImpDesc;
 use crate::ast::types::AstType;
-use crate::ast::types::AstType::Callback;
 use crate::base::lang::{
     ArgumentContext, BridgeContext, CallbackContext, Direction, LangImp, MethodContext, ModContext,
     ServiceContext, StructContext,
@@ -10,9 +9,7 @@ use crate::errors::*;
 use crate::ErrorKind::GenerateError;
 use crate::{ident, AstResult};
 use proc_macro2::{Ident, TokenStream};
-use rstgen::go::Extra;
 use std::cmp::Ordering;
-use std::fmt::format;
 use std::fs::File;
 use std::io::Write;
 use std::marker::PhantomData;
@@ -103,7 +100,7 @@ impl<Lang, Extra> FilesGenerator<Lang, Extra> {
                 structs: struct_vec,
                 imps: &ctx.ast.imps,
                 mod_name: mod_name.clone(),
-                bridge_ctx: &ctx,
+                bridge_ctx: ctx,
             };
 
             let tokens = self.bridge_file_generator.quote_one_bridge_file(&ctx)?;
@@ -112,11 +109,11 @@ impl<Lang, Extra> FilesGenerator<Lang, Extra> {
         }
 
         // generate sdk.rs
-        let tokens = (*self.quote_sdk_file)(&ctx)?;
+        let tokens = (*self.quote_sdk_file)(ctx)?;
         file_vec.push(("sdk.rs".to_owned(), tokens));
 
         // generate common.rs
-        let tokens = (*self.quote_common_file)(&ctx)?;
+        let tokens = (*self.quote_common_file)(ctx)?;
         file_vec.push(("common.rs".to_owned(), tokens));
 
         // generate mod.rs
@@ -223,12 +220,7 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                                     ctx.method.return_type.origin()
                                 );
 
-                                let mut result;
-                                if let AstType::Void = ctx.method.return_type.clone() {
-                                    result = quote! {};
-                                }
-
-                                result = ctx
+                                let result = ctx
                                     .service_ctx
                                     .mod_ctx
                                     .bridge_ctx
@@ -264,7 +256,7 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                             continue;
                         }
 
-                        if let Ok(imp) = find_imp(trait_desc, &ctx.imps) {
+                        if let Ok(imp) = find_imp(trait_desc, ctx.imps) {
                             let trait_mod_splits: Vec<Ident> = trait_desc
                                 .mod_path
                                 .split("::")
@@ -321,13 +313,11 @@ impl<Lang, Extra> BridgeFileGenerator<Lang, Extra> {
             #common_part
         };
 
-        for bridge_code in bridge_codes {
-            if let Ok(code) = bridge_code {
-                merge_tokens = quote! {
-                    #merge_tokens
-                    #code
-                };
-            }
+        for bridge_code in bridge_codes.into_iter().flatten() {
+            merge_tokens = quote! {
+                #merge_tokens
+                #bridge_code
+            };
         }
 
         println!("[bridge] ✅  end generate bridge file.");
@@ -476,7 +466,7 @@ impl<Lang, Extra> TraitMethodGenerator<Lang, Extra> {
             "[bridge][{}.{}]  🔆 ️begin quote method.",
             &ctx.service_ctx.trait_.name, &ctx.method.name
         );
-        let sig_define = (*self.quote_method_sig)(&ctx).unwrap();
+        let sig_define = (*self.quote_method_sig)(ctx).unwrap();
 
         let mut arg_convert = TokenStream::new();
         for arg in ctx.method.args.iter() {
@@ -491,9 +481,9 @@ impl<Lang, Extra> TraitMethodGenerator<Lang, Extra> {
             }
         }
 
-        let call_imp = (*self.quote_method_imp_call)(&ctx)?;
+        let call_imp = (*self.quote_method_imp_call)(ctx)?;
 
-        let return_handle = (*self.quote_method_return_convert)(&ctx)?;
+        let return_handle = (*self.quote_method_return_convert)(ctx)?;
 
         // combine all the parts
         let result = quote! {
@@ -548,7 +538,7 @@ impl<Lang, Extra> StructCodeGenerator<Lang, Extra> {
     }
 }
 
-fn find_imp<'a>(trait_: &'a TraitDesc, imps: &'a Vec<ImpDesc>) -> Result<&'a ImpDesc> {
+fn find_imp<'a>(trait_: &'a TraitDesc, imps: &'a [ImpDesc]) -> Result<&'a ImpDesc> {
     let imps = imps
         .iter()
         .filter(|info| info.contract == trait_.name)

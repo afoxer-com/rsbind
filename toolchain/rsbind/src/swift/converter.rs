@@ -68,7 +68,7 @@ impl<'a> SwiftConvert {
             | AstType::Vec(AstBaseType::Double(_)) => {
                 ConvertEnum::VecBase(VecBase { ty: ty.clone() })
             }
-            AstType::Vec(AstBaseType::Struct(ref base)) => {
+            AstType::Vec(AstBaseType::Struct(_)) => {
                 ConvertEnum::VecStruct(VecStruct { ty: ty.clone() })
             }
             AstType::Vec(_) => ConvertEnum::VecDefault(VecDefault { ty: ty.clone() }),

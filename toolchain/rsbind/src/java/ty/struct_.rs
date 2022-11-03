@@ -99,12 +99,12 @@ impl<'a> Convertible<Java<'a>> for Struct {
         }
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Java<'a> {
         java::imported("java.lang", "String")
     }
 
     fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
-        match direction.clone() {
+        match direction {
             Direction::Down => {
                 quote! {JString}
             }

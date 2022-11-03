@@ -1,21 +1,14 @@
 use crate::ast::contract::desc::*;
-use crate::ast::imp::desc::*;
 use crate::ast::types::*;
-use crate::base::bridge::BaseBridgeGen;
 use crate::base::lang::{
-    ArgumentContext, BridgeContext, CallbackContext, Convertible, Direction, LangImp,
-    MethodContext, ModContext, ServiceContext, StructContext,
+    BridgeContext, CallbackContext, Convertible, Direction, LangImp, MethodContext, ModContext,
+    ServiceContext, StructContext,
 };
 use crate::errors::*;
+use crate::ident;
 use crate::swift::converter::SwiftConvert;
-use crate::ErrorKind::GenerateError;
-use crate::{ident, AstResult};
 use proc_macro2::{Ident, TokenStream};
 use rstgen::swift::Swift;
-use std::cmp::Ordering;
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
 
 fn c_pointers_to_callback_convert(callback_desc: &TraitDesc) -> Result<TokenStream> {
     let struct_name = &format!("{}_struct", &callback_desc.name);
@@ -430,13 +423,13 @@ pub(crate) fn quote_callback_struct(callback: &TraitDesc, name: &str) -> Result<
 pub struct SwiftImp {}
 
 impl LangImp<Swift<'static>, ()> for SwiftImp {
-    fn quote_sdk_file(&self, context: &BridgeContext<Swift<'static>, ()>) -> Result<TokenStream> {
+    fn quote_sdk_file(&self, _context: &BridgeContext<Swift<'static>, ()>) -> Result<TokenStream> {
         Ok(quote! {})
     }
 
     fn quote_common_file(
         &self,
-        context: &BridgeContext<Swift<'static>, ()>,
+        _context: &BridgeContext<Swift<'static>, ()>,
     ) -> Result<TokenStream> {
         let int8_free_fn = self.quote_free_rust_array("free_i8_array".to_string(), quote! {i8});
         let int16_free_fn = self.quote_free_rust_array("free_i16_array".to_string(), quote! {i16});
@@ -532,7 +525,7 @@ impl LangImp<Swift<'static>, ()> for SwiftImp {
         Ok(tokens)
     }
 
-    fn quote_use_part(&self, context: &ModContext<Swift<'static>, ()>) -> Result<TokenStream> {
+    fn quote_use_part(&self, _context: &ModContext<Swift<'static>, ()>) -> Result<TokenStream> {
         Ok(quote! {
             use std::ffi::CStr;
             use std::os::raw::c_char;
@@ -545,7 +538,7 @@ impl LangImp<Swift<'static>, ()> for SwiftImp {
         })
     }
 
-    fn quote_common_part(&self, context: &ModContext<Swift<'static>, ()>) -> Result<TokenStream> {
+    fn quote_common_part(&self, _context: &ModContext<Swift<'static>, ()>) -> Result<TokenStream> {
         Ok(quote! {
             lazy_static! {
                 static ref CALLBACK_HASHMAP: Arc<RwLock<HashMap<i64, CallbackEnum>>> =  Arc::new(RwLock::new(HashMap::new()));

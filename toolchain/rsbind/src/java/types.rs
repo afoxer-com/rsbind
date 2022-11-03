@@ -69,9 +69,7 @@ impl From<JavaType> for Java<'static> {
                 _ => JavaType::new(AstType::from(base.clone())).to_boxed_array(),
             },
             AstType::Void => java::VOID,
-            AstType::Callback(origin) | AstType::Struct(origin) => {
-                java::local(origin.origin.clone())
-            }
+            AstType::Callback(origin) | AstType::Struct(origin) => java::local(origin.origin),
         }
     }
 }

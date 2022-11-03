@@ -1,18 +1,12 @@
-use crate::ast::contract::desc::TraitDesc;
-use crate::base::lang::{BridgeContext, Convertible, Direction, LangGen, LangImp, ModContext};
-use crate::errors::*;
-use crate::swift::artifact::SwiftCodeGen;
-
-use crate::{ident, AstResult};
-
 use crate::ast::types::AstType;
 use crate::base::bridge::{BaseBridgeGen, FilesGenerator};
-use crate::swift::converter::SwiftConvert;
+use crate::base::lang::{LangGen, LangImp, ModContext};
+use crate::errors::*;
+use crate::swift::artifact::SwiftCodeGen;
+use crate::{ident, AstResult};
 use bridge::SwiftImp;
-use proc_macro2::TokenStream;
 use rstgen::swift::Swift;
 use std::path::Path;
-
 mod artifact;
 mod bridge;
 mod callback;

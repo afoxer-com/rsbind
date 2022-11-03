@@ -1,24 +1,19 @@
-use std::cmp::Ordering;
-use std::path::Path;
-
 use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, Literal, TokenStream};
 use rstgen::Java;
-use std::fs::File;
-use std::io::Write;
 
-use crate::ast::contract::desc::{ArgDesc, MethodDesc, StructDesc, TraitDesc};
-use crate::ast::imp::desc::*;
+use crate::ast::contract::desc::TraitDesc;
+
 use crate::ast::types::*;
 use crate::base::lang::{
-    ArgumentContext, BridgeContext, CallbackContext, Convertible, Direction, LangImp,
-    MethodContext, ModContext, ServiceContext, StructContext,
+    BridgeContext, CallbackContext, Convertible, Direction, LangImp, MethodContext, ModContext,
+    StructContext,
 };
 use crate::errors::*;
 use crate::java::converter::JavaConvert;
 use crate::java::JavaExtra;
-use crate::ErrorKind::GenerateError;
-use crate::{ident, AstResult};
+
+use crate::ident;
 
 pub(crate) fn index_to_callback(
     callback_desc: &TraitDesc,
@@ -42,7 +37,6 @@ pub(crate) fn index_to_callback(
         let mut method_java_sig = "(J".to_owned();
         let mut cb_arg_array = quote!(JValue::Long(self.index),);
         for cb_arg in method.args.iter() {
-            let cb_arg_name = ident!(&format!("j_{}", cb_arg.name));
             method_java_sig = format!("{}{}", &method_java_sig, cb_arg.ty.to_java_sig());
 
             let cb_arg_name = ident!(&format!("j_{}", cb_arg.name));
@@ -164,18 +158,16 @@ pub(crate) fn index_to_callback(
             &callback_desc.name, &method.name
         );
 
-        let mut return_convert;
-
-        if let AstType::Void = method.return_type.clone() {
-            return_convert = quote! {};
-        }
-
-        let convert = JavaConvert {
-            ty: method.return_type.clone(),
-        }
-        .transferable_to_rust(quote! {result}, Direction::Up);
-        return_convert = quote! {
-            let r_result = #convert;
+        let return_convert = if let AstType::Void = method.return_type.clone() {
+            quote! {}
+        } else {
+            let convert = JavaConvert {
+                ty: method.return_type.clone(),
+            }
+            .transferable_to_rust(quote! {result}, Direction::Up);
+            quote! {
+                let r_result = #convert;
+            }
         };
 
         let return_result_ident = match method.return_type {
@@ -255,7 +247,7 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
         context: &BridgeContext<Java<'static>, JavaExtra>,
     ) -> Result<TokenStream> {
         let mut bridges: Vec<String> = vec![];
-        for (mod_name, traits) in &context.ast.traits {
+        for (mod_name, _traits) in &context.ast.traits {
             let out_mod_name = format!("java_{}", mod_name);
             bridges.push(out_mod_name);
         }
@@ -287,14 +279,14 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
 
     fn quote_common_file(
         &self,
-        context: &BridgeContext<Java<'static>, JavaExtra>,
+        _context: &BridgeContext<Java<'static>, JavaExtra>,
     ) -> Result<TokenStream> {
         Ok(quote! {})
     }
 
     fn quote_use_part(
         &self,
-        context: &ModContext<Java<'static>, JavaExtra>,
+        _context: &ModContext<Java<'static>, JavaExtra>,
     ) -> Result<TokenStream> {
         Ok(quote! {
             use jni::JNIEnv;
@@ -520,15 +512,14 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
                 .map(|arg| ident!(&format!("r_{}", &arg.name)))
                 .collect::<Vec<Ident>>();
 
-            let mut return_convert;
-            if let AstType::Void = method.return_type.clone() {
-                return_convert = quote! {};
-            }
-
-            return_convert = JavaConvert {
-                ty: method.return_type.clone(),
-            }
-            .rust_to_transferable(quote! {result}, Direction::Down);
+            let mut return_convert = if let AstType::Void = method.return_type.clone() {
+                quote! {}
+            } else {
+                JavaConvert {
+                    ty: method.return_type.clone(),
+                }
+                .rust_to_transferable(quote! {result}, Direction::Down)
+            };
 
             if let AstType::Callback(ref origin) = method.return_type.clone() {
                 let return_callback_ident = ident!(&origin.origin);

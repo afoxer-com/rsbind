@@ -96,10 +96,10 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
             AstType::Vec(AstBaseType::Long(ref _base)) => {
                 ident!("free_i64_array")
             }
-            AstType::Vec(AstBaseType::Float(ref base)) => {
+            AstType::Vec(AstBaseType::Float(_)) => {
                 ident!("free_f32_array")
             }
-            AstType::Vec(AstBaseType::Double(ref base)) => {
+            AstType::Vec(AstBaseType::Double(_)) => {
                 ident!("free_f64_array")
             }
             _ => {
@@ -147,7 +147,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
         swift::local(format!("[{}]", self.native_base_type_str()))
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Byte(_)) => swift::local("CInt8Array"),
             AstType::Vec(AstBaseType::Short(_)) => swift::local("CInt16Array"),
@@ -159,7 +159,7 @@ impl<'a> Convertible<Swift<'a>> for VecBase {
         }
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Vec(AstBaseType::Byte(_)) => quote!(CInt8Array),
             AstType::Vec(AstBaseType::Short(_)) => quote!(CInt16Array),

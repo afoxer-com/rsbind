@@ -52,11 +52,11 @@ impl<'a> Convertible<Java<'a>> for Bool {
         java::BOOLEAN
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Java<'a> {
         java::INTEGER
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         quote! {u8}
     }
 
@@ -163,7 +163,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
         }
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Java<'a> {
         match self.ty.clone() {
             AstType::Byte(_) => java::BYTE,
             AstType::Int(_) => java::INTEGER,
@@ -175,7 +175,7 @@ impl<'a> Convertible<Java<'a>> for Basic {
         }
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         match self.ty.clone() {
             AstType::Byte(_) => quote!(i8),
             AstType::Short(_) => quote!(i16),

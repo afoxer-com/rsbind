@@ -1,13 +1,10 @@
-use crate::ast::contract::desc::TraitDesc;
 use crate::base::bridge::{BaseBridgeGen, FilesGenerator};
-use crate::base::lang::{BridgeContext, LangGen, LangImp, ModContext};
+use crate::base::lang::{LangGen, LangImp, ModContext};
 use crate::errors::*;
 use crate::java::artifact::JavaCodeGen;
-use crate::{ident, AstResult};
+use crate::AstResult;
 use bridge::JavaImp;
-use proc_macro2::{Ident, TokenStream};
 use std::path::Path;
-
 mod artifact;
 mod bridge;
 mod callback;

@@ -37,11 +37,11 @@ impl<'a> Convertible<Swift<'a>> for Void {
         swift::local("()")
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Swift<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Swift<'a> {
         swift::VOID
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         quote! {()}
     }
 

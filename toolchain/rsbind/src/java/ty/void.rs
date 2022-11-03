@@ -34,11 +34,11 @@ impl<'a> Convertible<Java<'a>> for Void {
         java::VOID
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Java<'a> {
         java::VOID
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         quote! {()}
     }
 

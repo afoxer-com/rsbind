@@ -103,17 +103,17 @@ impl<'a> Convertible<Java<'a>> for VecStruct {
 
     fn native_type(&self) -> Java<'a> {
         match self.ty.clone() {
-            AstType::Vec(base) => JavaType::new(AstType::from(base.clone())).to_array(),
+            AstType::Vec(base) => JavaType::new(AstType::from(base)).to_array(),
             _ => java::local(""),
         }
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Java<'a> {
         java::imported("java.lang", "String")
     }
 
     fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
-        match direction.clone() {
+        match direction {
             Direction::Down => {
                 quote! {JString}
             }

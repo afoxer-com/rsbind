@@ -1,7 +1,6 @@
 use crate::ast::contract::desc::{StructDesc, TraitDesc};
 use crate::errors::*;
 use crate::AstResult;
-use rstgen::go::Extra;
 use std::fs;
 use std::path::PathBuf;
 

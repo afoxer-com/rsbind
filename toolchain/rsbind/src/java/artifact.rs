@@ -1,6 +1,3 @@
-use std::fs;
-use std::path::PathBuf;
-
 use crate::ast::AstResult;
 use crate::base::artifact::{NativeCodeGen, NativeGenStrategy};
 use crate::errors::*;
@@ -10,6 +7,7 @@ use crate::java::internal::InnerTraitGen;
 use crate::java::manager::ManagerGen;
 use crate::java::struct_::StructGen;
 use crate::java::wrapper::WrapperGen;
+use std::path::PathBuf;
 
 pub(crate) struct JavaCodeGen<'a> {
     pub java_gen_dir: &'a PathBuf,

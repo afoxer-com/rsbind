@@ -237,7 +237,7 @@ impl<'a> InternalCallbackGen<'a> {
     fn fill_cb_closure_method_sig(
         &self,
         cb_method: &MethodDesc,
-        callbacks: &[TraitDesc],
+        _callbacks: &[TraitDesc],
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
         let mut arg_params = toks!("(index");
@@ -314,7 +314,7 @@ impl<'a> InternalCallbackGen<'a> {
     fn fill_cb_closure_return_convert(
         &self,
         cb_method: &MethodDesc,
-        callbacks: &[TraitDesc],
+        _callbacks: &[TraitDesc],
         method_body: &mut Tokens<Swift>,
     ) -> Result<()> {
         let convert = SwiftConvert {

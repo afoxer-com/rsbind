@@ -88,11 +88,11 @@ impl<'a> Convertible<Java<'a>> for Callback {
         }
     }
 
-    fn native_transferable_type(&self, direction: Direction) -> Java<'a> {
+    fn native_transferable_type(&self, _direction: Direction) -> Java<'a> {
         java::LONG
     }
 
-    fn rust_transferable_type(&self, direction: Direction) -> TokenStream {
+    fn rust_transferable_type(&self, _direction: Direction) -> TokenStream {
         quote! {i64}
     }
 

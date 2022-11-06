@@ -139,13 +139,28 @@ impl AstHandler {
                         }
                     }
                 }
+                Target::NodeJS => {
+                    if let Some(ref nodejs) = cfg.nodejs {
+                        if let Some(ref contract_name_str) = nodejs.contract_name {
+                            if !contract_name_str.is_empty() {
+                                contract_str = contract_name_str.clone();
+                            }
+                        }
+
+                        if let Some(ref imp_name_str) = nodejs.imp_name {
+                            if !imp_name_str.is_empty() {
+                                imp_str = imp_name_str.clone();
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        let mut contract_dir: String = format!("src/{}", &contract_str);
-        let mut imp_dir: String = format!("src/{}", &imp_str);
-        let mut contract_file: String = format!("src/{}.rs", &contract_str);
-        let mut imp_file: String = format!("src/{}.rs", &imp_str);
+        let contract_dir: String = format!("src/{}", &contract_str);
+        let imp_dir: String = format!("src/{}", &imp_str);
+        let contract_file: String = format!("src/{}.rs", &contract_str);
+        let imp_file: String = format!("src/{}.rs", &imp_str);
         let rsbind_file: String = "src/rsbind.rs".to_string();
 
         let imp_dir_path = origin_prj_path.join(imp_dir);

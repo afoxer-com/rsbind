@@ -35,6 +35,8 @@ use crate::jar::config::Jar;
 use crate::jar::process::JarProcess;
 use crate::mac::config::Mac;
 use crate::mac::process::MacProcess;
+use crate::nodejs::config::NodeJS;
+use crate::nodejs::process::NodeJSProcess;
 
 mod android;
 mod ast;
@@ -52,6 +54,8 @@ mod test;
 mod unzip;
 #[macro_use]
 mod common;
+mod js;
+mod nodejs;
 
 const GEN_DIR_NAME: &str = "_gen";
 const HEADER_NAME: &str = "header";
@@ -64,6 +68,8 @@ const ANDROID_BRIDGE_PROJ: &str = "android_bridge";
 const ANDROID_PROJ: &str = "android_artifact";
 const JAR_BRIDGE_PROJ: &str = "jar_bridge";
 const JAR_PROJ: &str = "jar_artifact";
+const NODEJS_BRIDGE_PROJ: &str = "nodejs_bridge";
+const NODEJS_PROJ: &str = "nodejs_artifact";
 
 pub struct Bind {
     prj_path: PathBuf,
@@ -75,6 +81,8 @@ pub struct Bind {
     android_artifact_path: PathBuf,
     jar_bridge_path: PathBuf,
     jar_artifact_path: PathBuf,
+    nodejs_bridge_path: PathBuf,
+    nodejs_artifact_path: PathBuf,
     header_path: PathBuf,
     ast_path: PathBuf,
     target: Target,
@@ -86,6 +94,7 @@ pub enum Target {
     Ios,
     Mac,
     Jar,
+    NodeJS,
 }
 
 pub enum Action {
@@ -140,6 +149,11 @@ impl Bind {
 
         let jar_artifact_path = root.join(GEN_DIR_NAME).join(JAR_PROJ);
 
+        // ./_gen/nodejs_bridge
+        let nodejs_bridge_path = root.join(GEN_DIR_NAME).join(NODEJS_BRIDGE_PROJ);
+
+        let nodejs_artifact_path = root.join(GEN_DIR_NAME).join(NODEJS_PROJ);
+
         Bind {
             prj_path: root,
             ios_artifact_path,
@@ -150,6 +164,8 @@ impl Bind {
             android_artifact_path,
             jar_bridge_path,
             jar_artifact_path,
+            nodejs_bridge_path,
+            nodejs_artifact_path,
             header_path,
             ast_path,
             target,
@@ -184,6 +200,9 @@ impl Bind {
             }
             Target::Jar => {
                 self.gen_for_jar(&crate_name, ast, config)?;
+            }
+            Target::NodeJS => {
+                self.gen_for_nodejs(&crate_name, ast, config)?;
             }
         };
         Ok(())
@@ -394,6 +413,51 @@ impl Bind {
                 android_process.build_bridge_prj()?;
                 android_process.copy_bridge_outputs()?;
                 android_process.build_artifact_prj()?;
+            }
+        };
+
+        Ok(())
+    }
+
+    ///
+    /// generate the android aar
+    ///
+    fn gen_for_nodejs(
+        &self,
+        crate_name: &str,
+        ast_result: &AstResult,
+        config: Option<config::Config>,
+    ) -> Result<()> {
+        let nodejs = match config {
+            Some(ref config) => config.nodejs.clone(),
+            None => Some(NodeJS::default()),
+        };
+
+        let nodejs_process = NodeJSProcess {
+            origin_prj_path: &self.prj_path,
+            artifact_prj_path: &self.nodejs_artifact_path,
+            bridge_prj_path: &self.nodejs_bridge_path,
+            host_crate_name: crate_name,
+            ast_result,
+            config: nodejs,
+        };
+
+        match self.action {
+            Action::GenAst => (),
+            Action::GenBridge => nodejs_process.gen_bridge_src()?,
+            Action::GenArtifactCode => nodejs_process.gen_artifact_code()?,
+            Action::GenCHeader => (),
+            Action::BuildArtifact => {
+                nodejs_process.build_bridge_prj()?;
+                nodejs_process.copy_bridge_outputs()?;
+                nodejs_process.build_artifact_prj()?;
+            }
+            Action::All => {
+                nodejs_process.gen_bridge_src()?;
+                nodejs_process.gen_artifact_code()?;
+                nodejs_process.build_bridge_prj()?;
+                nodejs_process.copy_bridge_outputs()?;
+                nodejs_process.build_artifact_prj()?;
             }
         };
 

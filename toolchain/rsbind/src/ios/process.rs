@@ -89,10 +89,6 @@ impl<'a> IosProcess<'a> {
 }
 
 impl<'a> BuildProcess for IosProcess<'a> {
-    fn unpack(&self) -> Result<()> {
-        Ok(())
-    }
-
     fn gen_bridge_src(&self) -> Result<()> {
         println!("begin unzip rust template for ios");
         let buf: &[u8] = include_bytes!("res/template_bridge_ios.zip");

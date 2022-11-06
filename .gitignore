@@ -14,3 +14,4 @@ target
 *.xcuserdatad
 local.properties
 .DS_Store
+dist

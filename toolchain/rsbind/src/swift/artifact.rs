@@ -1,5 +1,5 @@
 use crate::ast::AstResult;
-use crate::base::artifact::{NativeCodeGen, NativeGenStrategy};
+use crate::base::artifact::{FileNameStyle, NativeCodeGen, NativeGenStrategy};
 use crate::errors::*;
 use crate::swift::callback::{CallbackGen, InternalCallbackGen};
 use crate::swift::internal::TraitGen;
@@ -41,6 +41,7 @@ impl<'a> SwiftCodeGen<'a> {
         let gen = NativeCodeGen {
             gen_dir: self.swift_gen_dir,
             file_ext: "swift".to_string(),
+            file_name_style: FileNameStyle::CamelCase,
             ast: self.ast,
             extra: (),
             strategy,

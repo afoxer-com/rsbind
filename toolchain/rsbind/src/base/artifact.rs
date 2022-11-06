@@ -1,8 +1,28 @@
 use crate::ast::contract::desc::{StructDesc, TraitDesc};
 use crate::errors::*;
 use crate::AstResult;
+use heck::{ToKebabCase, ToSnakeCase, ToUpperCamelCase};
 use std::fs;
 use std::path::PathBuf;
+
+macro_rules! filename {
+    ($style: expr, $ext: expr, $fmt: expr, $($values: expr),*) => {
+        match $style {
+            FileNameStyle::CamelCase => {
+                let name = format!($fmt, $($values),*).to_upper_camel_case();
+                format!("{}.{}", name, $ext)
+            }
+            FileNameStyle::SnakeCase => {
+                let name = format!($fmt, $($values),*).to_snake_case();
+                format!("{}.{}", name, $ext)
+            }
+            FileNameStyle::KebabCase => {
+                let name = format!($fmt, $($values),*).to_kebab_case();
+                format!("{}.{}", name, $ext)
+            }
+        }
+    };
+}
 
 pub(crate) struct NativeCodeGen<'a, Extra>
 where
@@ -10,6 +30,7 @@ where
 {
     pub gen_dir: &'a PathBuf,
     pub file_ext: String,
+    pub file_name_style: FileNameStyle,
     pub ast: &'a AstResult,
     pub extra: Extra,
     pub strategy: NativeGenStrategy<'a, Extra>,
@@ -62,14 +83,28 @@ where
         // generate all the callbacks.
         for each in callbacks.clone().iter() {
             let callback_str = (*self.strategy.gen_callback)(&ctx, each)?;
-            let file_name = format!("{}.{}", &each.name, &self.file_ext);
-            let callback_path = self.gen_dir.clone().join(file_name);
-            fs::write(callback_path, callback_str)?;
+            let file_name = filename!(
+                self.file_name_style.clone(),
+                &self.file_ext,
+                "{}",
+                &each.name
+            );
+            if !callback_str.is_empty() {
+                let callback_path = self.gen_dir.clone().join(file_name);
+                fs::write(callback_path, callback_str)?;
+            }
 
             let callback_str = (*self.strategy.gen_bridge_callback)(&ctx, each)?;
-            let file_name = format!("Internal{}.{}", &each.name, &self.file_ext);
-            let callback_path = self.gen_dir.clone().join(file_name);
-            fs::write(callback_path, callback_str)?;
+            let file_name = filename!(
+                self.file_name_style.clone(),
+                &self.file_ext,
+                "Internal{}",
+                &each.name
+            );
+            if !callback_str.is_empty() {
+                let callback_path = self.gen_dir.clone().join(file_name);
+                fs::write(callback_path, callback_str)?;
+            }
         }
 
         // generate all the traits.
@@ -78,19 +113,40 @@ where
             for each in descs.iter() {
                 if !each.is_callback {
                     let str = (*self.strategy.gen_bridge_trait)(&ctx, each)?;
-                    let file_name = format!("Internal{}.{}", &each.name, &self.file_ext);
-                    let path = self.gen_dir.clone().join(file_name);
-                    fs::write(path, str)?;
+                    let file_name = filename!(
+                        self.file_name_style.clone(),
+                        &self.file_ext,
+                        "Internal{}",
+                        &each.name
+                    );
+                    if !str.is_empty() {
+                        let path = self.gen_dir.clone().join(file_name);
+                        fs::write(path, str)?;
+                    }
 
                     let str = (*self.strategy.gen_wrapper_trait)(&ctx, each)?;
-                    let file_name = format!("Rust{}.{}", &each.name, &self.file_ext);
-                    let path = self.gen_dir.clone().join(file_name);
-                    fs::write(path, str)?;
+                    let file_name = filename!(
+                        self.file_name_style.clone(),
+                        &self.file_ext,
+                        "Rust{}",
+                        &each.name
+                    );
+                    if !str.is_empty() {
+                        let path = self.gen_dir.clone().join(file_name);
+                        fs::write(path, str)?;
+                    }
 
                     let str = (*self.strategy.gen_trait)(&ctx, each)?;
-                    let file_name = format!("{}.{}", &each.name, &self.file_ext);
-                    let path = self.gen_dir.clone().join(file_name);
-                    fs::write(path, str)?;
+                    let file_name = filename!(
+                        self.file_name_style.clone(),
+                        &self.file_ext,
+                        "{}",
+                        &each.name
+                    );
+                    if !str.is_empty() {
+                        let path = self.gen_dir.clone().join(file_name);
+                        fs::write(path, str)?;
+                    }
                 }
             }
         }
@@ -99,16 +155,36 @@ where
         for (_key, struct_descs) in self.ast.structs.iter() {
             for struct_desc in struct_descs.iter() {
                 let struct_str = (*self.strategy.gen_struct)(&ctx, struct_desc)?;
-                let file_name = format!("{}.{}", &struct_desc.name, &self.file_ext);
-                let path = self.gen_dir.join(file_name);
-                fs::write(path, struct_str)?
+                let file_name = filename!(
+                    self.file_name_style.clone(),
+                    &self.file_ext,
+                    "{}",
+                    &struct_desc.name
+                );
+                if !struct_str.is_empty() {
+                    let path = self.gen_dir.join(file_name);
+                    fs::write(path, struct_str)?
+                }
             }
         }
 
         let manager_result = (*self.strategy.gen_manager)(&ctx)?;
-        let path = self.gen_dir.join(format!("RustLib.{}", &self.file_ext));
-        fs::write(path, manager_result)?;
+        if !manager_result.is_empty() {
+            let path = self.gen_dir.join(filename!(
+                self.file_name_style.clone(),
+                &self.file_ext,
+                "RustLib",
+            ));
+            fs::write(path, manager_result)?;
+        }
 
         Ok(())
     }
+}
+
+#[derive(Clone)]
+pub(crate) enum FileNameStyle {
+    CamelCase,
+    SnakeCase,
+    KebabCase,
 }

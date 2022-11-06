@@ -91,3 +91,24 @@ script = '''
     xcodebuild -workspace "demo-ios.xcworkspace" -scheme "demo-ios-Example" -sdk iphonesimulator -configuration "Debug" CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGN_ENTITLEMENTS="" CODE_SIGNING_ALLOWED="NO" ARCHS="x86_64" clean build
 '''
 dependencies = ["build-ios-demo"]
+
+[tasks.build-node-demo]
+description = "Test through nodejs demo"
+cwd = "demo-node/rustlib"
+script = '''
+    cargo run --manifest-path ../../toolchain/rsbind/Cargo.toml . nodejs all
+'''
+
+#cargo build --release
+#cp target/release/libnode_rustlib.dylib ../
+#mv ../libnode_rustlib.dylib ../libnode_rustlib.node
+
+[tasks.test-node-demo]
+description = "Test through nodejs demo"
+cwd = "demo-node"
+script = '''
+npm install
+npm run build
+npm run test
+'''
+dependencies = ["build-node-demo"]

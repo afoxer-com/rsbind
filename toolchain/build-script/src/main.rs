@@ -49,6 +49,14 @@ fn main() {
         Path::new("./template/template-bridge-jar"),
         Path::new(&format!("{}/template/template-bridge-jar.zip", outdir)),
     );
+    compress_dir(
+        Path::new("./template/template-bridge-nodejs"),
+        Path::new(&format!("{}/template/template-bridge-nodejs.zip", outdir)),
+    );
+    compress_dir(
+        Path::new("./template/template-nodejs"),
+        Path::new(&format!("{}/template/template-nodejs.zip", outdir)),
+    );
 
     fs::copy(
         &format!("{}/template/template-ios.zip", outdir),
@@ -95,6 +103,18 @@ fn main() {
     fs::copy(
         &format!("{}/template/template-jar.zip", outdir),
         "src/jar/res/template_jar.zip",
+    )
+    .unwrap();
+
+    fs::copy(
+        &format!("{}/template/template-bridge-nodejs.zip", outdir),
+        "src/nodejs/res/template_bridge_nodejs.zip",
+    )
+    .unwrap();
+
+    fs::copy(
+        &format!("{}/template/template-nodejs.zip", outdir),
+        "src/nodejs/res/template_nodejs.zip",
     )
     .unwrap();
 }

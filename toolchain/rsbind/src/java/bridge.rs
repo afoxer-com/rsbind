@@ -242,7 +242,7 @@ pub(crate) fn index_to_callback(
 pub struct JavaImp {}
 
 impl LangImp<Java<'static>, JavaExtra> for JavaImp {
-    fn quote_sdk_file(
+    fn quote_lib_file(
         &self,
         context: &BridgeContext<Java<'static>, JavaExtra>,
     ) -> Result<TokenStream> {
@@ -256,7 +256,21 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
             .iter()
             .map(|name| ident!(name))
             .collect::<Vec<Ident>>();
+
+        let host_crate_underscore = ident!(&context.crate_name.replace("-", "_"));
         Ok(quote! {
+            #![allow(warnings)]
+            extern crate #host_crate_underscore;
+            extern crate jni;
+            #[macro_use]
+            extern crate serde_derive;
+            extern crate serde;
+            #[macro_use]
+            extern crate lazy_static;
+            #[macro_use]
+            extern crate log;
+            use log::Level;
+
             use jni::sys::JNI_VERSION_1_6;
             use jni::JNIEnv;
             use jni::JavaVM;
@@ -272,7 +286,7 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
             }
 
             pub fn set_java_vm(jvm: JavaVM) {
-                #(crate::java::#mod_idents::set_global_vm(jvm);)*
+                #(crate::#mod_idents::set_global_vm(jvm);)*
             }
         })
     }

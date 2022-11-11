@@ -423,8 +423,17 @@ pub(crate) fn quote_callback_struct(callback: &TraitDesc, name: &str) -> Result<
 pub struct SwiftImp {}
 
 impl LangImp<Swift<'static>, ()> for SwiftImp {
-    fn quote_sdk_file(&self, _context: &BridgeContext<Swift<'static>, ()>) -> Result<TokenStream> {
-        Ok(quote! {})
+    fn quote_lib_file(&self, context: &BridgeContext<Swift<'static>, ()>) -> Result<TokenStream> {
+        let host_crate_underscore = ident!(&context.crate_name.replace("-", "_"));
+        Ok(quote! {
+            #![allow(warnings)]
+            extern crate #host_crate_underscore;
+            #[macro_use]
+            extern crate serde_derive;
+            extern crate serde;
+            #[macro_use]
+            extern crate lazy_static;
+        })
     }
 
     fn quote_common_file(
@@ -530,7 +539,7 @@ impl LangImp<Swift<'static>, ()> for SwiftImp {
             use std::ffi::CStr;
             use std::os::raw::c_char;
             use std::ffi::CString;
-            use c::common::*;
+            use crate::common::*;
             use std::collections::HashMap;
             use std::sync::RwLock;
             use std::sync::Arc;

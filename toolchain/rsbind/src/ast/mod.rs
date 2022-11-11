@@ -19,26 +19,27 @@ const CONTRACT_DIR: &str = "src/contract";
 const IMP_DIR: &str = "src/imp";
 const CONTRACT_FILE: &str = "src/contract.rs";
 const IMP_FILE: &str = "src/imp.rs";
+const RSBIND_FILE: &str = "src/rsbind.rs";
 
 pub(crate) struct AstHandler {
     crate_name: String,
 }
 
-/// The ast result after parsing contract and imp directories.
+/// The ast result.
 #[derive(Clone)]
 pub(crate) struct AstResult {
-    /// All the traits in contract directory, key is mod name, value is all traits.
+    /// All the traits, key is mod name, value is all traits.
     pub traits: HashMap<String, Vec<TraitDesc>>,
-    /// All the struct in contract directory, key is mod name , value is all structs.
+    /// All the structs, key is mod name , value is all structs.
     pub structs: HashMap<String, Vec<StructDesc>>,
     /// All the implementations.
     pub imps: Vec<ImpDesc>,
 }
 
 struct IndexedContract {
-    /// All the traits in contract directory, key is mod name, value is all traits.
+    /// All the traits, key is mod name, value is all traits.
     pub traits: HashMap<String, Vec<TraitDesc>>,
-    /// All the struct in contract directory, key is mod name , value is all structs.
+    /// All the structs, key is mod name , value is all structs.
     pub structs: HashMap<String, Vec<StructDesc>>,
 }
 
@@ -51,18 +52,32 @@ impl AstHandler {
         let imp_dir_path = origin_prj_path.join(IMP_DIR);
         let contract_dir_path = origin_prj_path.join(CONTRACT_DIR);
 
+        let rsbind_file = origin_prj_path.join(RSBIND_FILE);
+        let contract_file = origin_prj_path.join(CONTRACT_FILE);
+        let imp_file = origin_prj_path.join(IMP_FILE);
+
         let IndexedContract { traits, structs } =
+            // contract directory.
             if contract_dir_path.is_dir() && contract_dir_path.exists() {
                 self.parse_contract_from_dir(&contract_dir_path)?
-            } else {
-                self.parse_from_file(origin_prj_path)?
+            } // contract.rs
+            else if contract_file.is_file() && contract_file.exists() {
+                self.parse_from_file(&contract_file, "contract")?
+            } // rsbind.rs
+            else {
+                self.parse_from_file(&rsbind_file, "rsbind")?
             };
 
-        let imps = if imp_dir_path.is_dir() && imp_dir_path.exists() {
+        let imps =
+        // imp dir
+        if imp_dir_path.is_dir() && imp_dir_path.exists() {
             imp::parser::parse_dir(&imp_dir_path, "imp")?
-        } else {
-            let imp_file = origin_prj_path.join(IMP_FILE);
-            imp::parser::parse(&imp_file.to_string_lossy(), "imp")?
+        } // imp.rs
+        else if imp_file.is_file() && imp_file.exists()  {
+            imp::parser::parse_from_file(&imp_file.to_string_lossy(), "imp")?
+        } //rsbind.rs
+        else {
+            imp::parser::parse_from_file(&rsbind_file.to_string_lossy(), "rsbind")?
         };
 
         Ok(AstResult {
@@ -102,15 +117,13 @@ impl AstHandler {
         Ok(IndexedContract { traits, structs })
     }
 
-    fn parse_from_file(&self, origin_prj_path: &Path) -> Result<IndexedContract> {
-        let contract_file = origin_prj_path.join(CONTRACT_FILE);
-
+    fn parse_from_file(&self, contract_file: &Path, mod_mame: &str) -> Result<IndexedContract> {
         let mut traits = HashMap::new();
         let mut structs = HashMap::new();
 
-        let results = contract::parser::parse(self.crate_name.clone(), &contract_file, "contract")?;
-        traits.insert("contract".to_owned(), results.traits);
-        structs.insert("contract".to_owned(), results.structs);
+        let results = contract::parser::parse(self.crate_name.clone(), &contract_file, mod_mame)?;
+        traits.insert(mod_mame.to_owned(), results.traits);
+        structs.insert(mod_mame.to_owned(), results.structs);
 
         Ok(IndexedContract { traits, structs })
     }

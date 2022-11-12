@@ -35,7 +35,7 @@ impl LangGen for JavaGen {
             lang_name: "java".to_string(),
             ast: &self.ast,
             bridge_dir: path,
-            crate_name: self.namespace.clone(),
+            crate_name: self.crate_name.clone(),
             lang_imp: Box::new(JavaImp {}),
             extra: JavaExtra {
                 namespace: self.namespace.clone(),

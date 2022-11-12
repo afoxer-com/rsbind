@@ -96,7 +96,7 @@ pub(crate) struct BridgeContext<'a, Lang, Extra> {
 }
 
 pub(crate) trait LangImp<Lang, Extra> {
-    fn quote_sdk_file(&self, context: &BridgeContext<Lang, Extra>) -> Result<TokenStream>;
+    fn quote_lib_file(&self, context: &BridgeContext<Lang, Extra>) -> Result<TokenStream>;
     fn quote_common_file(&self, context: &BridgeContext<Lang, Extra>) -> Result<TokenStream>;
     fn quote_use_part(&self, context: &ModContext<Lang, Extra>) -> Result<TokenStream>;
     fn quote_common_part(&self, context: &ModContext<Lang, Extra>) -> Result<TokenStream>;

@@ -53,19 +53,19 @@ impl<'a> Unpack<'a> {
             .map_err(|e| FileError(format!("write rust project Cargo.toml error {:?}", e)))?;
 
         // replace the crate name in lib.rs.
-        let lib_file = self.path.join("src").join("lib.rs");
-        let lib_text = fs::read_to_string(&lib_file)
-            .map_err(|e| FileError(format!("read lib.rs error, {:?}", e)))?;
-
-        let lib_replaced =
-            lib_text.replace(&format!("$({}-host_crate)", MAGIC_NUM), self.host_crate);
-        let lib_replaced = lib_replaced.replace(
-            &format!("$({}-host_crate_underscore)", MAGIC_NUM),
-            &self.host_crate.replace('-', "_"),
-        );
-
-        fs::write(lib_file, lib_replaced)
-            .map_err(|e| FileError(format!("write lib.rs error, {}", e)))?;
+        // let lib_file = self.path.join("src").join("lib.rs");
+        // let lib_text = fs::read_to_string(&lib_file)
+        //     .map_err(|e| FileError(format!("read lib.rs error, {:?}", e)))?;
+        //
+        // let lib_replaced =
+        //     lib_text.replace(&format!("$({}-host_crate)", MAGIC_NUM), self.host_crate);
+        // let lib_replaced = lib_replaced.replace(
+        //     &format!("$({}-host_crate_underscore)", MAGIC_NUM),
+        //     &self.host_crate.replace('-', "_"),
+        // );
+        //
+        // fs::write(lib_file, lib_replaced)
+        //     .map_err(|e| FileError(format!("write lib.rs error, {}", e)))?;
 
         Ok(())
     }

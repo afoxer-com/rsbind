@@ -348,7 +348,6 @@ pub(crate) fn callback_to_c_pointers_convert(callback: &TraitDesc) -> Result<Tok
         }
     }
 
-    let _free_fn_ident = ident!(&format!("{}_free_rust", &callback.crate_name));
     method_result = quote! {
         #method_result
 

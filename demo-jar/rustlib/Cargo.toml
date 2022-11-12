@@ -1,5 +1,5 @@
 [package]
-name = "jar_rustlib"
+name = "jar-rustlib"
 version = "0.1.0"
 authors = ["sidney.wang <sidney.wang@foxmail.com>"]
 

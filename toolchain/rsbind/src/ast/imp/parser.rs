@@ -38,7 +38,7 @@ pub(crate) fn parse_dir(dir: &Path, mod_path: &str) -> Result<Vec<ImpDesc>> {
             mod_path,
             file_path.file_stem().unwrap().to_string_lossy()
         );
-        let one_file_result = parse(path_str, &path)?;
+        let one_file_result = parse_from_file(path_str, &path)?;
         for each in one_file_result {
             result.push(each)
         }
@@ -49,7 +49,7 @@ pub(crate) fn parse_dir(dir: &Path, mod_path: &str) -> Result<Vec<ImpDesc>> {
 ///
 /// parse a implementation file to description info.
 ///
-pub(crate) fn parse(file: &str, mod_path: &str) -> Result<Vec<ImpDesc>> {
+pub(crate) fn parse_from_file(file: &str, mod_path: &str) -> Result<Vec<ImpDesc>> {
     // open file.
     let mut real_file = fs::File::open(file).map_err(|e| ParseError(e.to_string()))?;
 

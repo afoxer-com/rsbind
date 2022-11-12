@@ -22,9 +22,8 @@ type TokenResult = Result<TokenStream>;
 /// Bridge module is a rust module used for bridging rust code and native code.
 ///
 /// We assume that bridge module have several files:
-/// 1. sdk.rs
+/// 1. lib.rs
 /// 2. common.rs
-/// 3. mod.rs
 /// 4. bridge files for each mod.
 ///
 /// Bridge files have several parts:
@@ -77,7 +76,7 @@ impl<'a, Lang, Extra> BaseBridgeGen<'a, Lang, Extra> {
 /// Used for generating all files.
 ///
 pub(crate) struct FilesGenerator<Lang, Extra> {
-    pub(crate) quote_sdk_file: Box<dyn Fn(&BridgeContext<Lang, Extra>) -> TokenResult>,
+    pub(crate) quote_lib_file: Box<dyn Fn(&BridgeContext<Lang, Extra>) -> TokenResult>,
     pub(crate) quote_common_file: Box<dyn Fn(&BridgeContext<Lang, Extra>) -> TokenResult>,
     pub(crate) bridge_file_generator: BridgeFileGenerator<Lang, Extra>,
 }
@@ -108,18 +107,8 @@ impl<Lang, Extra> FilesGenerator<Lang, Extra> {
             bridges.push(out_mod_name)
         }
 
-        // generate sdk.rs
-        let tokens = (*self.quote_sdk_file)(ctx)?;
-        file_vec.push(("sdk.rs".to_owned(), tokens));
-
-        // generate common.rs
-        let tokens = (*self.quote_common_file)(ctx)?;
-        file_vec.push(("common.rs".to_owned(), tokens));
-
-        // generate mod.rs
-        bridges.push("sdk".to_owned());
+        // generate lib.rs
         bridges.push("common".to_owned());
-
         let bridge_ident = bridges
             .iter()
             .map(|bridge| ident!(bridge))
@@ -128,7 +117,18 @@ impl<Lang, Extra> FilesGenerator<Lang, Extra> {
         let bridge_mod_tokens = quote! {
             #(pub mod #bridge_ident;)*
         };
-        file_vec.push(("mod.rs".to_owned(), bridge_mod_tokens));
+
+        let sdk_tokens = (*self.quote_lib_file)(ctx)?;
+        let lib_tokens = quote! {
+            #sdk_tokens
+            #bridge_mod_tokens
+        };
+        file_vec.push(("lib.rs".to_owned(), lib_tokens));
+
+        // generate common.rs
+        let tokens = (*self.quote_common_file)(ctx)?;
+        file_vec.push(("common.rs".to_owned(), tokens));
+
         Ok(file_vec)
     }
 }
@@ -136,7 +136,7 @@ impl<Lang, Extra> FilesGenerator<Lang, Extra> {
 impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
     fn default() -> Self {
         FilesGenerator {
-            quote_sdk_file: Box::new(|ctx| ctx.lang_imp.quote_sdk_file(ctx)),
+            quote_lib_file: Box::new(|ctx| ctx.lang_imp.quote_lib_file(ctx)),
             quote_common_file: Box::new(|ctx| ctx.lang_imp.quote_common_file(ctx)),
             bridge_file_generator: BridgeFileGenerator {
                 bridge_code_generator: BridgeCodeGenerator {
@@ -250,6 +250,8 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                     println!("[bridge]  🔆  begin quote use part.");
                     let mut merge = ctx.bridge_ctx.lang_imp.quote_use_part(ctx).unwrap();
 
+                    let origin_crate = ctx.bridge_ctx.crate_name.to_owned();
+                    let crate_ident = ident!(&origin_crate.replace("-", "_"));
                     for trait_desc in ctx.traits.iter() {
                         if trait_desc.is_callback {
                             println!("Skip callback trait {}", &trait_desc.name);
@@ -273,8 +275,8 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                                 .collect();
 
                             let use_part = quote! {
-                                use #(#trait_mod_splits::)**;
-                                use #(#imp_mod_splits::)**;
+                                use #crate_ident::#(#trait_mod_splits::)**;
+                                use #crate_ident::#(#imp_mod_splits::)**;
                             };
 
                             merge = quote! {
@@ -297,8 +299,8 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
 ///
 pub(crate) struct BridgeFileGenerator<Lang, Extra> {
     pub(crate) bridge_code_generator: BridgeCodeGenerator<Lang, Extra>,
-    pub(crate) quote_use_part: Box<dyn Fn(&ModContext<Lang, Extra>) -> Result<TokenStream>>,
-    pub(crate) quote_common_part: Box<dyn Fn(&ModContext<Lang, Extra>) -> Result<TokenStream>>,
+    pub(crate) quote_use_part: Box<dyn Fn(&ModContext<Lang, Extra>) -> TokenResult>,
+    pub(crate) quote_common_part: Box<dyn Fn(&ModContext<Lang, Extra>) -> TokenResult>,
 }
 
 impl<Lang, Extra> BridgeFileGenerator<Lang, Extra> {
@@ -335,8 +337,8 @@ pub(crate) struct BridgeCodeGenerator<Lang, Extra> {
 }
 
 impl<Lang, Extra> BridgeCodeGenerator<Lang, Extra> {
-    fn gen_bridge_code(&self, ctx: &ModContext<Lang, Extra>) -> Vec<Result<TokenStream>> {
-        let mut results: Vec<Result<TokenStream>> = vec![];
+    fn gen_bridge_code(&self, ctx: &ModContext<Lang, Extra>) -> Vec<TokenResult> {
+        let mut results: Vec<TokenResult> = vec![];
 
         for trait_ in ctx.traits.iter() {
             if trait_.is_callback {
@@ -407,10 +409,7 @@ pub(crate) struct TraitCodeGenerator<Lang, Extra> {
 }
 
 impl<Lang, Extra> TraitCodeGenerator<Lang, Extra> {
-    pub(crate) fn quote_for_one_trait(
-        &self,
-        ctx: &ServiceContext<Lang, Extra>,
-    ) -> Result<TokenStream> {
+    pub(crate) fn quote_for_one_trait(&self, ctx: &ServiceContext<Lang, Extra>) -> TokenResult {
         println!(
             "[bridge][{}]  🔆  begin generate bridge on trait.",
             &ctx.trait_.name
@@ -452,16 +451,14 @@ impl<Lang, Extra> TraitCodeGenerator<Lang, Extra> {
 /// Used for generate code for one trait method.
 ///
 pub(crate) struct TraitMethodGenerator<Lang, Extra> {
-    pub(crate) quote_method_sig: Box<dyn Fn(&MethodContext<Lang, Extra>) -> Result<TokenStream>>,
-    pub(crate) quote_arg_convert: Box<dyn Fn(&ArgumentContext<Lang, Extra>) -> Result<TokenStream>>,
-    pub(crate) quote_method_imp_call:
-        Box<dyn Fn(&MethodContext<Lang, Extra>) -> Result<TokenStream>>,
-    pub(crate) quote_method_return_convert:
-        Box<dyn Fn(&MethodContext<Lang, Extra>) -> Result<TokenStream>>,
+    pub(crate) quote_method_sig: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
+    pub(crate) quote_arg_convert: Box<dyn Fn(&ArgumentContext<Lang, Extra>) -> TokenResult>,
+    pub(crate) quote_method_imp_call: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
+    pub(crate) quote_method_return_convert: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
 }
 
 impl<Lang, Extra> TraitMethodGenerator<Lang, Extra> {
-    fn quote_for_one_trait_method(&self, ctx: &MethodContext<Lang, Extra>) -> Result<TokenStream> {
+    fn quote_for_one_trait_method(&self, ctx: &MethodContext<Lang, Extra>) -> TokenResult {
         println!(
             "[bridge][{}.{}]  🔆 ️begin quote method.",
             &ctx.service_ctx.trait_.name, &ctx.method.name
@@ -511,10 +508,7 @@ pub(crate) struct CallbackCodeGenerator<Lang, Extra> {
 }
 
 impl<Lang, Extra> CallbackCodeGenerator<Lang, Extra> {
-    fn quote_for_one_callback(
-        &self,
-        context: &CallbackContext<Lang, Extra>,
-    ) -> Result<TokenStream> {
+    fn quote_for_one_callback(&self, context: &CallbackContext<Lang, Extra>) -> TokenResult {
         context
             .mod_ctx
             .bridge_ctx
@@ -529,7 +523,7 @@ pub(crate) struct StructCodeGenerator<Lang, Extra> {
 }
 
 impl<Lang, Extra> StructCodeGenerator<Lang, Extra> {
-    fn quote_for_one_struct(&self, context: &StructContext<Lang, Extra>) -> Result<TokenStream> {
+    fn quote_for_one_struct(&self, context: &StructContext<Lang, Extra>) -> TokenResult {
         context
             .mod_ctx
             .bridge_ctx

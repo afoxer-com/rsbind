@@ -86,7 +86,7 @@ impl<'a> BuildProcess for AndroidProcess<'a> {
             unpack.unpack()?;
         }
 
-        let bridge_c_src_path = self.bridge_prj_path.join("src").join("java");
+        let bridge_c_src_path = self.bridge_prj_path.join("src");
         fs::create_dir_all(&bridge_c_src_path)?;
 
         JavaGen {

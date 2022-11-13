@@ -128,12 +128,12 @@ uploadService.upload("to/your/path", new UploadProgress() {
 1. [Setup rust environment](/docs/env.md).
 2. Install 'rsbind'. ```cargo install --git https://github.com/rs-bind/rsbind.git --force -- rsbind```
 3. Create a Rust library, which contains mod for exposing your services. 
-- structures:
-![Rsbind mod](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/rsbind_structure.png)
-rsbind mod is where you expose your services. 
-In this structure, api and implementation is all in one mod, 
-rsbind will parse all trait and impl, and generate binding code. 
-You need move unnecessary code into other files. 
+- structures:  
+![Rsbind mod](https://raw.githubusercontent.com/sidneywang/rsbind/main/docs/rsbind_structure.png)  
+rsbind mod is where you expose your services.   
+In this structure, api and implementation is all in one mod,
+rsbind will parse all trait and impl, and generate binding code.
+You need move unnecessary code into other files.   
 
 Maybe you want to split your api and implementation, then you can use these two structure.
 - First structure:  
@@ -251,12 +251,12 @@ so_name = "demo"
 ```
 
 # Supported Types
-- Parameters: Basic types, Callback, Vec
-- Return: Basic types, Struct, Callback, Vec
+- Parameters: Basic types, String, Struct, Callback, Vec
+- Return: Basic types, String, Struct, Callback, Vec
 
 supported types in Callback:
-- Parameters: Basic types, Vec, Struct
-- Return: Basic types, Vec.
+- Parameters: Basic types, String, Struct, Vec, Callback (Yes! you can pass callback in Callback itself)
+- Return: Basic types, String, Struct, Vec, Callback (Yes! you can return callback in Callback itself).
 
 Will support it in near future.
 

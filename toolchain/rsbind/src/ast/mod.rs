@@ -36,6 +36,16 @@ pub(crate) struct AstResult {
     pub imps: Vec<ImpDesc>,
 }
 
+impl Default for AstResult {
+    fn default() -> Self {
+        AstResult {
+            traits: HashMap::default(),
+            structs: HashMap::default(),
+            imps: vec![],
+        }
+    }
+}
+
 struct IndexedContract {
     /// All the traits, key is mod name, value is all traits.
     pub traits: HashMap<String, Vec<TraitDesc>>,
@@ -64,8 +74,11 @@ impl AstHandler {
             else if contract_file.is_file() && contract_file.exists() {
                 self.parse_from_file(&contract_file, "contract")?
             } // rsbind.rs
-            else {
+            else if rsbind_file.is_file() && rsbind_file.exists() {
                 self.parse_from_file(&rsbind_file, "rsbind")?
+            } else {
+                println!("Err: No contract file in Rust found, should be contract.rs or contract dir or rsbind.rs");
+                return Ok(AstResult::default())
             };
 
         let imps =
@@ -76,8 +89,11 @@ impl AstHandler {
         else if imp_file.is_file() && imp_file.exists()  {
             imp::parser::parse_from_file(&imp_file.to_string_lossy(), "imp")?
         } //rsbind.rs
-        else {
+        else if rsbind_file.is_file() && rsbind_file.exists() {
             imp::parser::parse_from_file(&rsbind_file.to_string_lossy(), "rsbind")?
+        } else {
+            println!("Err: No implementation file in Rust found, should be imp.rs or imp dir or rsbind.rs");
+            return Ok(AstResult::default())
         };
 
         Ok(AstResult {

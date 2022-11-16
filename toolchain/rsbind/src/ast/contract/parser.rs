@@ -18,6 +18,15 @@ pub(crate) struct ContractResult {
     pub(crate) structs: Vec<StructDesc>,
 }
 
+impl Default for ContractResult {
+    fn default() -> Self {
+        ContractResult {
+            traits: vec![],
+            structs: vec![],
+        }
+    }
+}
+
 ///
 /// parse a syn file to TraitDesc which depicting the structure of the trait.
 ///
@@ -160,7 +169,8 @@ pub(crate) fn parse_from_str(ctx: &ParseContext, src: &str) -> Result<ContractRe
             structs: struct_descs,
         })
     } else {
-        Err(ParseError("Can't find invalid trait and struct.".to_string()).into())
+        println!("Err: Can't find invalid trait and struct.");
+        Ok(ContractResult::default())
     }
 }
 

@@ -267,7 +267,7 @@ Trait:
 | String                                                     | return and argument |                                                                                                   |
 | struct                                                     | return and argument |                                                                                                   |
 | Vec<i8/u8/i32/u32/i64/u64<br/>/f32/f64/bool/String/struct> | return and argument |                                                                                                   |
-| Box<dyn Callback>                                          | return and argument | Callback is a trait which functions have &self.<br/>**Yes! you can pass callback in Callback itself** |
+| Box\<dyn Callback\>                                        | return and argument | Callback is a trait which functions have &self.<br/>**Yes! you can pass callback in Callback itself** |
 
 Struct can support all the types above without Callback.
 

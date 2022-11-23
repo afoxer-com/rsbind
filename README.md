@@ -231,7 +231,7 @@ features_def = ["xxxx=[]"]
 
 [ios]
 rustc_param = ""
-arch = ["armv7-apple-ios", "i386-apple-ios", "x86_64-apple-ios"]
+arch = ["aarch64-apple-ios", "x86_64-apple-ios"]
 release = true
 features_def = []
 
@@ -251,14 +251,25 @@ so_name = "demo"
 ```
 
 # Supported Types
-- Parameters: Basic types, String, Struct, Callback, Vec
-- Return: Basic types, String, Struct, Callback, Vec
 
-supported types in Callback:
-- Parameters: Basic types, String, Struct, Vec, Callback (Yes! you can pass callback in Callback itself)
-- Return: Basic types, String, Struct, Vec, Callback (Yes! you can return callback in Callback itself).
+Trait:
+- Normal trait is a trait which functions have no &self parameter.
+- Callback is a trait which functions have &self parameter.
 
-Will support it in near future.
+| type                                                       | return/argument     | Note                                                                                              |
+|------------------------------------------------------------|---------------------|---------------------------------------------------------------------------------------------------|
+| i8/u8                                                      | return and argument |                                                                                                   |
+| i32/u32                                                    | return and argument |                                                                                                   |
+| i64/u64                                                    | return and argument |                                                                                                   |
+| f32                                                        | return and argument |                                                                                                   |
+| f64                                                        | return and argument |                                                                                                   |
+| bool                                                       | return and argument |                                                                                                   |
+| String                                                     | return and argument |                                                                                                   |
+| struct                                                     | return and argument |                                                                                                   |
+| Vec<i8/u8/i32/u32/i64/u64<br/>/f32/f64/bool/String/struct> | return and argument |                                                                                                   |
+| Box<dyn Callback>                                          | return and argument | Callback is a trait which functions have &self.<br/>**Yes! you can pass callback in Callback itself** |
+
+Struct can support all the types above without Callback.
 
 It is different to define a callback and a normal trait.
 It should contains &self in every callback but not in normal trait.

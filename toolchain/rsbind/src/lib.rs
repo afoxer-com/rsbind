@@ -27,6 +27,7 @@ use crate::android::config::Android;
 use crate::android::process::AndroidProcess;
 use crate::ast::AstResult;
 use crate::base::process::*;
+use crate::config::Config;
 use crate::errors::*;
 use crate::ios::config::Ios;
 use crate::ios::process::IosProcess;
@@ -167,11 +168,11 @@ impl Bind {
         let crate_name = self.parse_crate_name()?;
 
         if let Action::GenAst = self.action {
-            self.parse_ast(crate_name)?;
+            self.parse_ast(crate_name, &config)?;
             return Ok(());
         }
 
-        let ast = &self.get_ast_if_need(crate_name.clone())?;
+        let ast = &self.get_ast_if_need(crate_name.clone(), &config)?;
         match self.target {
             Target::Ios => {
                 self.gen_for_ios(&crate_name, ast, config)?;
@@ -195,9 +196,11 @@ impl Bind {
         Ok(())
     }
 
-    fn get_ast_if_need(&self, crate_name: String) -> Result<AstResult> {
+    fn get_ast_if_need(&self, crate_name: String, config: &Option<Config>) -> Result<AstResult> {
         match self.action {
-            Action::GenBridge | Action::GenArtifactCode | Action::All => self.parse_ast(crate_name),
+            Action::GenBridge | Action::GenArtifactCode | Action::All => {
+                self.parse_ast(crate_name, config)
+            }
             _ => {
                 use std::collections::HashMap;
                 let ast_result = AstResult {
@@ -210,14 +213,14 @@ impl Bind {
         }
     }
 
-    fn parse_ast(&self, crate_name: String) -> Result<AstResult> {
+    fn parse_ast(&self, crate_name: String, config: &Option<Config>) -> Result<AstResult> {
         let prj_path = PathBuf::from(&self.prj_path);
         if self.ast_path.exists() {
             fs::remove_dir_all(&self.ast_path)?;
         }
         fs::create_dir_all(&self.ast_path)?;
         ast::AstHandler::new(crate_name)
-            .parse(&prj_path)?
+            .parse(&prj_path, config)?
             .flush(&self.ast_path)
     }
 

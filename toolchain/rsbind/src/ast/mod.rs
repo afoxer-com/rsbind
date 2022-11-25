@@ -3,6 +3,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
+use crate::Config;
 use syn::__private::str;
 
 use crate::errors::ErrorKind::*;
@@ -14,12 +15,6 @@ use self::imp::desc::*;
 pub(crate) mod contract;
 pub(crate) mod imp;
 pub(crate) mod types;
-
-const CONTRACT_DIR: &str = "src/contract";
-const IMP_DIR: &str = "src/imp";
-const CONTRACT_FILE: &str = "src/contract.rs";
-const IMP_FILE: &str = "src/imp.rs";
-const RSBIND_FILE: &str = "src/rsbind.rs";
 
 pub(crate) struct AstHandler {
     crate_name: String,
@@ -58,36 +53,69 @@ impl AstHandler {
         AstHandler { crate_name }
     }
 
-    pub(crate) fn parse(&self, origin_prj_path: &Path) -> Result<AstResult> {
-        let imp_dir_path = origin_prj_path.join(IMP_DIR);
-        let contract_dir_path = origin_prj_path.join(CONTRACT_DIR);
+    pub(crate) fn parse(
+        &self,
+        origin_prj_path: &Path,
+        config: &Option<Config>,
+    ) -> Result<AstResult> {
+        let mut contract_dir: String = "src/contract".to_string();
+        let mut imp_dir: String = "src/imp".to_string();
+        let mut contract_file: String = "src/contract.rs".to_string();
+        let mut imp_file: String = "src/imp.rs".to_string();
+        let rsbind_file: String = "src/rsbind.rs".to_string();
 
-        let rsbind_file = origin_prj_path.join(RSBIND_FILE);
-        let contract_file = origin_prj_path.join(CONTRACT_FILE);
-        let imp_file = origin_prj_path.join(IMP_FILE);
+        let mut contract_str = "contract".to_string();
+        let mut imp_str = "imp".to_string();
+        if let &Some(ref cfg) = config {
+            if let Some(ref common) = cfg.common {
+                if let Some(ref contract_name_str) = common.contract_name {
+                    if !contract_name_str.is_empty() {
+                        contract_dir = format!("src/{}", contract_name_str);
+                        contract_file = format!("src/{}.rs", contract_name_str);
+                        contract_str = contract_name_str.clone();
+                    }
+                }
 
-        let IndexedContract { traits, structs } =
-            // contract directory.
-            if contract_dir_path.is_dir() && contract_dir_path.exists() {
-                self.parse_contract_from_dir(&contract_dir_path)?
-            } // contract.rs
-            else if contract_file.is_file() && contract_file.exists() {
-                self.parse_from_file(&contract_file, "contract")?
-            } // rsbind.rs
-            else if rsbind_file.is_file() && rsbind_file.exists() {
-                self.parse_from_file(&rsbind_file, "rsbind")?
-            } else {
-                println!("Err: No contract file in Rust found, should be contract.rs or contract dir or rsbind.rs");
-                return Ok(AstResult::default())
-            };
+                if let Some(ref imp_name_str) = common.imp_name {
+                    if !imp_name_str.is_empty() {
+                        imp_dir = format!("src/{}", imp_name_str);
+                        imp_file = format!("src/{}.rs", imp_name_str);
+                        imp_str = imp_name_str.clone();
+                    }
+                }
+            }
+        }
+
+        let imp_dir_path = origin_prj_path.join(imp_dir);
+        let contract_dir_path = origin_prj_path.join(contract_dir);
+        let contract_file = origin_prj_path.join(contract_file);
+        let imp_file = origin_prj_path.join(imp_file);
+        let rsbind_file = origin_prj_path.join(rsbind_file);
+
+        let IndexedContract { traits, structs } = if contract_dir_path.is_dir()
+            && contract_dir_path.exists()
+        {
+            self.parse_contract_from_dir(&contract_dir_path, &contract_str)?
+        }
+        // contract.rs
+        else if contract_file.is_file() && contract_file.exists() {
+            self.parse_from_file(&contract_file, &contract_str)?
+        }
+        // rsbind.rs
+        else if rsbind_file.is_file() && rsbind_file.exists() {
+            self.parse_from_file(&rsbind_file, "rsbind")?
+        } else {
+            println!("Err: No contract file in Rust found, should be contract.rs or contract dir or rsbind.rs");
+            return Ok(AstResult::default());
+        };
 
         let imps =
         // imp dir
         if imp_dir_path.is_dir() && imp_dir_path.exists() {
-            imp::parser::parse_dir(&imp_dir_path, "imp")?
+            imp::parser::parse_dir(&imp_dir_path, &imp_str)?
         } // imp.rs
         else if imp_file.is_file() && imp_file.exists()  {
-            imp::parser::parse_from_file(&imp_file.to_string_lossy(), "imp")?
+            imp::parser::parse_from_file(&imp_file.to_string_lossy(), &imp_str)?
         } //rsbind.rs
         else if rsbind_file.is_file() && rsbind_file.exists() {
             imp::parser::parse_from_file(&rsbind_file.to_string_lossy(), "rsbind")?
@@ -103,7 +131,11 @@ impl AstHandler {
         })
     }
 
-    fn parse_contract_from_dir(&self, contract_dir_path: &Path) -> Result<IndexedContract> {
+    fn parse_contract_from_dir(
+        &self,
+        contract_dir_path: &Path,
+        contract_name: &str,
+    ) -> Result<IndexedContract> {
         let mut traits = HashMap::new();
         let mut structs = HashMap::new();
 
@@ -123,7 +155,7 @@ impl AstHandler {
                 .to_str()
                 .unwrap()
                 .to_string();
-            let mod_path = format!("contract::{}", &mod_name);
+            let mod_path = format!("{}::{}", contract_name, &mod_name);
             let results =
                 contract::parser::parse(self.crate_name.clone(), &path, &mod_path).unwrap();
             traits.insert(mod_name.to_owned(), results.traits);

@@ -16,6 +16,13 @@ pub struct Config {
     pub ios: Option<Ios>,
     pub mac: Option<Mac>,
     pub jar: Option<Jar>,
+    pub common: Option<Common>,
+}
+
+#[derive(Clone, Deserialize, Debug)]
+pub struct Common {
+    pub contract_name: Option<String>,
+    pub imp_name: Option<String>,
 }
 
 ///

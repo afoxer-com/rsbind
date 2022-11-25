@@ -1,6 +1,6 @@
-use contract::test_contract1::DemoStruct;
-use contract::test_contract1::DemoTrait;
-use contract::test_contract1::{DemoCallback, DemoCallback2, DemoTrait2};
+use api::test_contract1::DemoStruct;
+use api::test_contract1::DemoTrait;
+use api::test_contract1::{DemoCallback, DemoCallback2, DemoTrait2};
 
 use log::{Level, LevelFilter};
 

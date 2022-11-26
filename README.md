@@ -228,17 +228,23 @@ namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
 ext_lib = []
 features_def = ["xxxx=[]"]
+#contract_name = "android_api"
+#imp_name = "android_imp"
 
 [ios]
 rustc_param = ""
 arch = ["aarch64-apple-ios", "x86_64-apple-ios"]
 release = true
 features_def = []
+#contract_name = "ios_api"
+#imp_name = "ios_imp"
 
 [mac]
 rustc_param = ""
 release = true
 features_def = []
+#contract_name = "mac_api"
+#imp_name = "mac_imp"
 
 [jar]
 rustc_param = ""
@@ -247,6 +253,8 @@ namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
 #ext_lib = []
 #features_def = ["xxxx=[]"]
+#contract_name = "jar_api"
+#imp_name = "jar_imp"
 
 ```
 

@@ -13,7 +13,7 @@ fn main() {
         Some(real) => real,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/mac/jar/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/jar ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }
@@ -28,11 +28,10 @@ fn main() {
         "android" => Target::Android,
         "ios" => Target::Ios,
         "mac" => Target::Mac,
-        "all" => Target::All,
         "jar" => Target::Jar,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/mac/jar/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/jar ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }
@@ -42,7 +41,7 @@ fn main() {
         Some(option) => option,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/mac/jar/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/jar ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }
@@ -57,7 +56,7 @@ fn main() {
         "all" => Action::All,
         _ => {
             eprintln!(
-                "Usage: rsbind path-to-project android/ios/mac/jar/all ast/bridge/artifact/header/build/all"
+                "Usage: rsbind path-to-project android/ios/mac/jar ast/bridge/artifact/header/build/all"
             );
             process::exit(1);
         }

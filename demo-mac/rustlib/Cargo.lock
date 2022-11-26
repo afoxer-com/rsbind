@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "mac_rustlib"
+name = "mac-rustlib"
 version = "0.1.0"
 dependencies = [
  "log",

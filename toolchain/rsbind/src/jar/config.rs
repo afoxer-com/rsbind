@@ -13,6 +13,8 @@ pub struct Jar {
     pub dylib_name: Option<String>,
     pub ext_lib: Option<Vec<String>>,
     pub features_def: Option<Vec<String>>,
+    pub contract_name: Option<String>,
+    pub imp_name: Option<String>,
 }
 
 impl Default for Jar {
@@ -25,6 +27,8 @@ impl Default for Jar {
             dylib_name: Some(DYLIB_NAME.to_owned()),
             ext_lib: None,
             features_def: None,
+            contract_name: None,
+            imp_name: None
         }
     }
 }

@@ -5,7 +5,7 @@ namespace = "com.afoxer.xxx.ffi"
 so_name = "demo"
 #ext_lib = []
 #features_def = ["xxxx=[]"]
-
-[common]
 contract_name = "api"
 imp_name = "implementation"
+
+[common]

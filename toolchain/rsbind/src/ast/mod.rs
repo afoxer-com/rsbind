@@ -3,7 +3,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use crate::Config;
+use crate::{Config, Target};
 use syn::__private::str;
 
 use crate::errors::ErrorKind::*;
@@ -57,34 +57,96 @@ impl AstHandler {
         &self,
         origin_prj_path: &Path,
         config: &Option<Config>,
+        target: &Target,
     ) -> Result<AstResult> {
-        let mut contract_dir: String = "src/contract".to_string();
-        let mut imp_dir: String = "src/imp".to_string();
-        let mut contract_file: String = "src/contract.rs".to_string();
-        let mut imp_file: String = "src/imp.rs".to_string();
-        let rsbind_file: String = "src/rsbind.rs".to_string();
-
         let mut contract_str = "contract".to_string();
         let mut imp_str = "imp".to_string();
+
+        //TODO need refactor!!
         if let &Some(ref cfg) = config {
             if let Some(ref common) = cfg.common {
                 if let Some(ref contract_name_str) = common.contract_name {
                     if !contract_name_str.is_empty() {
-                        contract_dir = format!("src/{}", contract_name_str);
-                        contract_file = format!("src/{}.rs", contract_name_str);
                         contract_str = contract_name_str.clone();
                     }
                 }
 
                 if let Some(ref imp_name_str) = common.imp_name {
                     if !imp_name_str.is_empty() {
-                        imp_dir = format!("src/{}", imp_name_str);
-                        imp_file = format!("src/{}.rs", imp_name_str);
                         imp_str = imp_name_str.clone();
                     }
                 }
             }
+
+            match target {
+                Target::Android => {
+                    if let Some(ref android) = cfg.android {
+                        if let Some(ref contract_name_str) = android.contract_name {
+                            if !contract_name_str.is_empty() {
+                                contract_str = contract_name_str.clone();
+                            }
+                        }
+
+                        if let Some(ref imp_name_str) = android.imp_name {
+                            if !imp_name_str.is_empty() {
+                                imp_str = imp_name_str.clone();
+                            }
+                        }
+                    }
+                }
+                Target::Ios => {
+                    if let Some(ref ios) = cfg.ios {
+                        if let Some(ref contract_name_str) = ios.contract_name {
+                            if !contract_name_str.is_empty() {
+                                contract_str = contract_name_str.clone();
+                            }
+                        }
+
+                        if let Some(ref imp_name_str) = ios.imp_name {
+                            if !imp_name_str.is_empty() {
+                                imp_str = imp_name_str.clone();
+                            }
+                        }
+                    }
+                }
+                Target::Mac => {
+                    if let Some(ref mac) = cfg.mac {
+                        if let Some(ref contract_name_str) = mac.contract_name {
+                            if !contract_name_str.is_empty() {
+                                contract_str = contract_name_str.clone();
+                            }
+                        }
+
+                        if let Some(ref imp_name_str) = mac.imp_name {
+                            if !imp_name_str.is_empty() {
+                                imp_str = imp_name_str.clone();
+                            }
+                        }
+                    }
+                }
+                Target::Jar => {
+                    if let Some(ref jar) = cfg.jar {
+                        if let Some(ref contract_name_str) = jar.contract_name {
+                            if !contract_name_str.is_empty() {
+                                contract_str = contract_name_str.clone();
+                            }
+                        }
+
+                        if let Some(ref imp_name_str) = jar.imp_name {
+                            if !imp_name_str.is_empty() {
+                                imp_str = imp_name_str.clone();
+                            }
+                        }
+                    }
+                }
+            }
         }
+
+        let mut contract_dir: String = format!("src/{}", &contract_str);
+        let mut imp_dir: String = format!("src/{}", &imp_str);
+        let mut contract_file: String = format!("src/{}.rs", &contract_str);
+        let mut imp_file: String = format!("src/{}.rs", &imp_str);
+        let rsbind_file: String = "src/rsbind.rs".to_string();
 
         let imp_dir_path = origin_prj_path.join(imp_dir);
         let contract_dir_path = origin_prj_path.join(contract_dir);

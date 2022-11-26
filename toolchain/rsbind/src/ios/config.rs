@@ -9,6 +9,8 @@ pub struct Ios {
     pub arch: Option<Vec<String>>,
     pub release: Option<bool>,
     pub features_def: Option<Vec<String>>,
+    pub contract_name: Option<String>,
+    pub imp_name: Option<String>,
 }
 
 impl Default for Ios {
@@ -20,6 +22,8 @@ impl Default for Ios {
             arch,
             release: Some(true),
             features_def: None,
+            contract_name: None,
+            imp_name: None
         }
     }
 }

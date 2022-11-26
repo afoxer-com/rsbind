@@ -6,6 +6,8 @@ pub struct Mac {
     pub rustc_param: Option<String>,
     pub release: Option<bool>,
     pub features_def: Option<Vec<String>>,
+    pub contract_name: Option<String>,
+    pub imp_name: Option<String>,
 }
 
 impl Default for Mac {
@@ -14,6 +16,8 @@ impl Default for Mac {
             rustc_param: None,
             release: Some(true),
             features_def: None,
+            contract_name: None,
+            imp_name: None
         }
     }
 }

@@ -86,7 +86,6 @@ pub enum Target {
     Ios,
     Mac,
     Jar,
-    All,
 }
 
 pub enum Action {
@@ -186,12 +185,6 @@ impl Bind {
             Target::Jar => {
                 self.gen_for_jar(&crate_name, ast, config)?;
             }
-            Target::All => {
-                self.gen_for_ios(&crate_name, ast, config.clone())?;
-                self.gen_for_android(&crate_name, ast, config.clone())?;
-                self.gen_for_mac(&crate_name, ast, config.clone())?;
-                self.gen_for_jar(&crate_name, ast, config)?;
-            }
         };
         Ok(())
     }
@@ -220,7 +213,7 @@ impl Bind {
         }
         fs::create_dir_all(&self.ast_path)?;
         ast::AstHandler::new(crate_name)
-            .parse(&prj_path, config)?
+            .parse(&prj_path, config, &self.target)?
             .flush(&self.ast_path)
     }
 

@@ -21,6 +21,8 @@ pub struct Android {
     pub so_name: Option<String>,
     pub ext_lib: Option<Vec<String>>,
     pub features_def: Option<Vec<String>>,
+    pub contract_name: Option<String>,
+    pub imp_name: Option<String>,
 }
 
 impl Default for Android {
@@ -42,6 +44,8 @@ impl Default for Android {
             so_name: Some(SO_NAME.to_owned()),
             ext_lib: None,
             features_def: None,
+            contract_name: None,
+            imp_name: None
         }
     }
 }

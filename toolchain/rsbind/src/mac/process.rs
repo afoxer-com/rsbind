@@ -87,10 +87,6 @@ impl<'a> MacProcess<'a> {
 }
 
 impl<'a> BuildProcess for MacProcess<'a> {
-    fn unpack(&self) -> Result<()> {
-        Ok(())
-    }
-
     fn gen_bridge_src(&self) -> Result<()> {
         println!("begin unzip rust template for mac");
         let buf: &[u8] = include_bytes!("res/template_bridge_mac.zip");

@@ -87,7 +87,6 @@ impl<'a> Convertible<Swift<'a>> for Str {
         quote! {{
                 let slice = unsafe {std::slice::from_raw_parts(#origin.ptr as (*const u8), #origin.len as usize).to_vec()};
                 let cstr = unsafe {CStr::from_bytes_with_nul_unchecked(&slice)};
-                println!("begin free str from rust");
                 let str = cstr.to_string_lossy().to_string();
                 (#origin.free_ptr)(#origin.ptr as (*mut i8), #origin.len, #origin.len);
                 str

@@ -745,7 +745,11 @@ impl LangImp<Swift<'static>, ()> for SwiftImp {
         })
     }
 
-    fn provide_converter(&self, ty: &AstType) -> Box<dyn Convertible<Swift<'static>>> {
+    fn provide_converter(
+        &self,
+        ty: &AstType,
+        context: &BridgeContext<Swift<'static>, ()>,
+    ) -> Box<dyn Convertible<Swift<'static>>> {
         Box::new(SwiftConvert { ty: ty.clone() })
     }
 }

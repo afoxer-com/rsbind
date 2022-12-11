@@ -149,6 +149,7 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                                     .lang_imp
                                     .quote_method_sig(ctx)
                             }),
+                            quote_method_header: Box::new(|ctx| Ok(quote! {})),
                             quote_arg_convert: Box::new(|ctx| {
                                 println!(
                                     "[bridge]  🔆  begin quote bridge method argument convert => {}:{}",
@@ -164,7 +165,10 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                                     .mod_ctx
                                     .bridge_ctx
                                     .lang_imp
-                                    .provide_converter(&ctx.arg.ty)
+                                    .provide_converter(
+                                        &ctx.arg.ty,
+                                        &ctx.method_ctx.service_ctx.mod_ctx.bridge_ctx,
+                                    )
                                     .transferable_to_rust(
                                         quote! {#arg_name_ident},
                                         Direction::Down,
@@ -225,7 +229,10 @@ impl<Lang, Extra> Default for FilesGenerator<Lang, Extra> {
                                     .mod_ctx
                                     .bridge_ctx
                                     .lang_imp
-                                    .provide_converter(&ctx.method.return_type)
+                                    .provide_converter(
+                                        &ctx.method.return_type,
+                                        &ctx.service_ctx.mod_ctx.bridge_ctx,
+                                    )
                                     .rust_to_transferable(quote! {result}, Direction::Down);
 
                                 println!(
@@ -452,6 +459,7 @@ impl<Lang, Extra> TraitCodeGenerator<Lang, Extra> {
 ///
 pub(crate) struct TraitMethodGenerator<Lang, Extra> {
     pub(crate) quote_method_sig: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
+    pub(crate) quote_method_header: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
     pub(crate) quote_arg_convert: Box<dyn Fn(&ArgumentContext<Lang, Extra>) -> TokenResult>,
     pub(crate) quote_method_imp_call: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
     pub(crate) quote_method_return_convert: Box<dyn Fn(&MethodContext<Lang, Extra>) -> TokenResult>,
@@ -464,7 +472,7 @@ impl<Lang, Extra> TraitMethodGenerator<Lang, Extra> {
             &ctx.service_ctx.trait_.name, &ctx.method.name
         );
         let sig_define = (*self.quote_method_sig)(ctx).unwrap();
-
+        let method_header = (*self.quote_method_header)(ctx).unwrap();
         let mut arg_convert = TokenStream::new();
         for arg in ctx.method.args.iter() {
             let ctx = ArgumentContext {
@@ -485,6 +493,7 @@ impl<Lang, Extra> TraitMethodGenerator<Lang, Extra> {
         // combine all the parts
         let result = quote! {
             #sig_define {
+                #method_header
                 #arg_convert
                 #call_imp
                 #return_handle

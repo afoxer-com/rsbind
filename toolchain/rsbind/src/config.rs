@@ -6,6 +6,7 @@ use crate::android::config::Android;
 use crate::ios::config::Ios;
 use crate::jar::config::Jar;
 use crate::mac::config::Mac;
+use crate::nodejs::config::NodeJS;
 
 ///
 /// Configuration struct mapping from Rsbind.toml
@@ -16,6 +17,7 @@ pub struct Config {
     pub ios: Option<Ios>,
     pub mac: Option<Mac>,
     pub jar: Option<Jar>,
+    pub nodejs: Option<NodeJS>,
     pub common: Option<Common>,
 }
 

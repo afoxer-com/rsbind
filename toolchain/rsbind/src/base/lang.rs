@@ -104,5 +104,9 @@ pub(crate) trait LangImp<Lang, Extra> {
     fn quote_for_one_struct(&self, context: &StructContext<Lang, Extra>) -> Result<TokenStream>;
     fn quote_for_one_callback(&self, context: &CallbackContext<Lang, Extra>)
         -> Result<TokenStream>;
-    fn provide_converter(&self, ty: &AstType) -> Box<dyn Convertible<Lang>>;
+    fn provide_converter(
+        &self,
+        ty: &AstType,
+        context: &BridgeContext<Lang, Extra>,
+    ) -> Box<dyn Convertible<Lang>>;
 }

@@ -1,0 +1,17 @@
+[package]
+name = "$(*521%-host_crate_underscore)_nodejs_bridge_prj"
+version = "0.1.0"
+authors = ["sidney.wang <sidney.wang@foxmail.com.com>"]
+
+#[workspace]
+#members = []
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+$(*521%-host_crate) = { path = "../../"}
+napi-sys = "2.2.2"
+
+[features]
+$(*521%-features)

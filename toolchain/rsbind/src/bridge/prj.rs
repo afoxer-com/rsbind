@@ -8,7 +8,7 @@ use crate::unzip;
 const MAGIC_NUM: &str = "*521%";
 
 ///
-/// Unpack the bridge project for android or iOS.
+/// Unpack the bridge project.
 ///
 pub(crate) struct Unpack<'a> {
     pub path: &'a Path,

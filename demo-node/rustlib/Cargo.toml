@@ -1,0 +1,13 @@
+[package]
+name = "node_rustlib"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+napi-sys = "2.2.2"
+ctor = "0.1.26"
+
+[lib]
+crate-type = ["lib", "cdylib"]

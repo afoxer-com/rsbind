@@ -526,7 +526,7 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
                 .map(|arg| ident!(&format!("r_{}", &arg.name)))
                 .collect::<Vec<Ident>>();
 
-            let mut return_convert = if let AstType::Void = method.return_type.clone() {
+            let return_convert = if let AstType::Void = method.return_type.clone() {
                 quote! {}
             } else {
                 JavaConvert {
@@ -664,7 +664,11 @@ impl LangImp<Java<'static>, JavaExtra> for JavaImp {
         })
     }
 
-    fn provide_converter(&self, ty: &AstType) -> Box<dyn Convertible<Java<'static>>> {
+    fn provide_converter(
+        &self,
+        ty: &AstType,
+        context: &BridgeContext<Java<'static>, JavaExtra>,
+    ) -> Box<dyn Convertible<Java<'static>>> {
         Box::new(JavaConvert { ty: ty.clone() })
     }
 }

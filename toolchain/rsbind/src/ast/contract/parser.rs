@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use syn::{TypeParamBound, TypePath};
+use syn::{TypeParamBound, TypePath, Visibility};
 
 use crate::errors::ErrorKind::*;
 use crate::errors::*;
@@ -73,6 +73,12 @@ pub(crate) fn parse_from_str(ctx: &ParseContext, src: &str) -> Result<ContractRe
     for item in syn_file.items.iter() {
         match *item {
             syn::Item::Trait(ref trait_inner) => {
+                match trait_inner.vis {
+                    Visibility::Public(_) => {}
+                    _ => {
+                        continue;
+                    }
+                }
                 let trait_name = trait_inner.ident.to_string();
                 println!("found trait => {}", trait_inner.ident);
 
@@ -91,24 +97,31 @@ pub(crate) fn parse_from_str(ctx: &ParseContext, src: &str) -> Result<ContractRe
                     }
                 }
 
-                if !send_derived || !sync_derived {
+                let (methods, is_callback) = parse_methods(ctx, &trait_inner.items)?;
+
+                if is_callback && (!send_derived || !sync_derived) {
                     panic!("Please derive 'Sync' and 'Send' for your trait '{}', Like: trait {} : Send + Sync {{ .. }}", &trait_name, &trait_name)
                 }
 
-                let methods = parse_methods(ctx, &trait_inner.items)?;
                 let trait_desc = TraitDesc {
                     name: trait_name,
                     ty: "trait".to_string(),
                     mod_name: ctx.mod_name.clone(),
                     mod_path: ctx.mod_path.clone(),
                     crate_name: ctx.crate_name.clone(),
-                    is_callback: methods.1,
-                    methods: methods.0,
+                    is_callback,
+                    methods,
                 };
 
                 trait_descs.push(trait_desc);
             }
             syn::Item::Struct(ref struct_inner) => {
+                match struct_inner.vis {
+                    Visibility::Public(_) => {}
+                    _ => {
+                        continue;
+                    }
+                }
                 println!("found struct => {}", &struct_inner.ident);
                 let stuct_name = struct_inner.ident.to_string();
 
@@ -119,6 +132,13 @@ pub(crate) fn parse_from_str(ctx: &ParseContext, src: &str) -> Result<ContractRe
                         Some(ref value) => value.to_owned().to_string(),
                         _ => "".to_owned(),
                     };
+
+                    match field.vis {
+                        Visibility::Public(_) => {}
+                        _ => {
+                            panic!("Please make sure your struct field is public, for example, \npub struct {} \n{{ pub {}:... }}", &struct_inner.ident.to_string(), &field_name)
+                        }
+                    }
 
                     let field_ty;
                     match field.ty {

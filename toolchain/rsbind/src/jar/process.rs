@@ -75,10 +75,6 @@ impl<'a> JarProcess<'a> {
 }
 
 impl<'a> BuildProcess for JarProcess<'a> {
-    fn unpack(&self) -> Result<()> {
-        Ok(())
-    }
-
     fn gen_bridge_src(&self) -> Result<()> {
         println!("begin unzip rust template for android");
         // unpack the bridge project.
